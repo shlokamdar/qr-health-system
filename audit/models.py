@@ -8,6 +8,11 @@ class AccessLog(models.Model):
         VIEW_RECORDS = 'VIEW_RECORDS', 'View Records'
         UPLOAD_RECORD = 'UPLOAD_RECORD', 'Upload Record'
         LOGIN = 'LOGIN', 'Login'
+        CREATE_CONSULTATION = 'CREATE_CONSULTATION', 'Create Consultation'
+        UPLOAD_DOCUMENT = 'UPLOAD_DOCUMENT', 'Upload Document'
+        GRANT_ACCESS = 'GRANT_ACCESS', 'Grant Access'
+        REVOKE_ACCESS = 'REVOKE_ACCESS', 'Revoke Access'
+        CREATE_HEALTH_ID = 'CREATE_HEALTH_ID', 'Create Health ID'
 
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='actions')
     patient = models.ForeignKey(Patient, on_delete=models.SET_NULL, null=True, blank=True, related_name='access_logs')

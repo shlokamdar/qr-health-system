@@ -1,0 +1,99 @@
+from django.db import models
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+
+
+class Hospital(models.Model):
+    """Hospital/Organization that doctors can be affiliated with."""
+    name = models.CharField(max_length=200)
+    address = models.TextField()
+    registration_number = models.CharField(max_length=50, unique=True)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField()
+    is_verified = models.BooleanField(
+        default=False, 
+        help_text=_("Set to True after superadmin approval")
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        status = "✓" if self.is_verified else "⏳"
+        return f"{self.name} ({status})"
+
+    class Meta:
+        ordering = ['name']
+
+
+class Doctor(models.Model):
+    """Extended doctor profile linked to User model."""
+    
+    class AuthorizationLevel(models.TextChoices):
+        BASIC = 'BASIC', _('Basic')           # Can view basic profile only
+        STANDARD = 'STANDARD', _('Standard')  # Can view records
+        FULL = 'FULL', _('Full')              # Can view everything + sensitive data
+    
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='doctor_profile'
+    )
+    hospital = models.ForeignKey(
+        Hospital, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='doctors'
+    )
+    license_number = models.CharField(max_length=50, unique=True)
+    specialization = models.CharField(max_length=100)
+    authorization_level = models.CharField(
+        max_length=20,
+        choices=AuthorizationLevel.choices, 
+        default=AuthorizationLevel.BASIC
+    )
+    is_verified = models.BooleanField(
+        default=False,
+        help_text=_("Set to True after superadmin approval")
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        hospital_name = self.hospital.name if self.hospital else "Independent"
+        return f"Dr. {self.user.get_full_name() or self.user.username} ({hospital_name})"
+
+    class Meta:
+        ordering = ['user__last_name', 'user__first_name']
+
+
+class Consultation(models.Model):
+    """Record of a consultation between a doctor and patient."""
+    
+    doctor = models.ForeignKey(
+        Doctor, 
+        on_delete=models.CASCADE, 
+        related_name='consultations'
+    )
+    patient = models.ForeignKey(
+        'patients.Patient', 
+        on_delete=models.CASCADE, 
+        related_name='consultations'
+    )
+    consultation_date = models.DateTimeField()
+    chief_complaint = models.TextField(help_text=_("Primary reason for visit"))
+    diagnosis = models.TextField(blank=True)
+    prescription = models.TextField(blank=True)
+    notes = models.TextField(blank=True, help_text=_("Additional clinical notes"))
+    follow_up_date = models.DateField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Consultation: {self.patient.health_id} with Dr. {self.doctor.user.username} on {self.consultation_date.date()}"
+
+    class Meta:
+        ordering = ['-consultation_date']

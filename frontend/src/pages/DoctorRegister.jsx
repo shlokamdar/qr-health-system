@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api';
 
 const DoctorRegister = () => {
     const [formData, setFormData] = useState({
@@ -9,12 +10,22 @@ const DoctorRegister = () => {
         password: '',
         confirmPassword: '',
         first_name: '',
-        last_name: ''
+        last_name: '',
+        license_number: '',
+        specialization: '',
+        hospital: ''
     });
+    const [hospitals, setHospitals] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { register } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        // Fetch verified hospitals
+        api.get('doctors/hospitals/')
+            .then(res => setHospitals(res.data))
+            .catch(() => setHospitals([]));
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,19 +40,27 @@ const DoctorRegister = () => {
             return;
         }
 
+        if (!formData.license_number || !formData.specialization) {
+            setError('License number and specialization are required');
+            return;
+        }
+
         setLoading(true);
         try {
-            await register({
+            await api.post('doctors/register/', {
                 username: formData.username,
                 email: formData.email,
                 password: formData.password,
                 first_name: formData.first_name,
                 last_name: formData.last_name,
-                role: 'DOCTOR'
+                license_number: formData.license_number,
+                specialization: formData.specialization,
+                hospital: formData.hospital || null
             });
-            navigate('/');
+            alert('Registration successful! Your account is pending verification by admin.');
+            navigate('/doctor/login');
         } catch (error) {
-            setError('Registration failed. Please try again.');
+            setError(error.response?.data?.license_number?.[0] || 'Registration failed. Please try again.');
         }
         setLoading(false);
     };
@@ -66,7 +85,7 @@ const DoctorRegister = () => {
             <div className="relative z-10 w-full max-w-md">
                 <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-purple-500/20 p-8 shadow-2xl">
                     {/* Header */}
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-6">
                         <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/30">
                             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -78,7 +97,7 @@ const DoctorRegister = () => {
 
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                        <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                             {error}
                         </div>
                     )}
@@ -87,76 +106,125 @@ const DoctorRegister = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">First Name</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">First Name</label>
                                 <input
                                     name="first_name"
                                     type="text"
                                     required
-                                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     placeholder="First"
                                     onChange={handleChange}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Last Name</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Last Name</label>
                                 <input
                                     name="last_name"
                                     type="text"
                                     required
-                                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     placeholder="Last"
                                     onChange={handleChange}
                                 />
                             </div>
                         </div>
+                        
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Username</label>
                             <input
                                 name="username"
                                 type="text"
                                 required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 placeholder="Choose a username"
                                 onChange={handleChange}
                             />
                         </div>
+                        
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
                             <input
                                 name="email"
                                 type="email"
                                 required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 placeholder="Enter your email"
                                 onChange={handleChange}
                             />
                         </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">License Number *</label>
+                                <input
+                                    name="license_number"
+                                    type="text"
+                                    required
+                                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="Medical License"
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Specialization *</label>
+                                <input
+                                    name="specialization"
+                                    type="text"
+                                    required
+                                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="e.g. Cardiology"
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Hospital/Organization</label>
+                            <select
+                                name="hospital"
+                                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                onChange={handleChange}
+                            >
+                                <option value="">Independent / Select Later</option>
+                                {hospitals.map(h => (
+                                    <option key={h.id} value={h.id}>{h.name}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-slate-500 mt-1">You can update this later in your profile</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
                             <input
                                 name="password"
                                 type="password"
                                 required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 placeholder="Create a password"
                                 onChange={handleChange}
                             />
                         </div>
+                        
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Confirm Password</label>
                             <input
                                 name="confirmPassword"
                                 type="password"
                                 required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 placeholder="Confirm your password"
                                 onChange={handleChange}
                             />
                         </div>
+
+                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3 text-sm text-orange-300">
+                            ⏳ Your account will be verified by admin before you can access all features.
+                        </div>
+
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/30 mt-2"
+                            className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-indigo-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/30"
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -166,7 +234,7 @@ const DoctorRegister = () => {
                                     </svg>
                                     Creating account...
                                 </span>
-                            ) : 'Create Account'}
+                            ) : 'Register as Doctor'}
                         </button>
                     </form>
 
@@ -174,7 +242,7 @@ const DoctorRegister = () => {
                     <div className="mt-6 text-center">
                         <p className="text-slate-400">
                             Already have an account?{' '}
-                            <Link to="/doctor/login" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+                            <Link to="/doctor/login" className="text-purple-400 hover:text-purple-300 font-semibold">
                                 Sign in here
                             </Link>
                         </p>
