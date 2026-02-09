@@ -215,3 +215,98 @@ class SharingHistoryView(generics.ListAPIView):
         ]
         
         return Response(data)
+
+
+from rest_framework.views import APIView
+from .models import OTPRequest
+from doctors.models import Doctor
+import random
+
+class OTPRequestView(APIView):
+    """Generate and send OTP to patient."""
+    permission_classes = [IsDoctor]
+
+    def post(self, request):
+        health_id = request.data.get('health_id')
+        if not health_id:
+            return Response({"error": "Health ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        patient = get_object_or_404(Patient, health_id=health_id)
+        doctor = get_object_or_404(Doctor, user=request.user)
+
+        # Generate 6-digit OTP
+        otp_code = str(random.randint(100000, 999999))
+        
+        # Save OTP
+        OTPRequest.objects.create(
+            doctor=doctor,
+            patient=patient,
+            otp_code=otp_code
+        )
+
+        # In production, send via SMS/Email
+        print(f"==========================================")
+        print(f"OTP for {patient.health_id}: {otp_code}")
+        print(f"==========================================")
+
+        return Response({
+            "message": "OTP sent successfully to patient's registered contact.",
+            "dev_note": "Check console for OTP code"
+        })
+
+
+class OTPVerifyView(APIView):
+    """Verify OTP and grant full access."""
+    permission_classes = [IsDoctor]
+
+    def post(self, request):
+        health_id = request.data.get('health_id')
+        otp_code = request.data.get('otp_code')
+
+        if not health_id or not otp_code:
+            return Response({"error": "Health ID and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        patient = get_object_or_404(Patient, health_id=health_id)
+        doctor = get_object_or_404(Doctor, user=request.user)
+
+        # Find valid OTP
+        otp_request = OTPRequest.objects.filter(
+            doctor=doctor,
+            patient=patient,
+            otp_code=otp_code,
+            is_verified=False
+        ).order_by('-created_at').first()
+
+        if not otp_request:
+            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if otp_request.is_expired:
+            return Response({"error": "OTP has expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mark OTP as verified
+        otp_request.is_verified = True
+        otp_request.save()
+
+        # Grant Full Access
+        permission, created = SharingPermission.objects.get_or_create(
+            patient=patient,
+            doctor=doctor,
+            defaults={'access_type': SharingPermission.AccessType.OTP_FULL}
+        )
+        
+        if not created:
+            permission.access_type = SharingPermission.AccessType.OTP_FULL
+            permission.is_active = True
+            permission.revoked_at = None
+            permission.expires_at = None # Full access might not expire or have long expiry
+            permission.save()
+
+        # Log Access
+        AccessLog.objects.create(
+            actor=request.user,
+            patient=patient,
+            action=AccessLog.Action.GRANT_ACCESS,
+            details=f"OTP Verified. Full Access Granted to Dr. {doctor.user.username}"
+        )
+
+        return Response({"message": "OTP Verified! Full Access Granted."})

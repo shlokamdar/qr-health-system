@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 const DoctorDashboard = () => {
     const [activeTab, setActiveTab] = useState('search');
@@ -9,7 +10,7 @@ const DoctorDashboard = () => {
     const [records, setRecords] = useState([]);
     const [consultations, setConsultations] = useState([]);
     const [myConsultations, setMyConsultations] = useState([]);
-    
+
     // Upload Form State
     const [newRecord, setNewRecord] = useState({
         title: '',
@@ -27,6 +28,9 @@ const DoctorDashboard = () => {
         notes: '',
         follow_up_date: ''
     });
+
+    // Scanner State
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
 
     // Register Patient Form State
     const [newPatient, setNewPatient] = useState({
@@ -63,12 +67,83 @@ const DoctorDashboard = () => {
         }
     };
 
+    // OTP State
+    const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+
+    const handleRequestOTP = async () => {
+        if (!patientResult) return;
+        try {
+            const res = await api.post('patients/otp/request/', {
+                health_id: patientResult.health_id
+            });
+            alert(res.data.message + '\n' + (res.data.dev_note || ''));
+            setIsOTPModalOpen(true);
+        } catch (err) {
+            console.error(err);
+            alert('Failed to send OTP');
+        }
+    };
+
+    const handleVerifyOTP = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('patients/otp/verify/', {
+                health_id: patientResult.health_id,
+                otp_code: otpCode
+            });
+            alert('Access Granted!');
+            setIsOTPModalOpen(false);
+            setOtpCode('');
+            // Refresh patient data
+            handleSearch({ preventDefault: () => { } });
+        } catch (err) {
+            console.error(err);
+            alert('Invalid OTP or Expired');
+        }
+    };
+
+    const handleScan = (result) => {
+        if (result) {
+            const rawValue = result[0]?.rawValue;
+            if (rawValue) {
+                let healthId = rawValue;
+                if (rawValue.includes('/api/patients/')) {
+                    const parts = rawValue.split('/api/patients/');
+                    if (parts.length > 1) {
+                        healthId = parts[1].replace('/', '');
+                    }
+                }
+                setSearchId(healthId);
+                setIsScannerOpen(false);
+
+                // Trigger fetch automatically
+                api.get(`patients/${healthId}/`)
+                    .then(res => {
+                        setPatientResult(res.data);
+                        return Promise.all([
+                            api.get(`records/?patient=${healthId}`),
+                            api.get(`doctors/patient-history/${healthId}/`)
+                        ]);
+                    })
+                    .then(([recRes, consRes]) => {
+                        setRecords(recRes.data);
+                        setConsultations(consRes.data);
+                    })
+                    .catch(() => {
+                        alert('Patient not found or Access Denied');
+                        setPatientResult(null);
+                    });
+            }
+        }
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         try {
             const res = await api.get(`patients/${searchId}/`);
             setPatientResult(res.data);
-            
+
             // Fetch records for this patient
             const recRes = await api.get(`records/?patient=${searchId}`);
             setRecords(recRes.data);
@@ -84,7 +159,7 @@ const DoctorDashboard = () => {
 
     const handleUpload = async (e) => {
         e.preventDefault();
-        if(!patientResult) return;
+        if (!patientResult) return;
 
         const formData = new FormData();
         formData.append('patient', patientResult.id);
@@ -111,7 +186,7 @@ const DoctorDashboard = () => {
 
     const handleCreateConsultation = async (e) => {
         e.preventDefault();
-        if(!patientResult) return;
+        if (!patientResult) return;
 
         try {
             await api.post('doctors/consultations/', {
@@ -158,7 +233,7 @@ const DoctorDashboard = () => {
     };
 
     const getAuthBadgeColor = (level) => {
-        switch(level) {
+        switch (level) {
             case 'FULL': return 'bg-green-500';
             case 'STANDARD': return 'bg-blue-500';
             default: return 'bg-gray-500';
@@ -197,11 +272,10 @@ const DoctorDashboard = () => {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`flex-1 py-3 px-4 text-center capitalize ${
-                                activeTab === tab 
-                                    ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' 
-                                    : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                            className={`flex-1 py-3 px-4 text-center capitalize ${activeTab === tab
+                                ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
                         >
                             {tab === 'search' ? 'Patient Search' : tab === 'consultations' ? 'My Consultations' : 'Register Patient'}
                         </button>
@@ -213,23 +287,95 @@ const DoctorDashboard = () => {
                     {activeTab === 'search' && (
                         <div className="space-y-6">
                             <form onSubmit={handleSearch} className="flex gap-4">
-                                <input 
-                                    type="text" 
-                                    placeholder="Scan or Enter Health ID" 
+                                <input
+                                    type="text"
+                                    placeholder="Scan or Enter Health ID"
                                     className="flex-1 border p-2 rounded"
                                     value={searchId}
                                     onChange={e => setSearchId(e.target.value)}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setIsScannerOpen(true)}
+                                    className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                                >
+                                    📷 Scan QR
+                                </button>
                                 <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">
                                     Fetch
                                 </button>
                             </form>
 
+                            {/* Scanner Modal */}
+                            {isScannerOpen && (
+                                <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
+                                    <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-md relative">
+                                        <button
+                                            onClick={() => setIsScannerOpen(false)}
+                                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                        >
+                                            ✕
+                                        </button>
+                                        <h3 className="text-lg font-bold mb-4">Scan Patient QR Code</h3>
+                                        <div className="aspect-square bg-gray-100 rounded overflow-hidden">
+                                            <Scanner
+                                                onScan={handleScan}
+                                                onError={(error) => console.log(error?.message)}
+                                                components={{ audio: false }}
+                                            />
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-4 text-center">
+                                            Point camera at patient's Health ID QR code
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* OTP Modal */}
+                            {isOTPModalOpen && (
+                                <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
+                                    <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm relative">
+                                        <button
+                                            onClick={() => setIsOTPModalOpen(false)}
+                                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                        >
+                                            ✕
+                                        </button>
+                                        <h3 className="text-lg font-bold mb-4">Enter OTP</h3>
+                                        <p className="text-sm text-gray-500 mb-4">
+                                            Ask patient for the 6-digit code sent to their phone.
+                                        </p>
+                                        <form onSubmit={handleVerifyOTP} className="space-y-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Enter 6-digit OTP"
+                                                className="w-full border p-2 rounded text-center text-2xl tracking-widest"
+                                                maxLength={6}
+                                                value={otpCode}
+                                                onChange={e => setOtpCode(e.target.value)}
+                                                autoFocus
+                                            />
+                                            <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+                                                Verify & Grant Access
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
+
                             {patientResult && (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     {/* Patient Info */}
                                     <div className="bg-gray-50 p-4 rounded">
-                                        <h3 className="text-lg font-bold mb-3">Patient Profile</h3>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <h3 className="text-lg font-bold">Patient Profile</h3>
+                                            <button
+                                                onClick={handleRequestOTP}
+                                                className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200"
+                                            >
+                                                🔓 Request Full Access
+                                            </button>
+                                        </div>
                                         <div className="space-y-2 text-sm">
                                             <p><strong>Health ID:</strong> {patientResult.health_id}</p>
                                             <p><strong>Name:</strong> {patientResult.user?.first_name} {patientResult.user?.last_name}</p>
@@ -275,37 +421,37 @@ const DoctorDashboard = () => {
                                         <div className="bg-gray-50 p-4 rounded">
                                             <h3 className="text-lg font-bold mb-3">New Consultation</h3>
                                             <form onSubmit={handleCreateConsultation} className="space-y-3">
-                                                <input 
+                                                <input
                                                     type="datetime-local"
                                                     className="w-full border p-2 rounded text-sm"
                                                     value={newConsultation.consultation_date}
-                                                    onChange={e => setNewConsultation({...newConsultation, consultation_date: e.target.value})}
+                                                    onChange={e => setNewConsultation({ ...newConsultation, consultation_date: e.target.value })}
                                                 />
-                                                <textarea 
+                                                <textarea
                                                     placeholder="Chief Complaint *"
                                                     className="w-full border p-2 rounded text-sm"
                                                     required
                                                     value={newConsultation.chief_complaint}
-                                                    onChange={e => setNewConsultation({...newConsultation, chief_complaint: e.target.value})}
+                                                    onChange={e => setNewConsultation({ ...newConsultation, chief_complaint: e.target.value })}
                                                 />
-                                                <textarea 
+                                                <textarea
                                                     placeholder="Diagnosis"
                                                     className="w-full border p-2 rounded text-sm"
                                                     value={newConsultation.diagnosis}
-                                                    onChange={e => setNewConsultation({...newConsultation, diagnosis: e.target.value})}
+                                                    onChange={e => setNewConsultation({ ...newConsultation, diagnosis: e.target.value })}
                                                 />
-                                                <textarea 
+                                                <textarea
                                                     placeholder="Prescription"
                                                     className="w-full border p-2 rounded text-sm"
                                                     value={newConsultation.prescription}
-                                                    onChange={e => setNewConsultation({...newConsultation, prescription: e.target.value})}
+                                                    onChange={e => setNewConsultation({ ...newConsultation, prescription: e.target.value })}
                                                 />
-                                                <input 
+                                                <input
                                                     type="date"
                                                     placeholder="Follow-up Date"
                                                     className="w-full border p-2 rounded text-sm"
                                                     value={newConsultation.follow_up_date}
-                                                    onChange={e => setNewConsultation({...newConsultation, follow_up_date: e.target.value})}
+                                                    onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
                                                 />
                                                 <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
                                                     Save Consultation
@@ -317,27 +463,27 @@ const DoctorDashboard = () => {
                                         <div className="bg-gray-50 p-4 rounded">
                                             <h3 className="text-lg font-bold mb-3">Add Record</h3>
                                             <form onSubmit={handleUpload} className="space-y-3">
-                                                <select 
+                                                <select
                                                     className="w-full border p-2 rounded text-sm"
                                                     value={newRecord.record_type}
-                                                    onChange={e => setNewRecord({...newRecord, record_type: e.target.value})}
+                                                    onChange={e => setNewRecord({ ...newRecord, record_type: e.target.value })}
                                                 >
                                                     <option value="PRESCRIPTION">Prescription</option>
                                                     <option value="DIAGNOSIS">Diagnosis</option>
                                                     <option value="LAB_REPORT">Lab Report</option>
                                                     <option value="VISIT_NOTE">Visit Note</option>
                                                 </select>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Title" 
+                                                <input
+                                                    type="text"
+                                                    placeholder="Title"
                                                     className="w-full border p-2 rounded text-sm"
                                                     value={newRecord.title}
-                                                    onChange={e => setNewRecord({...newRecord, title: e.target.value})}
+                                                    onChange={e => setNewRecord({ ...newRecord, title: e.target.value })}
                                                 />
-                                                <input 
-                                                    type="file" 
+                                                <input
+                                                    type="file"
                                                     className="w-full text-sm"
-                                                    onChange={e => setNewRecord({...newRecord, file: e.target.files[0]})}
+                                                    onChange={e => setNewRecord({ ...newRecord, file: e.target.files[0] })}
                                                 />
                                                 <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
                                                     Upload Record
@@ -385,61 +531,61 @@ const DoctorDashboard = () => {
                         <div>
                             <h3 className="text-lg font-bold mb-4">Register New Patient</h3>
                             <form onSubmit={handleRegisterPatient} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                                <input 
-                                    type="text" 
-                                    placeholder="Username *" 
+                                <input
+                                    type="text"
+                                    placeholder="Username *"
                                     required
                                     className="border p-2 rounded"
                                     value={newPatient.username}
-                                    onChange={e => setNewPatient({...newPatient, username: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, username: e.target.value })}
                                 />
-                                <input 
-                                    type="password" 
-                                    placeholder="Password *" 
+                                <input
+                                    type="password"
+                                    placeholder="Password *"
                                     required
                                     className="border p-2 rounded"
                                     value={newPatient.password}
-                                    onChange={e => setNewPatient({...newPatient, password: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, password: e.target.value })}
                                 />
-                                <input 
-                                    type="email" 
-                                    placeholder="Email" 
+                                <input
+                                    type="email"
+                                    placeholder="Email"
                                     className="border p-2 rounded"
                                     value={newPatient.email}
-                                    onChange={e => setNewPatient({...newPatient, email: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, email: e.target.value })}
                                 />
-                                <input 
-                                    type="text" 
-                                    placeholder="Phone Number" 
+                                <input
+                                    type="text"
+                                    placeholder="Phone Number"
                                     className="border p-2 rounded"
                                     value={newPatient.contact_number}
-                                    onChange={e => setNewPatient({...newPatient, contact_number: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, contact_number: e.target.value })}
                                 />
-                                <input 
-                                    type="text" 
-                                    placeholder="First Name" 
+                                <input
+                                    type="text"
+                                    placeholder="First Name"
                                     className="border p-2 rounded"
                                     value={newPatient.first_name}
-                                    onChange={e => setNewPatient({...newPatient, first_name: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, first_name: e.target.value })}
                                 />
-                                <input 
-                                    type="text" 
-                                    placeholder="Last Name" 
+                                <input
+                                    type="text"
+                                    placeholder="Last Name"
                                     className="border p-2 rounded"
                                     value={newPatient.last_name}
-                                    onChange={e => setNewPatient({...newPatient, last_name: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, last_name: e.target.value })}
                                 />
-                                <input 
-                                    type="date" 
-                                    placeholder="Date of Birth" 
+                                <input
+                                    type="date"
+                                    placeholder="Date of Birth"
                                     className="border p-2 rounded"
                                     value={newPatient.date_of_birth}
-                                    onChange={e => setNewPatient({...newPatient, date_of_birth: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
                                 />
-                                <select 
+                                <select
                                     className="border p-2 rounded"
                                     value={newPatient.blood_group}
-                                    onChange={e => setNewPatient({...newPatient, blood_group: e.target.value})}
+                                    onChange={e => setNewPatient({ ...newPatient, blood_group: e.target.value })}
                                 >
                                     <option value="">Select Blood Group</option>
                                     <option value="A+">A+</option>
