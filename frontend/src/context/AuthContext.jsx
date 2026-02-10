@@ -14,11 +14,21 @@ export const AuthProvider = ({ children }) => {
             if (token) {
                 try {
                     const decoded = jwtDecode(token);
-                    // Minimal user info from token (user_id). 
-                    // To get role, better to fetch /auth/me/ or similar, but simplified: assume simple setup
-                    // Or we can decode 'role' if we customized TokenObtainPairSerializer.
-                    // Let's assume we decode what we can or wait for a user fetch
-                    setUser({ id: decoded.user_id }); 
+                    setUser({
+                        id: decoded.user_id,
+                        role: decoded.role || null,
+                        username: decoded.username || null,
+                    });
+
+                    // Fallback: if role not in token, fetch from /me/
+                    if (!decoded.role) {
+                        try {
+                            const res = await api.get('auth/me/');
+                            setUser(prev => ({ ...prev, role: res.data.role }));
+                        } catch (err) {
+                            console.error('Failed to fetch user info', err);
+                        }
+                    }
                 } catch (error) {
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
@@ -36,8 +46,13 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
             const decoded = jwtDecode(access);
-            setUser({ id: decoded.user_id, ...decoded }); // If custom claims exist
-            return true;
+            const userData = {
+                id: decoded.user_id,
+                role: decoded.role || null,
+                username: decoded.username || null,
+            };
+            setUser(userData);
+            return userData;
         } catch (error) {
             console.error("Login failed", error);
             return false;

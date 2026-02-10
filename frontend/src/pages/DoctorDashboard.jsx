@@ -95,7 +95,6 @@ const DoctorDashboard = () => {
             alert('Access Granted!');
             setIsOTPModalOpen(false);
             setOtpCode('');
-            // Refresh patient data
             handleSearch({ preventDefault: () => { } });
         } catch (err) {
             console.error(err);
@@ -117,7 +116,6 @@ const DoctorDashboard = () => {
                 setSearchId(healthId);
                 setIsScannerOpen(false);
 
-                // Trigger fetch automatically
                 api.get(`patients/${healthId}/`)
                     .then(res => {
                         setPatientResult(res.data);
@@ -144,11 +142,9 @@ const DoctorDashboard = () => {
             const res = await api.get(`patients/${searchId}/`);
             setPatientResult(res.data);
 
-            // Fetch records for this patient
             const recRes = await api.get(`records/?patient=${searchId}`);
             setRecords(recRes.data);
 
-            // Fetch consultations for this patient
             const consRes = await api.get(`doctors/patient-history/${searchId}/`);
             setConsultations(consRes.data);
         } catch (err) {
@@ -234,375 +230,471 @@ const DoctorDashboard = () => {
 
     const getAuthBadgeColor = (level) => {
         switch (level) {
-            case 'FULL': return 'bg-green-500';
-            case 'STANDARD': return 'bg-blue-500';
-            default: return 'bg-gray-500';
+            case 'FULL': return 'bg-gradient-to-r from-emerald-500 to-emerald-600';
+            case 'STANDARD': return 'bg-gradient-to-r from-blue-500 to-blue-600';
+            default: return 'bg-gradient-to-r from-gray-400 to-gray-500';
         }
     };
 
     return (
-        <div className="space-y-6">
-            {/* Doctor Info Header */}
-            {doctorProfile && (
-                <div className="bg-white p-4 rounded shadow flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-bold">
-                            Dr. {doctorProfile.user?.first_name} {doctorProfile.user?.last_name}
-                        </h2>
-                        <p className="text-gray-600">{doctorProfile.specialization}</p>
-                        {doctorProfile.hospital_details && (
-                            <p className="text-sm text-gray-500">{doctorProfile.hospital_details.name}</p>
-                        )}
-                    </div>
-                    <div className="text-right">
-                        <span className={`px-3 py-1 rounded text-white text-sm ${getAuthBadgeColor(doctorProfile.authorization_level)}`}>
-                            {doctorProfile.authorization_level} Access
-                        </span>
-                        {!doctorProfile.is_verified && (
-                            <p className="text-orange-500 text-xs mt-1">⏳ Pending Verification</p>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Tab Navigation */}
-            <div className="bg-white rounded shadow">
-                <div className="flex border-b">
-                    {['search', 'consultations', 'register'].map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`flex-1 py-3 px-4 text-center capitalize ${activeTab === tab
-                                ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold'
-                                : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                        >
-                            {tab === 'search' ? 'Patient Search' : tab === 'consultations' ? 'My Consultations' : 'Register Patient'}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="p-6">
-                    {/* Patient Search Tab */}
-                    {activeTab === 'search' && (
-                        <div className="space-y-6">
-                            <form onSubmit={handleSearch} className="flex gap-4">
-                                <input
-                                    type="text"
-                                    placeholder="Scan or Enter Health ID"
-                                    className="flex-1 border p-2 rounded"
-                                    value={searchId}
-                                    onChange={e => setSearchId(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setIsScannerOpen(true)}
-                                    className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-                                >
-                                    📷 Scan QR
-                                </button>
-                                <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">
-                                    Fetch
-                                </button>
-                            </form>
-
-                            {/* Scanner Modal */}
-                            {isScannerOpen && (
-                                <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
-                                    <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-md relative">
-                                        <button
-                                            onClick={() => setIsScannerOpen(false)}
-                                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                                        >
-                                            ✕
-                                        </button>
-                                        <h3 className="text-lg font-bold mb-4">Scan Patient QR Code</h3>
-                                        <div className="aspect-square bg-gray-100 rounded overflow-hidden">
-                                            <Scanner
-                                                onScan={handleScan}
-                                                onError={(error) => console.log(error?.message)}
-                                                components={{ audio: false }}
-                                            />
-                                        </div>
-                                        <p className="text-sm text-gray-500 mt-4 text-center">
-                                            Point camera at patient's Health ID QR code
-                                        </p>
-                                    </div>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-8">
+            <div className="max-w-7xl mx-auto space-y-6">
+                {/* Doctor Info Header */}
+                {doctorProfile && (
+                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white p-6 rounded-2xl shadow-xl">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-3xl font-bold">
+                                    {doctorProfile.user?.first_name?.[0]}{doctorProfile.user?.last_name?.[0]}
                                 </div>
-                            )}
-
-                            {/* OTP Modal */}
-                            {isOTPModalOpen && (
-                                <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
-                                    <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm relative">
-                                        <button
-                                            onClick={() => setIsOTPModalOpen(false)}
-                                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                                        >
-                                            ✕
-                                        </button>
-                                        <h3 className="text-lg font-bold mb-4">Enter OTP</h3>
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            Ask patient for the 6-digit code sent to their phone.
-                                        </p>
-                                        <form onSubmit={handleVerifyOTP} className="space-y-4">
-                                            <input
-                                                type="text"
-                                                placeholder="Enter 6-digit OTP"
-                                                className="w-full border p-2 rounded text-center text-2xl tracking-widest"
-                                                maxLength={6}
-                                                value={otpCode}
-                                                onChange={e => setOtpCode(e.target.value)}
-                                                autoFocus
-                                            />
-                                            <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
-                                                Verify & Grant Access
-                                            </button>
-                                        </form>
-                                    </div>
+                                <div>
+                                    <h2 className="text-2xl md:text-3xl font-bold">
+                                        Dr. {doctorProfile.user?.first_name} {doctorProfile.user?.last_name}
+                                    </h2>
+                                    <p className="text-white/90 text-lg">{doctorProfile.specialization}</p>
+                                    {doctorProfile.hospital_details && (
+                                        <p className="text-white/70 text-sm mt-1">📍 {doctorProfile.hospital_details.name}</p>
+                                    )}
                                 </div>
-                            )}
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                <span className={`${getAuthBadgeColor(doctorProfile.authorization_level)} px-4 py-2 rounded-lg text-white font-semibold shadow-lg`}>
+                                    ✓ {doctorProfile.authorization_level} Access
+                                </span>
+                                {!doctorProfile.is_verified && (
+                                    <div className="flex items-center gap-1 bg-yellow-500/20 text-yellow-100 px-3 py-1 rounded-lg text-sm">
+                                        <span>⏳</span>
+                                        <span>Pending Verification</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                            {patientResult && (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Patient Info */}
-                                    <div className="bg-gray-50 p-4 rounded">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <h3 className="text-lg font-bold">Patient Profile</h3>
+                {/* Main Dashboard Card */}
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    {/* Tab Navigation */}
+                    <div className="flex border-b border-gray-200 bg-gray-50">
+                        {['search', 'consultations', 'register'].map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-200 ${activeTab === tab
+                                    ? 'border-b-4 border-indigo-600 text-indigo-600 bg-white'
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <div className="flex items-center justify-center gap-2">
+                                    {tab === 'search' && <span>🔍</span>}
+                                    {tab === 'consultations' && <span>📋</span>}
+                                    {tab === 'register' && <span>➕</span>}
+                                    <span>{tab === 'search' ? 'Patient Search' : tab === 'consultations' ? 'My Consultations' : 'Register Patient'}</span>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="p-6 md:p-8">
+                        {/* Patient Search Tab */}
+                        {activeTab === 'search' && (
+                            <div className="space-y-6">
+                                <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
+                                    <input
+                                        type="text"
+                                        placeholder="🔎 Enter Patient Health ID..."
+                                        className="flex-1 border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={searchId}
+                                        onChange={e => setSearchId(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsScannerOpen(true)}
+                                        className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-xl hover:from-gray-700 hover:to-gray-800 font-medium shadow-lg hover:shadow-xl transition-all"
+                                    >
+                                        📷 Scan QR
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg hover:shadow-xl transition-all"
+                                    >
+                                        Search
+                                    </button>
+                                </form>
+
+                                {/* Scanner Modal */}
+                                {isScannerOpen && (
+                                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                                        <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative">
                                             <button
-                                                onClick={handleRequestOTP}
-                                                className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200"
+                                                onClick={() => setIsScannerOpen(false)}
+                                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
                                             >
-                                                🔓 Request Full Access
+                                                ✕
                                             </button>
+                                            <h3 className="text-xl font-bold mb-4 text-gray-800">Scan Patient QR Code</h3>
+                                            <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden">
+                                                <Scanner
+                                                    onScan={handleScan}
+                                                    onError={(error) => console.log(error?.message)}
+                                                    components={{ audio: false }}
+                                                />
+                                            </div>
+                                            <p className="text-sm text-gray-500 mt-4 text-center">
+                                                Point camera at patient's Health ID QR code
+                                            </p>
                                         </div>
-                                        <div className="space-y-2 text-sm">
-                                            <p><strong>Health ID:</strong> {patientResult.health_id}</p>
-                                            <p><strong>Name:</strong> {patientResult.user?.first_name} {patientResult.user?.last_name}</p>
-                                            <p><strong>Phone:</strong> {patientResult.contact_number || 'N/A'}</p>
-                                            <p><strong>Blood Group:</strong> {patientResult.blood_group || 'N/A'}</p>
-                                            {patientResult.allergies && (
-                                                <p><strong>Allergies:</strong> {patientResult.allergies}</p>
-                                            )}
-                                        </div>
-
-                                        {/* Previous Records */}
-                                        <h4 className="font-bold mt-4 mb-2">Medical Records</h4>
-                                        <ul className="divide-y divide-gray-200 max-h-40 overflow-y-auto">
-                                            {records.length === 0 ? (
-                                                <li className="py-2 text-gray-500 text-sm">No records found</li>
-                                            ) : records.map(rec => (
-                                                <li key={rec.id} className="py-2">
-                                                    <p className="font-semibold text-sm">{rec.title}</p>
-                                                    <p className="text-xs text-gray-500">{rec.record_type} - {new Date(rec.created_at).toLocaleDateString()}</p>
-                                                </li>
-                                            ))}
-                                        </ul>
-
-                                        {/* Consultation History */}
-                                        <h4 className="font-bold mt-4 mb-2">Consultation History</h4>
-                                        <ul className="divide-y divide-gray-200 max-h-40 overflow-y-auto">
-                                            {consultations.length === 0 ? (
-                                                <li className="py-2 text-gray-500 text-sm">No consultations found</li>
-                                            ) : consultations.map(con => (
-                                                <li key={con.id} className="py-2">
-                                                    <p className="font-semibold text-sm">{con.chief_complaint}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        {new Date(con.consultation_date).toLocaleDateString()} - {con.diagnosis || 'Pending'}
-                                                    </p>
-                                                </li>
-                                            ))}
-                                        </ul>
                                     </div>
+                                )}
 
-                                    {/* Forms Column */}
-                                    <div className="space-y-6">
-                                        {/* New Consultation */}
-                                        <div className="bg-gray-50 p-4 rounded">
-                                            <h3 className="text-lg font-bold mb-3">New Consultation</h3>
-                                            <form onSubmit={handleCreateConsultation} className="space-y-3">
-                                                <input
-                                                    type="datetime-local"
-                                                    className="w-full border p-2 rounded text-sm"
-                                                    value={newConsultation.consultation_date}
-                                                    onChange={e => setNewConsultation({ ...newConsultation, consultation_date: e.target.value })}
-                                                />
-                                                <textarea
-                                                    placeholder="Chief Complaint *"
-                                                    className="w-full border p-2 rounded text-sm"
-                                                    required
-                                                    value={newConsultation.chief_complaint}
-                                                    onChange={e => setNewConsultation({ ...newConsultation, chief_complaint: e.target.value })}
-                                                />
-                                                <textarea
-                                                    placeholder="Diagnosis"
-                                                    className="w-full border p-2 rounded text-sm"
-                                                    value={newConsultation.diagnosis}
-                                                    onChange={e => setNewConsultation({ ...newConsultation, diagnosis: e.target.value })}
-                                                />
-                                                <textarea
-                                                    placeholder="Prescription"
-                                                    className="w-full border p-2 rounded text-sm"
-                                                    value={newConsultation.prescription}
-                                                    onChange={e => setNewConsultation({ ...newConsultation, prescription: e.target.value })}
-                                                />
-                                                <input
-                                                    type="date"
-                                                    placeholder="Follow-up Date"
-                                                    className="w-full border p-2 rounded text-sm"
-                                                    value={newConsultation.follow_up_date}
-                                                    onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
-                                                />
-                                                <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-                                                    Save Consultation
-                                                </button>
-                                            </form>
-                                        </div>
-
-                                        {/* Upload Record */}
-                                        <div className="bg-gray-50 p-4 rounded">
-                                            <h3 className="text-lg font-bold mb-3">Add Record</h3>
-                                            <form onSubmit={handleUpload} className="space-y-3">
-                                                <select
-                                                    className="w-full border p-2 rounded text-sm"
-                                                    value={newRecord.record_type}
-                                                    onChange={e => setNewRecord({ ...newRecord, record_type: e.target.value })}
-                                                >
-                                                    <option value="PRESCRIPTION">Prescription</option>
-                                                    <option value="DIAGNOSIS">Diagnosis</option>
-                                                    <option value="LAB_REPORT">Lab Report</option>
-                                                    <option value="VISIT_NOTE">Visit Note</option>
-                                                </select>
+                                {/* OTP Modal */}
+                                {isOTPModalOpen && (
+                                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                                        <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm relative">
+                                            <button
+                                                onClick={() => setIsOTPModalOpen(false)}
+                                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+                                            >
+                                                ✕
+                                            </button>
+                                            <h3 className="text-xl font-bold mb-2 text-gray-800">Enter OTP</h3>
+                                            <p className="text-sm text-gray-500 mb-4">
+                                                Ask patient for the 6-digit code sent to their phone.
+                                            </p>
+                                            <form onSubmit={handleVerifyOTP} className="space-y-4">
                                                 <input
                                                     type="text"
-                                                    placeholder="Title"
-                                                    className="w-full border p-2 rounded text-sm"
-                                                    value={newRecord.title}
-                                                    onChange={e => setNewRecord({ ...newRecord, title: e.target.value })}
+                                                    placeholder="• • • • • •"
+                                                    className="w-full border-2 border-gray-200 p-3 rounded-xl text-center text-3xl tracking-widest focus:border-indigo-500 focus:outline-none"
+                                                    maxLength={6}
+                                                    value={otpCode}
+                                                    onChange={e => setOtpCode(e.target.value)}
+                                                    autoFocus
                                                 />
-                                                <input
-                                                    type="file"
-                                                    className="w-full text-sm"
-                                                    onChange={e => setNewRecord({ ...newRecord, file: e.target.files[0] })}
-                                                />
-                                                <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-                                                    Upload Record
+                                                <button 
+                                                    type="submit" 
+                                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg transition-all"
+                                                >
+                                                    Verify & Grant Access
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
 
-                    {/* My Consultations Tab */}
-                    {activeTab === 'consultations' && (
-                        <div>
-                            <h3 className="text-lg font-bold mb-4">Recent Consultations</h3>
-                            {myConsultations.length === 0 ? (
-                                <p className="text-gray-500">No consultations yet.</p>
-                            ) : (
-                                <div className="divide-y">
-                                    {myConsultations.map(con => (
-                                        <div key={con.id} className="py-4">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className="font-semibold">{con.patient_health_id}</p>
-                                                    <p className="text-sm text-gray-600">{con.chief_complaint}</p>
-                                                    {con.diagnosis && <p className="text-sm"><strong>Dx:</strong> {con.diagnosis}</p>}
+                                {patientResult && (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {/* Patient Info Card */}
+                                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h3 className="text-xl font-bold text-gray-800">👤 Patient Profile</h3>
+                                                <button
+                                                    onClick={handleRequestOTP}
+                                                    className="text-xs bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 font-medium flex items-center gap-1"
+                                                >
+                                                    <span>🔓</span>
+                                                    <span>Request Full Access</span>
+                                                </button>
+                                            </div>
+                                            <div className="space-y-3 text-sm">
+                                                <div className="bg-white p-3 rounded-lg">
+                                                    <span className="font-semibold text-gray-600">Health ID:</span>
+                                                    <span className="ml-2 font-mono text-indigo-600 font-bold">{patientResult.health_id}</span>
                                                 </div>
-                                                <div className="text-right text-sm text-gray-500">
-                                                    <p>{new Date(con.consultation_date).toLocaleDateString()}</p>
-                                                    {con.follow_up_date && (
-                                                        <p className="text-orange-500">F/U: {new Date(con.follow_up_date).toLocaleDateString()}</p>
-                                                    )}
+                                                <div className="bg-white p-3 rounded-lg">
+                                                    <span className="font-semibold text-gray-600">Name:</span>
+                                                    <span className="ml-2">{patientResult.user?.first_name} {patientResult.user?.last_name}</span>
+                                                </div>
+                                                <div className="bg-white p-3 rounded-lg">
+                                                    <span className="font-semibold text-gray-600">Phone:</span>
+                                                    <span className="ml-2">{patientResult.contact_number || 'N/A'}</span>
+                                                </div>
+                                                <div className="bg-white p-3 rounded-lg">
+                                                    <span className="font-semibold text-gray-600">Blood Group:</span>
+                                                    <span className="ml-2 text-red-600 font-bold">{patientResult.blood_group || 'N/A'}</span>
+                                                </div>
+                                                {patientResult.allergies && (
+                                                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                                                        <span className="font-semibold text-yellow-800">⚠️ Allergies:</span>
+                                                        <span className="ml-2 text-yellow-900">{patientResult.allergies}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Records & History */}
+                                            <div className="mt-6 space-y-4">
+                                                <div>
+                                                    <h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                                        <span>📄</span>
+                                                        <span>Medical Records</span>
+                                                    </h4>
+                                                    <div className="bg-white rounded-lg max-h-40 overflow-y-auto">
+                                                        {records.length === 0 ? (
+                                                            <p className="p-3 text-gray-400 text-sm text-center">No records found</p>
+                                                        ) : (
+                                                            <ul className="divide-y divide-gray-100">
+                                                                {records.map(rec => (
+                                                                    <li key={rec.id} className="p-3 hover:bg-gray-50">
+                                                                        <p className="font-semibold text-sm text-gray-800">{rec.title}</p>
+                                                                        <p className="text-xs text-gray-500">{rec.record_type} · {new Date(rec.created_at).toLocaleDateString()}</p>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                                        <span>🩺</span>
+                                                        <span>Consultation History</span>
+                                                    </h4>
+                                                    <div className="bg-white rounded-lg max-h-40 overflow-y-auto">
+                                                        {consultations.length === 0 ? (
+                                                            <p className="p-3 text-gray-400 text-sm text-center">No consultations found</p>
+                                                        ) : (
+                                                            <ul className="divide-y divide-gray-100">
+                                                                {consultations.map(con => (
+                                                                    <li key={con.id} className="p-3 hover:bg-gray-50">
+                                                                        <p className="font-semibold text-sm text-gray-800">{con.chief_complaint}</p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            {new Date(con.consultation_date).toLocaleDateString()} · {con.diagnosis || 'Pending'}
+                                                                        </p>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
 
-                    {/* Register Patient Tab */}
-                    {activeTab === 'register' && (
-                        <div>
-                            <h3 className="text-lg font-bold mb-4">Register New Patient</h3>
-                            <form onSubmit={handleRegisterPatient} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                                <input
-                                    type="text"
-                                    placeholder="Username *"
-                                    required
-                                    className="border p-2 rounded"
-                                    value={newPatient.username}
-                                    onChange={e => setNewPatient({ ...newPatient, username: e.target.value })}
-                                />
-                                <input
-                                    type="password"
-                                    placeholder="Password *"
-                                    required
-                                    className="border p-2 rounded"
-                                    value={newPatient.password}
-                                    onChange={e => setNewPatient({ ...newPatient, password: e.target.value })}
-                                />
-                                <input
-                                    type="email"
-                                    placeholder="Email"
-                                    className="border p-2 rounded"
-                                    value={newPatient.email}
-                                    onChange={e => setNewPatient({ ...newPatient, email: e.target.value })}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Phone Number"
-                                    className="border p-2 rounded"
-                                    value={newPatient.contact_number}
-                                    onChange={e => setNewPatient({ ...newPatient, contact_number: e.target.value })}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="First Name"
-                                    className="border p-2 rounded"
-                                    value={newPatient.first_name}
-                                    onChange={e => setNewPatient({ ...newPatient, first_name: e.target.value })}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Last Name"
-                                    className="border p-2 rounded"
-                                    value={newPatient.last_name}
-                                    onChange={e => setNewPatient({ ...newPatient, last_name: e.target.value })}
-                                />
-                                <input
-                                    type="date"
-                                    placeholder="Date of Birth"
-                                    className="border p-2 rounded"
-                                    value={newPatient.date_of_birth}
-                                    onChange={e => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
-                                />
-                                <select
-                                    className="border p-2 rounded"
-                                    value={newPatient.blood_group}
-                                    onChange={e => setNewPatient({ ...newPatient, blood_group: e.target.value })}
-                                >
-                                    <option value="">Select Blood Group</option>
-                                    <option value="A+">A+</option>
-                                    <option value="A-">A-</option>
-                                    <option value="B+">B+</option>
-                                    <option value="B-">B-</option>
-                                    <option value="AB+">AB+</option>
-                                    <option value="AB-">AB-</option>
-                                    <option value="O+">O+</option>
-                                    <option value="O-">O-</option>
-                                </select>
-                                <button type="submit" className="md:col-span-2 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
-                                    Register & Generate Health ID
-                                </button>
-                            </form>
-                        </div>
-                    )}
+                                        {/* Forms Column */}
+                                        <div className="space-y-6">
+                                            {/* New Consultation Form */}
+                                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
+                                                <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                                                    <span>➕</span>
+                                                    <span>New Consultation</span>
+                                                </h3>
+                                                <form onSubmit={handleCreateConsultation} className="space-y-3">
+                                                    <input
+                                                        type="datetime-local"
+                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
+                                                        value={newConsultation.consultation_date}
+                                                        onChange={e => setNewConsultation({ ...newConsultation, consultation_date: e.target.value })}
+                                                    />
+                                                    <textarea
+                                                        placeholder="Chief Complaint *"
+                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
+                                                        rows="2"
+                                                        required
+                                                        value={newConsultation.chief_complaint}
+                                                        onChange={e => setNewConsultation({ ...newConsultation, chief_complaint: e.target.value })}
+                                                    />
+                                                    <textarea
+                                                        placeholder="Diagnosis"
+                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
+                                                        rows="2"
+                                                        value={newConsultation.diagnosis}
+                                                        onChange={e => setNewConsultation({ ...newConsultation, diagnosis: e.target.value })}
+                                                    />
+                                                    <textarea
+                                                        placeholder="Prescription"
+                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
+                                                        rows="2"
+                                                        value={newConsultation.prescription}
+                                                        onChange={e => setNewConsultation({ ...newConsultation, prescription: e.target.value })}
+                                                    />
+                                                    <input
+                                                        type="date"
+                                                        placeholder="Follow-up Date"
+                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
+                                                        value={newConsultation.follow_up_date}
+                                                        onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
+                                                    />
+                                                    <button 
+                                                        type="submit" 
+                                                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium shadow-lg transition-all"
+                                                    >
+                                                        💾 Save Consultation
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            {/* Upload Record Form */}
+                                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100">
+                                                <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                                                    <span>📤</span>
+                                                    <span>Add Record</span>
+                                                </h3>
+                                                <form onSubmit={handleUpload} className="space-y-3">
+                                                    <select
+                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-purple-500 focus:outline-none"
+                                                        value={newRecord.record_type}
+                                                        onChange={e => setNewRecord({ ...newRecord, record_type: e.target.value })}
+                                                    >
+                                                        <option value="PRESCRIPTION">💊 Prescription</option>
+                                                        <option value="DIAGNOSIS">🔬 Diagnosis</option>
+                                                        <option value="LAB_REPORT">🧪 Lab Report</option>
+                                                        <option value="VISIT_NOTE">📝 Visit Note</option>
+                                                    </select>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Record Title"
+                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-purple-500 focus:outline-none"
+                                                        value={newRecord.title}
+                                                        onChange={e => setNewRecord({ ...newRecord, title: e.target.value })}
+                                                    />
+                                                    <input
+                                                        type="file"
+                                                        className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
+                                                        onChange={e => setNewRecord({ ...newRecord, file: e.target.files[0] })}
+                                                    />
+                                                    <button 
+                                                        type="submit" 
+                                                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 font-medium shadow-lg transition-all"
+                                                    >
+                                                        📤 Upload Record
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* My Consultations Tab */}
+                        {activeTab === 'consultations' && (
+                            <div>
+                                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                                    <span>📋</span>
+                                    <span>Recent Consultations</span>
+                                </h3>
+                                {myConsultations.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-gray-400 text-lg">No consultations yet.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-4">
+                                        {myConsultations.map(con => (
+                                            <div key={con.id} className="bg-gradient-to-r from-white to-gray-50 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all">
+                                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg text-sm font-mono font-bold">
+                                                                {con.patient_health_id}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-lg font-semibold text-gray-800">{con.chief_complaint}</p>
+                                                        {con.diagnosis && (
+                                                            <div className="mt-2 bg-blue-50 border border-blue-100 p-2 rounded-lg">
+                                                                <span className="text-sm text-gray-600 font-semibold">Diagnosis:</span>
+                                                                <span className="text-sm text-gray-800 ml-2">{con.diagnosis}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-right text-sm space-y-1">
+                                                        <p className="text-gray-600">📅 {new Date(con.consultation_date).toLocaleDateString()}</p>
+                                                        {con.follow_up_date && (
+                                                            <div className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg inline-block">
+                                                                Follow-up: {new Date(con.follow_up_date).toLocaleDateString()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Register Patient Tab */}
+                        {activeTab === 'register' && (
+                            <div>
+                                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                                    <span>➕</span>
+                                    <span>Register New Patient</span>
+                                </h3>
+                                <form onSubmit={handleRegisterPatient} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
+                                    <input
+                                        type="text"
+                                        placeholder="Username *"
+                                        required
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.username}
+                                        onChange={e => setNewPatient({ ...newPatient, username: e.target.value })}
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Password *"
+                                        required
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.password}
+                                        onChange={e => setNewPatient({ ...newPatient, password: e.target.value })}
+                                    />
+                                    <input
+                                        type="email"
+                                        placeholder="📧 Email"
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.email}
+                                        onChange={e => setNewPatient({ ...newPatient, email: e.target.value })}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="📱 Phone Number"
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.contact_number}
+                                        onChange={e => setNewPatient({ ...newPatient, contact_number: e.target.value })}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="First Name"
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.first_name}
+                                        onChange={e => setNewPatient({ ...newPatient, first_name: e.target.value })}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Last Name"
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.last_name}
+                                        onChange={e => setNewPatient({ ...newPatient, last_name: e.target.value })}
+                                    />
+                                    <input
+                                        type="date"
+                                        placeholder="Date of Birth"
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.date_of_birth}
+                                        onChange={e => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
+                                    />
+                                    <select
+                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+                                        value={newPatient.blood_group}
+                                        onChange={e => setNewPatient({ ...newPatient, blood_group: e.target.value })}
+                                    >
+                                        <option value="">🩸 Select Blood Group</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                    <button 
+                                        type="submit" 
+                                        className="md:col-span-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-bold text-lg shadow-xl hover:shadow-2xl transition-all"
+                                    >
+                                        ✨ Register & Generate Health ID
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

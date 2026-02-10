@@ -14,9 +14,9 @@ const DoctorLogin = () => {
         e.preventDefault();
         setLoading(true);
         setError('');
-        const success = await login(username, password);
-        if (success) {
-            navigate('/dashboard');
+        const result = await login(username, password);
+        if (result) {
+            navigate('/doctor/dashboard');
         } else {
             setError('Invalid credentials. Please try again.');
         }
