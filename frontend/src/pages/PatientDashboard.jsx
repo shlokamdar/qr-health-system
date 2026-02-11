@@ -54,7 +54,7 @@ const PatientDashboard = () => {
                 api.get('patients/sharing-history/').catch(() => ({ data: [] })),
                 api.get('patients/emergency-contacts/').catch(() => ({ data: [] }))
             ]);
-            
+
             setPatient(patientRes.data);
             setRecords(recordsRes.data);
             setDocuments(docsRes.data);
@@ -96,7 +96,7 @@ const PatientDashboard = () => {
         formData.append('symptoms', newPrescription.symptoms);
         formData.append('diagnosis', newPrescription.diagnosis);
         formData.append('insights', newPrescription.insights);
-        
+
         // Parse medicines as JSON array
         try {
             const medicines = newPrescription.medicines.split('\n').filter(m => m.trim()).map(m => {
@@ -107,7 +107,7 @@ const PatientDashboard = () => {
         } catch {
             formData.append('medicines', '[]');
         }
-        
+
         if (newPrescription.file) formData.append('file', newPrescription.file);
 
         try {
@@ -157,6 +157,39 @@ const PatientDashboard = () => {
         }
     };
 
+    // Edit Profile State
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        contact_number: '',
+        address: '',
+        blood_group: '',
+        allergies: '',
+        chronic_conditions: ''
+    });
+
+    const handleEditClick = () => {
+        setEditForm({
+            contact_number: patient.contact_number || '',
+            address: patient.address || '',
+            blood_group: patient.blood_group || '',
+            allergies: patient.allergies || '',
+            chronic_conditions: patient.chronic_conditions || ''
+        });
+        setIsEditing(true);
+    };
+
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        try {
+            await api.patch(`patients/${patient.health_id}/`, editForm);
+            alert('Profile updated successfully!');
+            setIsEditing(false);
+            fetchData();
+        } catch (err) {
+            alert('Failed to update profile');
+        }
+    };
+
     if (!patient) return <div className="p-6">Loading...</div>;
 
     return (
@@ -178,7 +211,7 @@ const PatientDashboard = () => {
                 {patient.qr_code && (
                     <div className="text-center">
                         <img src={patient.qr_code} alt="QR Code" className="w-32 h-32 bg-white p-1 rounded" />
-                        <button 
+                        <button
                             onClick={downloadQRCode}
                             className="text-xs mt-2 underline hover:no-underline"
                         >
@@ -195,11 +228,10 @@ const PatientDashboard = () => {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`py-3 px-4 text-center capitalize whitespace-nowrap ${
-                                activeTab === tab 
-                                    ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' 
+                            className={`py-3 px-4 text-center capitalize whitespace-nowrap ${activeTab === tab
+                                    ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold'
                                     : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                                }`}
                         >
                             {tab === 'emergency' ? 'Emergency Contacts' : tab}
                         </button>
@@ -211,8 +243,19 @@ const PatientDashboard = () => {
                     {activeTab === 'overview' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Profile Info */}
-                            <div className="bg-gray-50 p-4 rounded">
-                                <h3 className="font-bold mb-3">My Profile</h3>
+                            <div className="bg-gray-50 p-4 rounded relative">
+                                <div className="flex justify-between items-start mb-3">
+                                    <h3 className="font-bold">My Profile</h3>
+                                    <button
+                                        onClick={handleEditClick}
+                                        className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Edit
+                                    </button>
+                                </div>
                                 <div className="space-y-2 text-sm">
                                     <p><strong>Email:</strong> {patient.user?.email || 'N/A'}</p>
                                     <p><strong>Phone:</strong> {patient.contact_number || 'N/A'}</p>
@@ -275,34 +318,34 @@ const PatientDashboard = () => {
                             <div className="bg-gray-50 p-4 rounded">
                                 <h3 className="font-bold mb-3">Upload Document</h3>
                                 <form onSubmit={handleUploadDocument} className="space-y-3">
-                                    <select 
+                                    <select
                                         className="w-full border p-2 rounded"
                                         value={newDocument.document_type}
-                                        onChange={e => setNewDocument({...newDocument, document_type: e.target.value})}
+                                        onChange={e => setNewDocument({ ...newDocument, document_type: e.target.value })}
                                     >
                                         <option value="REPORT">Medical Report</option>
                                         <option value="INSURANCE">Insurance Document</option>
                                         <option value="ID_PROOF">ID Proof</option>
                                         <option value="OTHER">Other</option>
                                     </select>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Title *" 
+                                    <input
+                                        type="text"
+                                        placeholder="Title *"
                                         required
                                         className="w-full border p-2 rounded"
                                         value={newDocument.title}
-                                        onChange={e => setNewDocument({...newDocument, title: e.target.value})}
+                                        onChange={e => setNewDocument({ ...newDocument, title: e.target.value })}
                                     />
-                                    <textarea 
+                                    <textarea
                                         placeholder="Description"
                                         className="w-full border p-2 rounded"
                                         value={newDocument.description}
-                                        onChange={e => setNewDocument({...newDocument, description: e.target.value})}
+                                        onChange={e => setNewDocument({ ...newDocument, description: e.target.value })}
                                     />
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         className="w-full"
-                                        onChange={e => setNewDocument({...newDocument, file: e.target.files[0]})}
+                                        onChange={e => setNewDocument({ ...newDocument, file: e.target.files[0] })}
                                     />
                                     <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
                                         Upload
@@ -341,50 +384,50 @@ const PatientDashboard = () => {
                             <div className="bg-gray-50 p-4 rounded">
                                 <h3 className="font-bold mb-3">Add Old Prescription</h3>
                                 <form onSubmit={handleUploadPrescription} className="space-y-3">
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         required
                                         className="w-full border p-2 rounded"
                                         value={newPrescription.prescription_date}
-                                        onChange={e => setNewPrescription({...newPrescription, prescription_date: e.target.value})}
+                                        onChange={e => setNewPrescription({ ...newPrescription, prescription_date: e.target.value })}
                                     />
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         placeholder="Doctor Name"
                                         className="w-full border p-2 rounded"
                                         value={newPrescription.doctor_name}
-                                        onChange={e => setNewPrescription({...newPrescription, doctor_name: e.target.value})}
+                                        onChange={e => setNewPrescription({ ...newPrescription, doctor_name: e.target.value })}
                                     />
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         placeholder="Hospital Name"
                                         className="w-full border p-2 rounded"
                                         value={newPrescription.hospital_name}
-                                        onChange={e => setNewPrescription({...newPrescription, hospital_name: e.target.value})}
+                                        onChange={e => setNewPrescription({ ...newPrescription, hospital_name: e.target.value })}
                                     />
-                                    <textarea 
+                                    <textarea
                                         placeholder="Symptoms *"
                                         required
                                         className="w-full border p-2 rounded"
                                         value={newPrescription.symptoms}
-                                        onChange={e => setNewPrescription({...newPrescription, symptoms: e.target.value})}
+                                        onChange={e => setNewPrescription({ ...newPrescription, symptoms: e.target.value })}
                                     />
-                                    <textarea 
+                                    <textarea
                                         placeholder="Diagnosis"
                                         className="w-full border p-2 rounded"
                                         value={newPrescription.diagnosis}
-                                        onChange={e => setNewPrescription({...newPrescription, diagnosis: e.target.value})}
+                                        onChange={e => setNewPrescription({ ...newPrescription, diagnosis: e.target.value })}
                                     />
-                                    <textarea 
+                                    <textarea
                                         placeholder="Medicines (one per line: name, dosage, frequency)"
                                         className="w-full border p-2 rounded text-sm"
                                         value={newPrescription.medicines}
-                                        onChange={e => setNewPrescription({...newPrescription, medicines: e.target.value})}
+                                        onChange={e => setNewPrescription({ ...newPrescription, medicines: e.target.value })}
                                     />
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         className="w-full"
-                                        onChange={e => setNewPrescription({...newPrescription, file: e.target.files[0]})}
+                                        onChange={e => setNewPrescription({ ...newPrescription, file: e.target.files[0] })}
                                     />
                                     <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
                                         Save Prescription
@@ -416,7 +459,7 @@ const PatientDashboard = () => {
                                                     {perm.can_add_records && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Add Records</span>}
                                                 </div>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => handleRevokeAccess(perm.id)}
                                                 className="text-red-500 hover:text-red-700 text-sm"
                                             >
@@ -479,35 +522,35 @@ const PatientDashboard = () => {
                             <div className="bg-gray-50 p-4 rounded">
                                 <h3 className="font-bold mb-3">Add Emergency Contact</h3>
                                 <form onSubmit={handleAddContact} className="space-y-3">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Name *" 
+                                    <input
+                                        type="text"
+                                        placeholder="Name *"
                                         required
                                         className="w-full border p-2 rounded"
                                         value={newContact.name}
-                                        onChange={e => setNewContact({...newContact, name: e.target.value})}
+                                        onChange={e => setNewContact({ ...newContact, name: e.target.value })}
                                     />
-                                    <input 
-                                        type="text" 
-                                        placeholder="Relationship *" 
+                                    <input
+                                        type="text"
+                                        placeholder="Relationship *"
                                         required
                                         className="w-full border p-2 rounded"
                                         value={newContact.relationship}
-                                        onChange={e => setNewContact({...newContact, relationship: e.target.value})}
+                                        onChange={e => setNewContact({ ...newContact, relationship: e.target.value })}
                                     />
-                                    <input 
-                                        type="tel" 
-                                        placeholder="Phone *" 
+                                    <input
+                                        type="tel"
+                                        placeholder="Phone *"
                                         required
                                         className="w-full border p-2 rounded"
                                         value={newContact.phone}
-                                        onChange={e => setNewContact({...newContact, phone: e.target.value})}
+                                        onChange={e => setNewContact({ ...newContact, phone: e.target.value })}
                                     />
                                     <label className="flex items-center gap-2 text-sm">
-                                        <input 
+                                        <input
                                             type="checkbox"
                                             checked={newContact.can_grant_access}
-                                            onChange={e => setNewContact({...newContact, can_grant_access: e.target.checked})}
+                                            onChange={e => setNewContact({ ...newContact, can_grant_access: e.target.checked })}
                                         />
                                         Can grant access on my behalf (emergencies)
                                     </label>
@@ -520,6 +563,88 @@ const PatientDashboard = () => {
                     )}
                 </div>
             </div>
+
+            {/* Edit Profile Modal */}
+            {isEditing && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 animate-fade-in">
+                        <h3 className="text-xl font-bold mb-4">Edit Profile</h3>
+                        <form onSubmit={handleUpdateProfile} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input
+                                    type="text"
+                                    className="w-full border rounded-lg p-2"
+                                    value={editForm.contact_number}
+                                    onChange={e => setEditForm({ ...editForm, contact_number: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
+                                <select
+                                    className="w-full border rounded-lg p-2"
+                                    value={editForm.blood_group}
+                                    onChange={e => setEditForm({ ...editForm, blood_group: e.target.value })}
+                                >
+                                    <option value="">Select Blood Group</option>
+                                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                                        <option key={bg} value={bg}>{bg}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <textarea
+                                    className="w-full border rounded-lg p-2"
+                                    rows="2"
+                                    value={editForm.address}
+                                    onChange={e => setEditForm({ ...editForm, address: e.target.value })}
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Allergies (Optional)</label>
+                                <textarea
+                                    className="w-full border rounded-lg p-2"
+                                    rows="2"
+                                    value={editForm.allergies}
+                                    onChange={e => setEditForm({ ...editForm, allergies: e.target.value })}
+                                    placeholder="e.g. Penicillin, Peanuts"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Chronic Conditions (Optional)</label>
+                                <textarea
+                                    className="w-full border rounded-lg p-2"
+                                    rows="2"
+                                    value={editForm.chronic_conditions}
+                                    onChange={e => setEditForm({ ...editForm, chronic_conditions: e.target.value })}
+                                    placeholder="e.g. Diabetes, Hypertension"
+                                ></textarea>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditing(false)}
+                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

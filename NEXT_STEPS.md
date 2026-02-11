@@ -34,72 +34,55 @@
 
 ## 🔜 Suggested Next Steps
 
+### Completed Features (New)
+- **QR Code Scanning** - Scans patient Health ID for quick access.
+- **OTP Verification** - Secure 6-digit OTP flow for full record access.
+- **Superadmin Panel** - Comprehensive dashboard for managing doctors and hospitals.
+- **Hospital Self-Registration** - Public registration flow with admin approval.
+- **Patient Profile Editing** - Patients can update their own personal details.
+
+---
+
+## 🔜 Suggested Next Steps
+
 ### High Priority
 
-#### 1. QR Code Scanning Implementation
-- [ ] Add QR scanner to Doctor Dashboard using `react-qr-reader` or similar
-- [ ] Generate actual QR codes containing patient Health ID
-- [ ] Implement scan-to-search functionality
-
-#### 2. OTP Verification Flow
-- [ ] Create OTP generation API (random 6-digit code)
-- [ ] Send OTP via SMS (Twilio/MSG91) or Email
-- [ ] OTP verification endpoint
-- [ ] Frontend OTP input modal
-
-#### 3. Superadmin Panel
-- [ ] Create dedicated superadmin dashboard
-- [ ] Hospital verification queue with approve/reject
-- [ ] Doctor verification queue
-- [ ] Set doctor authorization levels
-- [ ] System analytics/statistics
-
-### Medium Priority
-
-#### 4. Patient Profile Editing
-- [ ] Allow patients to update their profile info
-- [ ] Profile photo upload
-- [ ] Address/contact updates
-
-#### 5. Notifications System
+#### 1. Notifications System
 - [ ] Email notifications for access granted/revoked
 - [ ] Appointment reminders
 - [ ] Follow-up date reminders
 - [ ] New record added notifications
 
-#### 6. Hospital Self-Registration
-- [ ] Hospital registration page
-- [ ] Document upload for verification
-- [ ] Pending approval status page
-
-#### 7. Lab Role Implementation
+#### 2. Lab Role Implementation
 - [ ] Lab technician portal
 - [ ] Lab report upload with patient Health ID
 - [ ] Lab access permissions
 
-### Lower Priority
+### Medium Priority
 
-#### 8. Mobile Responsiveness
+#### 3. Mobile Responsiveness
 - [ ] Optimize dashboards for mobile view
 - [ ] Mobile-friendly QR scanning
 - [ ] PWA (Progressive Web App) setup
 
-#### 9. Data Export
+#### 4. Data Export
 - [ ] Export patient records as PDF
 - [ ] Download medical history
 - [ ] Share records via secure link
 
-#### 10. Analytics Dashboard
+### Lower Priority
+
+#### 5. Analytics Dashboard
 - [ ] Patient visit statistics
 - [ ] Common diagnoses trends
 - [ ] Hospital/doctor performance metrics
 
-#### 11. Appointment Scheduling
+#### 6. Appointment Scheduling
 - [ ] Doctor availability slots
 - [ ] Patient booking interface
 - [ ] Calendar integration
 
-#### 12. Testing & Security
+#### 7. Testing & Security
 - [ ] Unit tests for all API endpoints
 - [ ] Integration tests
 - [ ] Rate limiting for sensitive endpoints

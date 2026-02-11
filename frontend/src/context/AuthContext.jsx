@@ -42,14 +42,16 @@ export const AuthProvider = ({ children }) => {
     const login = async (username, password) => {
         try {
             const response = await api.post('auth/login/', { username, password });
-            const { access, refresh } = response.data;
+            const { access, refresh, role, username: resUsername, is_superuser } = response.data;
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
+
             const decoded = jwtDecode(access);
             const userData = {
                 id: decoded.user_id,
-                role: decoded.role || null,
-                username: decoded.username || null,
+                role: role || decoded.role || null,
+                username: resUsername || decoded.username || null,
+                is_superuser: is_superuser || decoded.is_superuser || false,
             };
             setUser(userData);
             return userData;

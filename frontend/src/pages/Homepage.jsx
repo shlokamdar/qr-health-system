@@ -35,16 +35,18 @@ const Homepage = () => {
                         </span>
                     </h1>
                     <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                        Secure, instant access to patient medical records via QR code scanning. 
+                        Secure, instant access to patient medical records via QR code scanning.
                         Connecting doctors and patients seamlessly.
                     </p>
                 </div>
 
+
+
                 {/* Portal Cards */}
-                <div className="grid md:grid-cols-2 gap-8 max-w-4xl w-full">
+                <div className="grid md:grid-cols-3 gap-8 max-w-6xl w-full">
                     {/* Patient Portal Card */}
-                    <Link 
-                        to="/patient/login" 
+                    <Link
+                        to="/patient/login"
                         className="group relative overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-teal-500/10 to-teal-600/10 border border-teal-500/20 backdrop-blur-xl hover:border-teal-400/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-teal-500/20"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/0 to-teal-600/0 group-hover:from-teal-500/10 group-hover:to-teal-600/10 transition-all duration-500"></div>
@@ -59,7 +61,7 @@ const Homepage = () => {
                                 Access your health records, view your QR code, and manage your medical history securely.
                             </p>
                             <div className="flex items-center text-teal-400 font-semibold group-hover:gap-3 transition-all duration-300">
-                                <span>Enter Patient Portal</span>
+                                <span>Enter Portal</span>
                                 <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
@@ -68,8 +70,8 @@ const Homepage = () => {
                     </Link>
 
                     {/* Doctor Portal Card */}
-                    <Link 
-                        to="/doctor/login" 
+                    <Link
+                        to="/doctor/login"
                         className="group relative overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-purple-500/10 to-indigo-600/10 border border-purple-500/20 backdrop-blur-xl hover:border-purple-400/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-indigo-600/0 group-hover:from-purple-500/10 group-hover:to-indigo-600/10 transition-all duration-500"></div>
@@ -84,7 +86,33 @@ const Homepage = () => {
                                 Scan patient QR codes, access medical records, and upload prescriptions securely.
                             </p>
                             <div className="flex items-center text-purple-400 font-semibold group-hover:gap-3 transition-all duration-300">
-                                <span>Enter Doctor Portal</span>
+                                <span>Enter Portal</span>
+                                <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Admin Portal Card */}
+                    <Link
+                        to="/admin/login"
+                        className="group relative overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-slate-700/30 to-slate-800/30 border border-slate-600/30 backdrop-blur-xl hover:border-slate-500/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-slate-500/20"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-slate-700/0 to-slate-800/0 group-hover:from-slate-700/10 group-hover:to-slate-800/10 transition-all duration-500"></div>
+                        <div className="relative z-10">
+                            <div className="w-16 h-16 bg-gradient-to-br from-slate-600 to-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-slate-500/30 group-hover:scale-110 transition-transform duration-300">
+                                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-3">I'm an Admin</h2>
+                            <p className="text-slate-300 mb-6">
+                                Manage hospital verifications, doctors, and view system analytics.
+                            </p>
+                            <div className="flex items-center text-slate-300 font-semibold group-hover:gap-3 transition-all duration-300">
+                                <span>Enter Portal</span>
                                 <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
@@ -92,6 +120,7 @@ const Homepage = () => {
                         </div>
                     </Link>
                 </div>
+
 
                 {/* Features Section */}
                 <div className="mt-20 grid grid-cols-3 gap-8 max-w-3xl text-center">
@@ -120,13 +149,18 @@ const Homepage = () => {
                         <p className="text-sm font-medium">Digital Records</p>
                     </div>
                 </div>
-            </main>
+            </main >
 
             {/* Footer */}
             <footer className="relative z-10 px-6 py-6 text-center text-slate-500 text-sm">
                 <p>© 2026 HealthQR - Unified Health Record System</p>
+                <div className="mt-2">
+                    <Link to="/hospital/register" className="text-teal-500 hover:text-teal-400 font-medium transition-colors">
+                        Register your Hospital
+                    </Link>
+                </div>
             </footer>
-        </div>
+        </div >
     );
 };
 

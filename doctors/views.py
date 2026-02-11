@@ -103,6 +103,67 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+class DoctorListView(generics.ListAPIView):
+    """View for admins to list all doctors (verified and unverified)."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = DoctorSerializer
+    queryset = Doctor.objects.all().order_by('-user__date_joined')
+
+
+class DoctorVerificationView(generics.UpdateAPIView):
+    """View to verify/update doctor status."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = DoctorSerializer
+    queryset = Doctor.objects.all()
+    lookup_field = 'pk'
+
+    def update(self, request, *args, **kwargs):
+        doctor = self.get_object()
+        
+        if 'verify' in request.data:
+            doctor.is_verified = True
+            doctor.save()
+            return Response({'message': 'Doctor verified successfully'})
+            
+        if 'auth_level' in request.data:
+            level = request.data.get('auth_level')
+            if level in ['BASIC', 'STANDARD', 'FULL']:
+                doctor.authorization_level = level
+                doctor.save()
+                return Response({'message': f'Authorization level set to {level}'})
+            return Response({'error': 'Invalid authorization level'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return super().update(request, *args, **kwargs)
+
+
+        return super().update(request, *args, **kwargs)
+
+
+class HospitalListView(generics.ListAPIView):
+    """View for admins to list all hospitals."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = HospitalSerializer
+    queryset = Hospital.objects.all().order_by('name')
+
+
+class HospitalVerificationView(generics.UpdateAPIView):
+    """View to verify hospital status."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = HospitalSerializer
+    queryset = Hospital.objects.all()
+    lookup_field = 'pk'
+
+    def update(self, request, *args, **kwargs):
+        hospital = self.get_object()
+        
+        if 'verify' in request.data:
+            hospital.is_verified = True
+            hospital.save()
+            return Response({'message': 'Hospital verified successfully'})
+            
+        return super().update(request, *args, **kwargs)
+
+
 class ConsultationViewSet(viewsets.ModelViewSet):
     """ViewSet for Consultation CRUD operations."""
     permission_classes = [IsDoctor]

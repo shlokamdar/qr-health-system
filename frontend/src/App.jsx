@@ -8,6 +8,9 @@ import DoctorLogin from './pages/DoctorLogin';
 import DoctorRegister from './pages/DoctorRegister';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from './pages/AdminLogin';
+import HospitalRegister from './pages/HospitalRegister';
 
 // Protected Route — requires authentication
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -15,8 +18,8 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center text-white text-xl">Loading...</div>;
 
-    const token = localStorage.getItem('access_token');
-    if (!token || !user) {
+    if (!user) {
+        if (allowedRole === 'ADMIN') return <Navigate to="/admin/login" replace />;
         return <Navigate to="/" replace />;
     }
 
@@ -43,48 +46,62 @@ const DashboardRedirect = () => {
 };
 
 function App() {
-  return (
-    <AuthProvider>
-        <Router>
-            <Routes>
-                {/* Homepage */}
-                <Route path="/" element={<Homepage />} />
+    return (
+        <AuthProvider>
+            <Router>
+                <Routes>
+                    {/* Homepage */}
+                    <Route path="/" element={<Homepage />} />
 
-                {/* Patient Routes */}
-                <Route path="/patient/login" element={<PatientLogin />} />
-                <Route path="/patient/register" element={<PatientRegister />} />
-                <Route
-                    path="/patient/dashboard"
-                    element={
-                        <ProtectedRoute allowedRole="PATIENT">
-                            <PatientDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+                    {/* Hospital Registration */}
+                    <Route path="/hospital/register" element={<HospitalRegister />} />
 
-                {/* Doctor Routes */}
-                <Route path="/doctor/login" element={<DoctorLogin />} />
-                <Route path="/doctor/register" element={<DoctorRegister />} />
-                <Route
-                    path="/doctor/dashboard"
-                    element={
-                        <ProtectedRoute allowedRole="DOCTOR">
-                            <DoctorDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+                    {/* Patient Routes */}
+                    <Route path="/patient/login" element={<PatientLogin />} />
+                    <Route path="/patient/register" element={<PatientRegister />} />
+                    <Route
+                        path="/patient/dashboard"
+                        element={
+                            <ProtectedRoute allowedRole="PATIENT">
+                                <PatientDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                {/* Legacy redirect */}
-                <Route path="/dashboard" element={<DashboardRedirect />} />
-                <Route path="/login" element={<Navigate to="/" replace />} />
-                <Route path="/register" element={<Navigate to="/" replace />} />
+                    {/* Doctor Routes */}
+                    <Route path="/doctor/login" element={<DoctorLogin />} />
+                    <Route path="/doctor/register" element={<DoctorRegister />} />
+                    <Route
+                        path="/doctor/dashboard"
+                        element={
+                            <ProtectedRoute allowedRole="DOCTOR">
+                                <DoctorDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                {/* Catch all */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </Router>
-    </AuthProvider>
-  );
+                    {/* Admin Routes */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route
+                        path="/admin-dashboard"
+                        element={
+                            <ProtectedRoute allowedRole="ADMIN">
+                                <AdminDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Legacy redirect */}
+                    <Route path="/dashboard" element={<DashboardRedirect />} />
+                    <Route path="/login" element={<Navigate to="/" replace />} />
+                    <Route path="/register" element={<Navigate to="/" replace />} />
+
+                    {/* Catch all */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Router>
+        </AuthProvider>
+    );
 }
 
 export default App;

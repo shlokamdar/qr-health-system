@@ -21,8 +21,10 @@ class PatientViewSet(viewsets.ModelViewSet):
     lookup_field = 'health_id'
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['create', 'destroy']:
             return [permissions.IsAdminUser()]
+        if self.action in ['update', 'partial_update']:
+            return [IsPatient()]
         if self.action == 'me':
             return [IsPatient()]
         if self.action == 'retrieve':
