@@ -31,6 +31,8 @@ const DoctorDashboard = () => {
 
     // Scanner State
     const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const [scannerError, setScannerError] = useState(null);
+    const [isCameraLoading, setIsCameraLoading] = useState(false);
 
     // Register Patient Form State
     const [newPatient, setNewPatient] = useState({
@@ -103,19 +105,30 @@ const DoctorDashboard = () => {
     };
 
     const handleScan = (result) => {
-        if (result) {
+        if (result && result.length > 0) {
             const rawValue = result[0]?.rawValue;
             if (rawValue) {
                 let healthId = rawValue;
+                // Extract health ID from URL if needed
                 if (rawValue.includes('/api/patients/')) {
                     const parts = rawValue.split('/api/patients/');
                     if (parts.length > 1) {
                         healthId = parts[1].replace('/', '');
                     }
                 }
+                
+                // Validate health ID format (basic check)
+                if (!healthId || healthId.trim() === '') {
+                    setScannerError('Invalid QR code scanned');
+                    return;
+                }
+                
                 setSearchId(healthId);
                 setIsScannerOpen(false);
+                setScannerError(null);
+                setIsCameraLoading(false);
 
+                // Fetch patient data
                 api.get(`patients/${healthId}/`)
                     .then(res => {
                         setPatientResult(res.data);
@@ -134,6 +147,39 @@ const DoctorDashboard = () => {
                     });
             }
         }
+    };
+
+    const handleScannerError = (error) => {
+        console.error('Scanner error:', error);
+        setIsCameraLoading(false);
+        
+        if (error?.message) {
+            const errorMsg = error.message.toLowerCase();
+            
+            if (errorMsg.includes('permission') || errorMsg.includes('notallowederror')) {
+                setScannerError('Camera permission denied. Please allow camera access in your browser settings.');
+            } else if (errorMsg.includes('notfound') || errorMsg.includes('notfounderror')) {
+                setScannerError('No camera found on this device.');
+            } else if (errorMsg.includes('notreadable') || errorMsg.includes('notreadableerror')) {
+                setScannerError('Camera is in use by another application.');
+            } else {
+                setScannerError('Failed to access camera. Please try again.');
+            }
+        } else {
+            setScannerError('Failed to access camera. Please try again.');
+        }
+    };
+
+    const openScanner = () => {
+        setIsScannerOpen(true);
+        setScannerError(null);
+        setIsCameraLoading(true);
+    };
+
+    const closeScanner = () => {
+        setIsScannerOpen(false);
+        setScannerError(null);
+        setIsCameraLoading(false);
     };
 
     const handleSearch = async (e) => {
@@ -309,7 +355,7 @@ const DoctorDashboard = () => {
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setIsScannerOpen(true)}
+                                        onClick={openScanner}
                                         className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-xl hover:from-gray-700 hover:to-gray-800 font-medium shadow-lg hover:shadow-xl transition-all"
                                     >
                                         📷 Scan QR
@@ -327,21 +373,50 @@ const DoctorDashboard = () => {
                                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                                         <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative">
                                             <button
-                                                onClick={() => setIsScannerOpen(false)}
-                                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+                                                onClick={closeScanner}
+                                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10"
                                             >
                                                 ✕
                                             </button>
                                             <h3 className="text-xl font-bold mb-4 text-gray-800">Scan Patient QR Code</h3>
-                                            <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden">
-                                                <Scanner
-                                                    onScan={handleScan}
-                                                    onError={(error) => console.log(error?.message)}
-                                                    components={{ audio: false }}
-                                                />
-                                            </div>
+                                            
+                                            {scannerError ? (
+                                                <div className="space-y-4">
+                                                    <div className="aspect-square bg-red-50 rounded-xl flex flex-col items-center justify-center p-6 text-center">
+                                                        <span className="text-6xl mb-4">❌</span>
+                                                        <p className="text-red-600 font-medium">{scannerError}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            setScannerError(null);
+                                                            setIsCameraLoading(true);
+                                                        }}
+                                                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium transition-all"
+                                                    >
+                                                        🔄 Retry
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden">
+                                                    <Scanner
+                                                        onScan={handleScan}
+                                                        onError={handleScannerError}
+                                                        components={{ 
+                                                            audio: false,
+                                                            finder: true
+                                                        }}
+                                                        constraints={{
+                                                            facingMode: 'environment',
+                                                            aspectRatio: 1
+                                                        }}
+                                                        formats={['qr_code', 'data_matrix']}
+                                                        scanDelay={300}
+                                                    />
+                                                </div>
+                                            )}
+                                            
                                             <p className="text-sm text-gray-500 mt-4 text-center">
-                                                Point camera at patient's Health ID QR code
+                                                {scannerError ? 'Please grant camera permission to scan QR codes' : 'Point camera at patient\'s Health ID QR code'}
                                             </p>
                                         </div>
                                     </div>
