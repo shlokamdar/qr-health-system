@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Scanner } from '@yudiel/react-qr-scanner';
+// Scanner is now simulated/handled inside ScannerModal or PatientSearch if needed, 
+// but actually we moved Scanner logic to ScannerModal. 
+// However, the dashboard logic still uses some scanner state.
 import Header from '../components/Header';
+import DashboardStats from '../components/doctor/DashboardStats';
+import PatientSearch from '../components/doctor/PatientSearch';
+import ScannerModal from '../components/doctor/ScannerModal';
+import OTPModal from '../components/doctor/OTPModal';
+import PatientProfile from '../components/doctor/PatientProfile';
+import MedicalRecordList from '../components/doctor/MedicalRecordList';
+import ConsultationHistory from '../components/doctor/ConsultationHistory';
+import ConsultationForm from '../components/doctor/ConsultationForm';
+import UploadRecordForm from '../components/doctor/UploadRecordForm';
+import AppointmentList from '../components/doctor/AppointmentList';
+import PatientRegisterForm from '../components/doctor/PatientRegisterForm';
 
 const DoctorDashboard = () => {
     const [activeTab, setActiveTab] = useState('search');
@@ -206,47 +219,69 @@ const DoctorDashboard = () => {
         setIsCameraLoading(false);
     };
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
+    const handleSearch = async (e, overrideId = null) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const idToSearch = overrideId || searchId;
+        
+        if (!idToSearch) return;
+
         try {
-            const res = await api.get(`patients/${searchId}/`);
+            const res = await api.get(`patients/${idToSearch}/`);
             setPatientResult(res.data);
 
-            const recRes = await api.get(`records/?patient=${searchId}`);
+            const recRes = await api.get(`records/?patient=${idToSearch}`);
             setRecords(recRes.data);
 
-            const consRes = await api.get(`doctors/patient-history/${searchId}/`);
+            const consRes = await api.get(`doctors/patient-history/${idToSearch}/`);
             setConsultations(consRes.data);
+            
+            // If we are not already on search tab, switch to it
+            if (activeTab !== 'search') {
+                setActiveTab('search');
+                setSearchId(idToSearch);
+            }
         } catch (err) {
             alert('Patient not found or Access Denied');
             setPatientResult(null);
         }
     };
 
+    const handleViewPatient = (healthId) => {
+        setSearchId(healthId);
+        setActiveTab('search');
+        handleSearch(null, healthId);
+    };
+
     const handleUpload = async (e) => {
         e.preventDefault();
         if (!patientResult) return;
 
+        console.log("Uploading record for patient:", patientResult.id, newRecord);
+
         const formData = new FormData();
-        formData.append('patient', patientResult.id);
+        formData.append('patient', patientResult.id); // Ensure this is the PK
         formData.append('title', newRecord.title);
-        formData.append('description', newRecord.description);
+        formData.append('description', newRecord.description || '');
         formData.append('record_type', newRecord.record_type);
         if (newRecord.file) {
             formData.append('file', newRecord.file);
         }
 
         try {
-            await api.post('records/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            alert('Record Uploaded!');
-            const recRes = await api.get(`records/?patient=${searchId}`);
-            setRecords(recRes.data);
+            // Let axios and browser handle Content-Type boundary for FormData
+            await api.post('records/', formData);
+            
+            alert('Record Uploaded Successfully!');
+            // Refresh records if we are viewing the same patient
+            if (searchId === patientResult.health_id) {
+                const recRes = await api.get(`records/?patient=${searchId}`);
+                setRecords(recRes.data);
+            }
             setNewRecord({ title: '', description: '', record_type: 'PRESCRIPTION', file: null });
         } catch (err) {
-            console.error(err);
-            alert('Upload failed');
+            console.error("Upload Error Details:", err.response?.data || err.message);
+            const errMsg = err.response?.data ? JSON.stringify(err.response.data) : 'Upload failed. Check console for details.';
+            alert(`Upload Failed: ${errMsg}`);
         }
     };
 
@@ -298,413 +333,184 @@ const DoctorDashboard = () => {
         }
     };
 
-    const getAuthBadgeColor = (level) => {
-        switch (level) {
-            case 'FULL': return 'bg-gradient-to-r from-emerald-500 to-emerald-600';
-            case 'STANDARD': return 'bg-gradient-to-r from-blue-500 to-blue-600';
-            default: return 'bg-gradient-to-r from-gray-400 to-gray-500';
-        }
-    };
+
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-            <Header />
-            <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
-                {/* Doctor Info Header */}
-                {doctorProfile && (
-                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white p-6 rounded-2xl shadow-xl">
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-3xl font-bold">
-                                    {doctorProfile.user?.first_name?.[0]}{doctorProfile.user?.last_name?.[0]}
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl md:text-3xl font-bold">
-                                        Dr. {doctorProfile.user?.first_name} {doctorProfile.user?.last_name}
-                                    </h2>
-                                    <p className="text-white/90 text-lg">{doctorProfile.specialization}</p>
-                                    {doctorProfile.hospital_details && (
-                                        <p className="text-white/70 text-sm mt-1">📍 {doctorProfile.hospital_details.name}</p>
+        <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-800">
+             {/* Background decorative elements */}
+             <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-br from-indigo-50/80 via-purple-50/50 to-slate-50 z-0 pointer-events-none" />
+             <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-100/40 rounded-full blur-3xl pointer-events-none" />
+             <div className="absolute top-[20%] left-[-10%] w-72 h-72 bg-purple-100/40 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10">
+                <Header />
+                <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+                    
+                    <DashboardStats doctorProfile={doctorProfile} />
+
+                    {/* Main Dashboard Card */}
+                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/60 overflow-hidden ring-1 ring-slate-900/5">
+                        {/* Tab Navigation */}
+                        <div className="flex border-b border-slate-100 bg-white/50 backdrop-blur-md overflow-x-auto scroller-none">
+                            {['search', 'consultations', 'appointments', 'register'].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`flex-1 py-5 px-6 text-center font-medium transition-all duration-300 relative group min-w-[140px] ${activeTab === tab
+                                        ? 'text-indigo-600'
+                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                                        }`}
+                                >
+                                    <div className="flex flex-col items-center justify-center gap-1.5 relative z-10">
+                                        <span className={`text-2xl transition-transform duration-300 ${activeTab === tab ? 'scale-110 drop-shadow-sm' : 'group-hover:scale-105 grayscale opacity-70'}`}>
+                                            {tab === 'search' && '🔍'}
+                                            {tab === 'consultations' && '📋'}
+                                            {tab === 'appointments' && '📅'}
+                                            {tab === 'register' && '➕'}
+                                        </span>
+                                        <span className={`text-xs font-bold tracking-wide uppercase transition-colors duration-300 ${activeTab === tab ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                            {tab === 'search' ? 'Patient Search' :
+                                                tab === 'consultations' ? 'My Consultations' :
+                                                    tab === 'appointments' ? 'Appointments' :
+                                                        'Register Patient'}
+                                        </span>
+                                    </div>
+                                    {activeTab === tab && (
+                                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-full shadow-lg shadow-indigo-500/20" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="p-6 md:p-8 bg-gradient-to-b from-white/40 to-transparent">
+                            {/* Patient Search Tab */}
+                            {activeTab === 'search' && (
+                                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="bg-white rounded-2xl p-1 shadow-sm border border-slate-100 max-w-2xl mx-auto">
+                                        <PatientSearch
+                                            searchId={searchId}
+                                            setSearchId={setSearchId}
+                                            handleSearch={(e) => handleSearch(e)}
+                                            openScanner={openScanner}
+                                        />
+                                    </div>
+
+                                    {patientResult && (
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                            {/* Left Column: Profile & Quick Actions */}
+                                            <div className="space-y-6 lg:col-span-1">
+                                                <PatientProfile
+                                                    patient={patientResult}
+                                                    handleRequestOTP={handleRequestOTP}
+                                                />
+                                                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white shadow-sm hover:shadow-md transition-all">
+                                                     <UploadRecordForm
+                                                        newRecord={newRecord}
+                                                        setNewRecord={setNewRecord}
+                                                        handleUpload={handleUpload}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Right Column: History & Forms */}
+                                            <div className="space-y-8 lg:col-span-2">
+                                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                                                    <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                                        <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                                                            <span>📝</span> Clinical History
+                                                        </h3>
+                                                        <span className="text-xs font-medium bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
+                                                            {consultations.length} Visits
+                                                        </span>
+                                                    </div>
+                                                    <div className="p-6 max-h-[400px] overflow-y-auto custom-scrollbar">
+                                                        <ConsultationHistory consultations={consultations} />
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                                                    <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                                                            <span>📂</span> Medical Records
+                                                        </h3>
+                                                        <span className="text-xs font-medium bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
+                                                            {records.length} Files
+                                                        </span>
+                                                    </div>
+                                                     <div className="p-6 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                        <MedicalRecordList records={records} />
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-indigo-50/50 rounded-2xl border border-indigo-100 p-6">
+                                                    <h3 className="font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                                                        <span>🩺</span> New Consultation
+                                                    </h3>
+                                                    <ConsultationForm
+                                                        newConsultation={newConsultation}
+                                                        setNewConsultation={setNewConsultation}
+                                                        handleSubmit={handleCreateConsultation}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {!patientResult && (
+                                        <div className="text-center py-20 opacity-60">
+                                            <div className="text-6xl mb-4">🔍</div>
+                                            <h3 className="text-xl font-medium text-slate-600">Search for a patient to begin</h3>
+                                            <p className="text-slate-400 mt-2">Enter a Health ID or scan a QR code</p>
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                                <span className={`${getAuthBadgeColor(doctorProfile.authorization_level)} px-4 py-2 rounded-lg text-white font-semibold shadow-lg`}>
-                                    ✓ {doctorProfile.authorization_level} Access
-                                </span>
-                                {!doctorProfile.is_verified && (
-                                    <div className="flex items-center gap-1 bg-yellow-500/20 text-yellow-100 px-3 py-1 rounded-lg text-sm">
-                                        <span>⏳</span>
-                                        <span>Pending Verification</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Main Dashboard Card */}
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                    {/* Tab Navigation */}
-                    <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto">
-                        {['search', 'consultations', 'appointments', 'register'].map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-200 whitespace-nowrap ${activeTab === tab
-                                    ? 'border-b-4 border-indigo-600 text-indigo-600 bg-white'
-                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                                    }`}
-                            >
-                                <div className="flex items-center justify-center gap-2">
-                                    {tab === 'search' && <span>🔍</span>}
-                                    {tab === 'consultations' && <span>📋</span>}
-                                    {tab === 'appointments' && <span>📅</span>}
-                                    {tab === 'register' && <span>➕</span>}
-                                    <span>
-                                        {tab === 'search' ? 'Patient Search' :
-                                            tab === 'consultations' ? 'My Consultations' :
-                                                tab === 'appointments' ? 'Appointments' :
-                                                    'Register Patient'}
-                                    </span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="p-6 md:p-8">
-                        {/* Patient Search Tab */}
-                        {activeTab === 'search' && (
-                            <div className="space-y-6">
-                                <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
-                                    <input
-                                        type="text"
-                                        placeholder="🔎 Enter Patient Health ID..."
-                                        className="flex-1 border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={searchId}
-                                        onChange={e => setSearchId(e.target.value)}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={openScanner}
-                                        className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-xl hover:from-gray-700 hover:to-gray-800 font-medium shadow-lg hover:shadow-xl transition-all"
-                                    >
-                                        📷 Scan QR
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg hover:shadow-xl transition-all"
-                                    >
-                                        Search
-                                    </button>
-                                </form>
-
-                                {/* Scanner Modal */}
-                                {isScannerOpen && (
-                                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                                        <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative">
-                                            <button
-                                                onClick={closeScanner}
-                                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10"
-                                            >
-                                                ✕
-                                            </button>
-                                            <h3 className="text-xl font-bold mb-4 text-gray-800">Scan Patient QR Code</h3>
-
-                                            {scannerError ? (
-                                                <div className="space-y-4">
-                                                    <div className="aspect-square bg-red-50 rounded-xl flex flex-col items-center justify-center p-6 text-center">
-                                                        <span className="text-6xl mb-4">❌</span>
-                                                        <p className="text-red-600 font-medium">{scannerError}</p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => {
-                                                            setScannerError(null);
-                                                            setIsCameraLoading(true);
-                                                        }}
-                                                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium transition-all"
-                                                    >
-                                                        🔄 Retry
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden">
-                                                    <Scanner
-                                                        onScan={handleScan}
-                                                        onError={handleScannerError}
-                                                        components={{
-                                                            audio: false,
-                                                            finder: true
-                                                        }}
-                                                        constraints={{
-                                                            facingMode: 'environment',
-                                                            aspectRatio: 1
-                                                        }}
-                                                        formats={['qr_code', 'data_matrix']}
-                                                        scanDelay={300}
-                                                    />
-                                                </div>
-                                            )}
-
-                                            <p className="text-sm text-gray-500 mt-4 text-center">
-                                                {scannerError ? 'Please grant camera permission to scan QR codes' : 'Point camera at patient\'s Health ID QR code'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* OTP Modal */}
-                                {isOTPModalOpen && (
-                                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                                        <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm relative">
-                                            <button
-                                                onClick={() => setIsOTPModalOpen(false)}
-                                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
-                                            >
-                                                ✕
-                                            </button>
-                                            <h3 className="text-xl font-bold mb-2 text-gray-800">Enter OTP</h3>
-                                            <p className="text-sm text-gray-500 mb-4">
-                                                Ask patient for the 6-digit code sent to their phone.
-                                            </p>
-                                            <form onSubmit={handleVerifyOTP} className="space-y-4">
-                                                <input
-                                                    type="text"
-                                                    placeholder="• • • • • •"
-                                                    className="w-full border-2 border-gray-200 p-3 rounded-xl text-center text-3xl tracking-widest focus:border-indigo-500 focus:outline-none"
-                                                    maxLength={6}
-                                                    value={otpCode}
-                                                    onChange={e => setOtpCode(e.target.value)}
-                                                    autoFocus
-                                                />
-                                                <button
-                                                    type="submit"
-                                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg transition-all"
-                                                >
-                                                    Verify & Grant Access
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {patientResult && (
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        {/* Patient Info Card */}
-                                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <h3 className="text-xl font-bold text-gray-800">👤 Patient Profile</h3>
-                                                <button
-                                                    onClick={handleRequestOTP}
-                                                    className="text-xs bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 font-medium flex items-center gap-1"
-                                                >
-                                                    <span>🔓</span>
-                                                    <span>Request Full Access</span>
-                                                </button>
-                                            </div>
-                                            <div className="space-y-3 text-sm">
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <span className="font-semibold text-gray-600">Health ID:</span>
-                                                    <span className="ml-2 font-mono text-indigo-600 font-bold">{patientResult.health_id}</span>
-                                                </div>
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <span className="font-semibold text-gray-600">Name:</span>
-                                                    <span className="ml-2">{patientResult.user?.first_name} {patientResult.user?.last_name}</span>
-                                                </div>
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <span className="font-semibold text-gray-600">Phone:</span>
-                                                    <span className="ml-2">{patientResult.contact_number || 'N/A'}</span>
-                                                </div>
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <span className="font-semibold text-gray-600">Blood Group:</span>
-                                                    <span className="ml-2 text-red-600 font-bold">{patientResult.blood_group || 'N/A'}</span>
-                                                </div>
-                                                {patientResult.allergies && (
-                                                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                                                        <span className="font-semibold text-yellow-800">⚠️ Allergies:</span>
-                                                        <span className="ml-2 text-yellow-900">{patientResult.allergies}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Records & History */}
-                                            <div className="mt-6 space-y-4">
-                                                <div>
-                                                    <h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                                        <span>📄</span>
-                                                        <span>Medical Records</span>
-                                                    </h4>
-                                                    <div className="bg-white rounded-lg max-h-40 overflow-y-auto">
-                                                        {records.length === 0 ? (
-                                                            <p className="p-3 text-gray-400 text-sm text-center">No records found</p>
-                                                        ) : (
-                                                            <ul className="divide-y divide-gray-100">
-                                                                {records.map(rec => (
-                                                                    <li key={rec.id} className="p-3 hover:bg-gray-50">
-                                                                        <p className="font-semibold text-sm text-gray-800">{rec.title}</p>
-                                                                        <p className="text-xs text-gray-500">{rec.record_type} · {new Date(rec.created_at).toLocaleDateString()}</p>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                                        <span>🩺</span>
-                                                        <span>Consultation History</span>
-                                                    </h4>
-                                                    <div className="bg-white rounded-lg max-h-40 overflow-y-auto">
-                                                        {consultations.length === 0 ? (
-                                                            <p className="p-3 text-gray-400 text-sm text-center">No consultations found</p>
-                                                        ) : (
-                                                            <ul className="divide-y divide-gray-100">
-                                                                {consultations.map(con => (
-                                                                    <li key={con.id} className="p-3 hover:bg-gray-50">
-                                                                        <p className="font-semibold text-sm text-gray-800">{con.chief_complaint}</p>
-                                                                        <p className="text-xs text-gray-500">
-                                                                            {new Date(con.consultation_date).toLocaleDateString()} · {con.diagnosis || 'Pending'}
-                                                                        </p>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Forms Column */}
-                                        <div className="space-y-6">
-                                            {/* New Consultation Form */}
-                                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
-                                                <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                                                    <span>➕</span>
-                                                    <span>New Consultation</span>
-                                                </h3>
-                                                <form onSubmit={handleCreateConsultation} className="space-y-3">
-                                                    <input
-                                                        type="datetime-local"
-                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
-                                                        value={newConsultation.consultation_date}
-                                                        onChange={e => setNewConsultation({ ...newConsultation, consultation_date: e.target.value })}
-                                                    />
-                                                    <textarea
-                                                        placeholder="Chief Complaint *"
-                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
-                                                        rows="2"
-                                                        required
-                                                        value={newConsultation.chief_complaint}
-                                                        onChange={e => setNewConsultation({ ...newConsultation, chief_complaint: e.target.value })}
-                                                    />
-                                                    <textarea
-                                                        placeholder="Diagnosis"
-                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
-                                                        rows="2"
-                                                        value={newConsultation.diagnosis}
-                                                        onChange={e => setNewConsultation({ ...newConsultation, diagnosis: e.target.value })}
-                                                    />
-                                                    <textarea
-                                                        placeholder="Prescription"
-                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
-                                                        rows="2"
-                                                        value={newConsultation.prescription}
-                                                        onChange={e => setNewConsultation({ ...newConsultation, prescription: e.target.value })}
-                                                    />
-                                                    <input
-                                                        type="date"
-                                                        placeholder="Follow-up Date"
-                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-green-500 focus:outline-none"
-                                                        value={newConsultation.follow_up_date}
-                                                        onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
-                                                    />
-                                                    <button
-                                                        type="submit"
-                                                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium shadow-lg transition-all"
-                                                    >
-                                                        💾 Save Consultation
-                                                    </button>
-                                                </form>
-                                            </div>
-
-                                            {/* Upload Record Form */}
-                                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100">
-                                                <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                                                    <span>📤</span>
-                                                    <span>Add Record</span>
-                                                </h3>
-                                                <form onSubmit={handleUpload} className="space-y-3">
-                                                    <select
-                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-purple-500 focus:outline-none"
-                                                        value={newRecord.record_type}
-                                                        onChange={e => setNewRecord({ ...newRecord, record_type: e.target.value })}
-                                                    >
-                                                        <option value="PRESCRIPTION">💊 Prescription</option>
-                                                        <option value="DIAGNOSIS">🔬 Diagnosis</option>
-                                                        <option value="LAB_REPORT">🧪 Lab Report</option>
-                                                        <option value="VISIT_NOTE">📝 Visit Note</option>
-                                                    </select>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Record Title"
-                                                        className="w-full border-2 border-gray-200 p-2 rounded-lg text-sm focus:border-purple-500 focus:outline-none"
-                                                        value={newRecord.title}
-                                                        onChange={e => setNewRecord({ ...newRecord, title: e.target.value })}
-                                                    />
-                                                    <input
-                                                        type="file"
-                                                        className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
-                                                        onChange={e => setNewRecord({ ...newRecord, file: e.target.files[0] })}
-                                                    />
-                                                    <button
-                                                        type="submit"
-                                                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 font-medium shadow-lg transition-all"
-                                                    >
-                                                        📤 Upload Record
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                            )}
 
                         {/* My Consultations Tab */}
                         {activeTab === 'consultations' && (
-                            <div>
-                                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                                    <span>📋</span>
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                                    <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📋</span>
                                     <span>Recent Consultations</span>
                                 </h3>
                                 {myConsultations.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <p className="text-gray-400 text-lg">No consultations yet.</p>
+                                    <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                        <p className="text-slate-400 text-lg">No consultations yet.</p>
                                     </div>
                                 ) : (
-                                    <div className="grid gap-4">
+                                    <div className="grid gap-6">
                                         {myConsultations.map(con => (
-                                            <div key={con.id} className="bg-gradient-to-r from-white to-gray-50 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all">
-                                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg text-sm font-mono font-bold">
+                                            <div key={con.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                                                    <div className="flex-1 space-y-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider border border-indigo-100">
                                                                 {con.patient_health_id}
                                                             </span>
+                                                            <span className="text-slate-400 text-sm">•</span>
+                                                            <span className="text-slate-500 text-sm font-medium">
+                                                                {new Date(con.consultation_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                            </span>
                                                         </div>
-                                                        <p className="text-lg font-semibold text-gray-800">{con.chief_complaint}</p>
+                                                        <p className="text-xl font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                                                            {con.chief_complaint}
+                                                        </p>
                                                         {con.diagnosis && (
-                                                            <div className="mt-2 bg-blue-50 border border-blue-100 p-2 rounded-lg">
-                                                                <span className="text-sm text-gray-600 font-semibold">Diagnosis:</span>
-                                                                <span className="text-sm text-gray-800 ml-2">{con.diagnosis}</span>
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mt-1">Diagnosis:</span>
+                                                                <span className="text-slate-700 bg-slate-100 px-3 py-1 rounded-lg text-sm">{con.diagnosis}</span>
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="text-right text-sm space-y-1">
-                                                        <p className="text-gray-600">📅 {new Date(con.consultation_date).toLocaleDateString()}</p>
+                                                    <div className="flex flex-col items-end gap-3 min-w-[140px]">
+                                                        <button 
+                                                            onClick={() => handleViewPatient(con.patient_health_id)}
+                                                            className="text-indigo-600 font-medium text-sm hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors w-full justify-center group-hover:bg-indigo-600 group-hover:text-white"
+                                                        >
+                                                            View Profile <span>→</span>
+                                                        </button>
                                                         {con.follow_up_date && (
-                                                            <div className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg inline-block">
+                                                            <div className="text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100 w-full text-center">
                                                                 Follow-up: {new Date(con.follow_up_date).toLocaleDateString()}
                                                             </div>
                                                         )}
@@ -719,159 +525,56 @@ const DoctorDashboard = () => {
 
                         {/* Appointments Tab */}
                         {activeTab === 'appointments' && (
-                            <div>
-                                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                                    <span>📅</span>
-                                    <span>manage Appointments</span>
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                                    <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📅</span>
+                                    <span>Manage Appointments</span>
                                 </h3>
-                                {appointments.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <p className="text-gray-400 text-lg">No appointments found.</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid gap-4">
-                                        {appointments.map(apt => (
-                                            <div key={apt.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                                    <div>
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <span className="font-bold text-lg text-gray-800">{apt.patient_name}</span>
-                                                            <span className={`text-xs px-2 py-1 rounded font-bold ${apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                                                                    apt.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                                                                        apt.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
-                                                                            'bg-red-100 text-red-700'
-                                                                }`}>
-                                                                {apt.status}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-gray-600 mb-1">
-                                                            📅 {new Date(apt.appointment_date).toLocaleString()}
-                                                        </p>
-                                                        <p className="text-gray-500 text-sm italic">
-                                                            "{apt.reason}"
-                                                        </p>
-                                                    </div>
-
-                                                    <div className="flex gap-2">
-                                                        {apt.status === 'PENDING' && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => handleUpdateAppointment(apt.id, 'CONFIRMED')}
-                                                                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
-                                                                >
-                                                                    Accept
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleUpdateAppointment(apt.id, 'REJECTED')}
-                                                                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm"
-                                                                >
-                                                                    Reject
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                        {apt.status === 'CONFIRMED' && (
-                                                            <button
-                                                                onClick={() => handleUpdateAppointment(apt.id, 'COMPLETED')}
-                                                                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
-                                                            >
-                                                                Mark Completed
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                <AppointmentList
+                                    appointments={appointments}
+                                    handleUpdateStatus={handleUpdateAppointment}
+                                    handleViewPatient={handleViewPatient}
+                                />
                             </div>
                         )}
 
-                        {/* Register Patient Tab */}
-                        {activeTab === 'register' && (
-                            <div>
-                                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                                    <span>➕</span>
+                         {/* Register Patient Tab */}
+                         {activeTab === 'register' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                 <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                                    <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">➕</span>
                                     <span>Register New Patient</span>
                                 </h3>
-                                <form onSubmit={handleRegisterPatient} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
-                                    <input
-                                        type="text"
-                                        placeholder="Username *"
-                                        required
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.username}
-                                        onChange={e => setNewPatient({ ...newPatient, username: e.target.value })}
-                                    />
-                                    <input
-                                        type="password"
-                                        placeholder="Password *"
-                                        required
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.password}
-                                        onChange={e => setNewPatient({ ...newPatient, password: e.target.value })}
-                                    />
-                                    <input
-                                        type="email"
-                                        placeholder="📧 Email"
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.email}
-                                        onChange={e => setNewPatient({ ...newPatient, email: e.target.value })}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="📱 Phone Number"
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.contact_number}
-                                        onChange={e => setNewPatient({ ...newPatient, contact_number: e.target.value })}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="First Name"
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.first_name}
-                                        onChange={e => setNewPatient({ ...newPatient, first_name: e.target.value })}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Last Name"
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.last_name}
-                                        onChange={e => setNewPatient({ ...newPatient, last_name: e.target.value })}
-                                    />
-                                    <input
-                                        type="date"
-                                        placeholder="Date of Birth"
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.date_of_birth}
-                                        onChange={e => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
-                                    />
-                                    <select
-                                        className="border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-                                        value={newPatient.blood_group}
-                                        onChange={e => setNewPatient({ ...newPatient, blood_group: e.target.value })}
-                                    >
-                                        <option value="">🩸 Select Blood Group</option>
-                                        <option value="A+">A+</option>
-                                        <option value="A-">A-</option>
-                                        <option value="B+">B+</option>
-                                        <option value="B-">B-</option>
-                                        <option value="AB+">AB+</option>
-                                        <option value="AB-">AB-</option>
-                                        <option value="O+">O+</option>
-                                        <option value="O-">O-</option>
-                                    </select>
-                                    <button
-                                        type="submit"
-                                        className="md:col-span-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-bold text-lg shadow-xl hover:shadow-2xl transition-all"
-                                    >
-                                        ✨ Register & Generate Health ID
-                                    </button>
-                                </form>
+                                <PatientRegisterForm
+                                    newPatient={newPatient}
+                                    setNewPatient={setNewPatient}
+                                    handleRegister={handleRegisterPatient}
+                                />
                             </div>
                         )}
+
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <ScannerModal
+                isOpen={isScannerOpen}
+                onClose={closeScanner}
+                onScan={handleScan}
+                error={scannerError}
+                onError={handleScannerError}
+                setScannerError={setScannerError}
+                setIsCameraLoading={setIsCameraLoading}
+            />
+
+            <OTPModal
+                isOpen={isOTPModalOpen}
+                onClose={() => setIsOTPModalOpen(false)}
+                otpCode={otpCode}
+                setOtpCode={setOtpCode}
+                handleVerifyOTP={handleVerifyOTP}
+            />
         </div>
     );
 };

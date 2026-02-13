@@ -31,7 +31,8 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsDoctor() | IsLab()]
+            return [(IsDoctor | IsLab)()]
+
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
