@@ -97,3 +97,42 @@ class Consultation(models.Model):
 
     class Meta:
         ordering = ['-consultation_date']
+
+
+class Appointment(models.Model):
+    """Appointment booking model."""
+    
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', _('Pending')
+        CONFIRMED = 'CONFIRMED', _('Confirmed')
+        REJECTED = 'REJECTED', _('Rejected')
+        COMPLETED = 'COMPLETED', _('Completed')
+        CANCELLED = 'CANCELLED', _('Cancelled')
+
+    patient = models.ForeignKey(
+        'patients.Patient', 
+        on_delete=models.CASCADE, 
+        related_name='appointments'
+    )
+    doctor = models.ForeignKey(
+        Doctor, 
+        on_delete=models.CASCADE, 
+        related_name='appointments'
+    )
+    appointment_date = models.DateTimeField()
+    reason = models.TextField()
+    status = models.CharField(
+        max_length=20, 
+        choices=Status.choices, 
+        default=Status.PENDING
+    )
+    notes = models.TextField(blank=True, help_text=_("Doctor's notes"))
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['appointment_date']
+
+    def __str__(self):
+        return f"Appointment: {self.patient.user.get_full_name()} with Dr. {self.doctor.user.get_full_name()} on {self.appointment_date}"

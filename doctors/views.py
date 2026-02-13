@@ -1,11 +1,12 @@
 from rest_framework import viewsets, generics, permissions, status, decorators
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Hospital, Doctor, Consultation
+from .models import Hospital, Doctor, Consultation, Appointment
 from .serializers import (
     HospitalSerializer, HospitalRegisterSerializer,
     DoctorSerializer, DoctorRegisterSerializer,
-    ConsultationSerializer, ConsultationCreateSerializer
+    ConsultationSerializer, ConsultationCreateSerializer,
+    AppointmentSerializer
 )
 from permissions.roles import IsDoctor
 from audit.models import AccessLog
@@ -110,6 +111,13 @@ class DoctorListView(generics.ListAPIView):
     queryset = Doctor.objects.all().order_by('-user__date_joined')
 
 
+class VerifiedDoctorListView(generics.ListAPIView):
+    """View for patients to list verified doctors."""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DoctorSerializer
+    queryset = Doctor.objects.filter(is_verified=True).order_by('user__first_name')
+
+
 class DoctorVerificationView(generics.UpdateAPIView):
     """View to verify/update doctor status."""
     permission_classes = [permissions.IsAdminUser]
@@ -164,6 +172,8 @@ class HospitalVerificationView(generics.UpdateAPIView):
         return super().update(request, *args, **kwargs)
 
 
+from utils.notifications import send_record_uploaded_email
+
 class ConsultationViewSet(viewsets.ModelViewSet):
     """ViewSet for Consultation CRUD operations."""
     permission_classes = [IsDoctor]
@@ -195,6 +205,10 @@ class ConsultationViewSet(viewsets.ModelViewSet):
             details=f"Created consultation: {consultation.chief_complaint[:50]}"
         )
 
+        # Send Email Notification
+        doctor_name = self.request.user.get_full_name() or self.request.user.username
+        send_record_uploaded_email(consultation.patient, "Consultation Record", doctor_name)
+
 
 class PatientHistoryView(generics.ListAPIView):
     """View for getting consultation history for a specific patient."""
@@ -214,3 +228,30 @@ class PatientHistoryView(generics.ListAPIView):
         )
         
         return Consultation.objects.filter(patient=patient)
+
+
+class AppointmentViewSet(viewsets.ModelViewSet):
+    """ViewSet for Appointment booking and management."""
+    serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'doctor_profile'):
+            return Appointment.objects.filter(doctor=user.doctor_profile)
+        if hasattr(user, 'patient_profile'):
+            return Appointment.objects.filter(patient=user.patient_profile)
+        return Appointment.objects.none()
+
+    def perform_create(self, serializer):
+        # Patient booking an appointment
+        if hasattr(self.request.user, 'patient_profile'):
+            serializer.save(patient=self.request.user.patient_profile)
+        else:
+            # Doctors/Admins usually don't book for themselves in this flow, but fallback
+            serializer.save()
+
+    def update(self, request, *args, **kwargs):
+        # Allow partial updates for status change
+        kwargs['partial'] = True
+        return super().update(request, *args, **kwargs)

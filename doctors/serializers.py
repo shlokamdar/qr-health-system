@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Hospital, Doctor, Consultation
+from .models import Hospital, Doctor, Consultation, Appointment
 from accounts.serializers import UserSerializer
 
 User = get_user_model()
@@ -133,3 +133,26 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return consultation
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    """Serializer for Appointment model."""
+    doctor_name = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
+    patient_name = serializers.CharField(source='patient.user.get_full_name', read_only=True)
+    doctor_hospital = serializers.CharField(source='doctor.hospital.name', read_only=True)
+    
+    class Meta:
+        model = Appointment
+        fields = [
+            'id', 'patient', 'doctor', 'doctor_name', 'patient_name',
+            'doctor_hospital', 'appointment_date', 'reason', 
+            'status', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'patient']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        # Ensure patient can only book for themselves
+        if hasattr(request.user, 'patient_profile'):
+            validated_data['patient'] = request.user.patient_profile
+        return super().create(validated_data)

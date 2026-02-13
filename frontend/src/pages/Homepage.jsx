@@ -123,7 +123,7 @@ const Homepage = () => {
 
 
                 {/* Features Section */}
-                <div className="mt-20 grid grid-cols-3 gap-8 max-w-3xl text-center">
+                <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl text-center">
                     <div className="text-slate-400">
                         <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-800/50 flex items-center justify-center">
                             <svg className="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,6 +157,10 @@ const Homepage = () => {
                 <div className="mt-2">
                     <Link to="/hospital/register" className="text-teal-500 hover:text-teal-400 font-medium transition-colors">
                         Register your Hospital
+                    </Link>
+                    <span className="mx-2">|</span>
+                    <Link to="/lab/register" className="text-purple-500 hover:text-purple-400 font-medium transition-colors">
+                        Lab Technician Registration
                     </Link>
                 </div>
             </footer>

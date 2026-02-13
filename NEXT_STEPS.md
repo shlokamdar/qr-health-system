@@ -40,53 +40,27 @@
 - **Superadmin Panel** - Comprehensive dashboard for managing doctors and hospitals.
 - **Hospital Self-Registration** - Public registration flow with admin approval.
 - **Patient Profile Editing** - Patients can update their own personal details.
+- **Notifications System** - Email alerts for access/records.
+- **Lab Role** - Lab technician portal and report uploads.
+- **Data Export** - PDF download of patient records.
+- **Mobile Responsiveness** - Optimized for all devices.
+- **Appointment Scheduling** - Full booking system.
+- **Testing & Security** - Unit tests and rate limiting.
 
 ---
 
 ## 🔜 Suggested Next Steps
 
-### High Priority
+### 1. Deployment Preparation
+- [ ] Containerize Application (Docker/Docker Compose)
+- [ ] Configure Production Settings (WhiteNoise for static files)
+- [ ] Database Migration (PostgreSQL for prod) - *Optional*
+- [ ] CI/CD Pipeline (GitHub Actions) - *Optional*
 
-#### 1. Notifications System
-- [ ] Email notifications for access granted/revoked
-- [ ] Appointment reminders
-- [ ] Follow-up date reminders
-- [ ] New record added notifications
-
-#### 2. Lab Role Implementation
-- [ ] Lab technician portal
-- [ ] Lab report upload with patient Health ID
-- [ ] Lab access permissions
-
-### Medium Priority
-
-#### 3. Mobile Responsiveness
-- [ ] Optimize dashboards for mobile view
-- [ ] Mobile-friendly QR scanning
-- [ ] PWA (Progressive Web App) setup
-
-#### 4. Data Export
-- [ ] Export patient records as PDF
-- [ ] Download medical history
-- [ ] Share records via secure link
-
-### Lower Priority
-
-#### 5. Analytics Dashboard
-- [ ] Patient visit statistics
-- [ ] Common diagnoses trends
-- [ ] Hospital/doctor performance metrics
-
-#### 6. Appointment Scheduling
-- [ ] Doctor availability slots
-- [ ] Patient booking interface
-- [ ] Calendar integration
-
-#### 7. Testing & Security
-- [ ] Unit tests for all API endpoints
-- [ ] Integration tests
-- [ ] Rate limiting for sensitive endpoints
-- [ ] Input sanitization audit
+### 2. Advanced Features (Future)
+- [ ] AI-based Diagnosis Assistance
+- [ ] Real-time Chat (WebSockets)
+- [ ] Payment Gateway Integration
 
 ---
 

@@ -11,6 +11,9 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import HospitalRegister from './pages/HospitalRegister';
+import LabRegister from './pages/LabRegister';
+import LabLogin from './pages/LabLogin';
+import LabDashboard from './pages/LabDashboard';
 
 // Protected Route — requires authentication
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -26,7 +29,10 @@ const ProtectedRoute = ({ children, allowedRole }) => {
     // If a specific role is required, check it
     if (allowedRole && user.role !== allowedRole) {
         // Redirect to their own dashboard
-        const redirect = user.role === 'PATIENT' ? '/patient/dashboard' : '/doctor/dashboard';
+        const redirect =
+            user.role === 'PATIENT' ? '/patient/dashboard' :
+                user.role === 'DOCTOR' ? '/doctor/dashboard' :
+                    user.role === 'LAB_TECH' ? '/lab/dashboard' : '/';
         return <Navigate to={redirect} replace />;
     }
 
@@ -42,6 +48,7 @@ const DashboardRedirect = () => {
     if (!user) return <Navigate to="/" replace />;
 
     if (user.role === 'DOCTOR') return <Navigate to="/doctor/dashboard" replace />;
+    if (user.role === 'LAB_TECH') return <Navigate to="/lab/dashboard" replace />;
     return <Navigate to="/patient/dashboard" replace />;
 };
 
@@ -55,6 +62,16 @@ function App() {
 
                     {/* Hospital Registration */}
                     <Route path="/hospital/register" element={<HospitalRegister />} />
+                    <Route path="/lab/register" element={<LabRegister />} />
+                    <Route path="/lab/login" element={<LabLogin />} />
+                    <Route
+                        path="/lab/dashboard"
+                        element={
+                            <ProtectedRoute allowedRole="LAB_TECH">
+                                <LabDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     {/* Patient Routes */}
                     <Route path="/patient/login" element={<PatientLogin />} />

@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-$dy%7yg+nd@p56pvr*%)5y94h#ozhx0$0$dlsbvvyh&)=$0%m-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'records',
     'audit',
     'doctors',
+    'labs',
 ]
 
 MIDDLEWARE = [
@@ -154,6 +155,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    }
 }
 
 # JWT Settings
@@ -163,3 +172,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
 }
+
+# Email Configuration (Development)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@qrhealthsystem.com'

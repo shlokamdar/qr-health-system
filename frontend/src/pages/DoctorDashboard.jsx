@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Scanner } from '@yudiel/react-qr-scanner';
+import Header from '../components/Header';
 
 const DoctorDashboard = () => {
     const [activeTab, setActiveTab] = useState('search');
@@ -49,6 +50,7 @@ const DoctorDashboard = () => {
     useEffect(() => {
         fetchDoctorProfile();
         fetchMyConsultations();
+        fetchAppointments();
     }, []);
 
     const fetchDoctorProfile = async () => {
@@ -66,6 +68,28 @@ const DoctorDashboard = () => {
             setMyConsultations(res.data);
         } catch (err) {
             console.error('Could not fetch consultations');
+        }
+    };
+
+    // Appointments State
+    const [appointments, setAppointments] = useState([]);
+
+    const fetchAppointments = async () => {
+        try {
+            const res = await api.get('doctors/appointments/');
+            setAppointments(res.data);
+        } catch (err) {
+            console.error('Could not fetch appointments');
+        }
+    };
+
+    const handleUpdateAppointment = async (id, status) => {
+        try {
+            await api.patch(`doctors/appointments/${id}/`, { status });
+            alert(`Appointment ${status.toLowerCase()}!`);
+            fetchAppointments();
+        } catch (err) {
+            alert('Failed to update status');
         }
     };
 
@@ -116,13 +140,13 @@ const DoctorDashboard = () => {
                         healthId = parts[1].replace('/', '');
                     }
                 }
-                
+
                 // Validate health ID format (basic check)
                 if (!healthId || healthId.trim() === '') {
                     setScannerError('Invalid QR code scanned');
                     return;
                 }
-                
+
                 setSearchId(healthId);
                 setIsScannerOpen(false);
                 setScannerError(null);
@@ -152,10 +176,10 @@ const DoctorDashboard = () => {
     const handleScannerError = (error) => {
         console.error('Scanner error:', error);
         setIsCameraLoading(false);
-        
+
         if (error?.message) {
             const errorMsg = error.message.toLowerCase();
-            
+
             if (errorMsg.includes('permission') || errorMsg.includes('notallowederror')) {
                 setScannerError('Camera permission denied. Please allow camera access in your browser settings.');
             } else if (errorMsg.includes('notfound') || errorMsg.includes('notfounderror')) {
@@ -283,8 +307,9 @@ const DoctorDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+            <Header />
+            <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
                 {/* Doctor Info Header */}
                 {doctorProfile && (
                     <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white p-6 rounded-2xl shadow-xl">
@@ -321,12 +346,12 @@ const DoctorDashboard = () => {
                 {/* Main Dashboard Card */}
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     {/* Tab Navigation */}
-                    <div className="flex border-b border-gray-200 bg-gray-50">
-                        {['search', 'consultations', 'register'].map(tab => (
+                    <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto">
+                        {['search', 'consultations', 'appointments', 'register'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-200 ${activeTab === tab
+                                className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-200 whitespace-nowrap ${activeTab === tab
                                     ? 'border-b-4 border-indigo-600 text-indigo-600 bg-white'
                                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                                     }`}
@@ -334,8 +359,14 @@ const DoctorDashboard = () => {
                                 <div className="flex items-center justify-center gap-2">
                                     {tab === 'search' && <span>🔍</span>}
                                     {tab === 'consultations' && <span>📋</span>}
+                                    {tab === 'appointments' && <span>📅</span>}
                                     {tab === 'register' && <span>➕</span>}
-                                    <span>{tab === 'search' ? 'Patient Search' : tab === 'consultations' ? 'My Consultations' : 'Register Patient'}</span>
+                                    <span>
+                                        {tab === 'search' ? 'Patient Search' :
+                                            tab === 'consultations' ? 'My Consultations' :
+                                                tab === 'appointments' ? 'Appointments' :
+                                                    'Register Patient'}
+                                    </span>
                                 </div>
                             </button>
                         ))}
@@ -360,8 +391,8 @@ const DoctorDashboard = () => {
                                     >
                                         📷 Scan QR
                                     </button>
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg hover:shadow-xl transition-all"
                                     >
                                         Search
@@ -379,7 +410,7 @@ const DoctorDashboard = () => {
                                                 ✕
                                             </button>
                                             <h3 className="text-xl font-bold mb-4 text-gray-800">Scan Patient QR Code</h3>
-                                            
+
                                             {scannerError ? (
                                                 <div className="space-y-4">
                                                     <div className="aspect-square bg-red-50 rounded-xl flex flex-col items-center justify-center p-6 text-center">
@@ -401,7 +432,7 @@ const DoctorDashboard = () => {
                                                     <Scanner
                                                         onScan={handleScan}
                                                         onError={handleScannerError}
-                                                        components={{ 
+                                                        components={{
                                                             audio: false,
                                                             finder: true
                                                         }}
@@ -414,7 +445,7 @@ const DoctorDashboard = () => {
                                                     />
                                                 </div>
                                             )}
-                                            
+
                                             <p className="text-sm text-gray-500 mt-4 text-center">
                                                 {scannerError ? 'Please grant camera permission to scan QR codes' : 'Point camera at patient\'s Health ID QR code'}
                                             </p>
@@ -446,8 +477,8 @@ const DoctorDashboard = () => {
                                                     onChange={e => setOtpCode(e.target.value)}
                                                     autoFocus
                                                 />
-                                                <button 
-                                                    type="submit" 
+                                                <button
+                                                    type="submit"
                                                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg transition-all"
                                                 >
                                                     Verify & Grant Access
@@ -588,8 +619,8 @@ const DoctorDashboard = () => {
                                                         value={newConsultation.follow_up_date}
                                                         onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
                                                     />
-                                                    <button 
-                                                        type="submit" 
+                                                    <button
+                                                        type="submit"
                                                         className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 font-medium shadow-lg transition-all"
                                                     >
                                                         💾 Save Consultation
@@ -626,8 +657,8 @@ const DoctorDashboard = () => {
                                                         className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
                                                         onChange={e => setNewRecord({ ...newRecord, file: e.target.files[0] })}
                                                     />
-                                                    <button 
-                                                        type="submit" 
+                                                    <button
+                                                        type="submit"
                                                         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 font-medium shadow-lg transition-all"
                                                     >
                                                         📤 Upload Record
@@ -676,6 +707,75 @@ const DoctorDashboard = () => {
                                                             <div className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg inline-block">
                                                                 Follow-up: {new Date(con.follow_up_date).toLocaleDateString()}
                                                             </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Appointments Tab */}
+                        {activeTab === 'appointments' && (
+                            <div>
+                                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                                    <span>📅</span>
+                                    <span>manage Appointments</span>
+                                </h3>
+                                {appointments.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-gray-400 text-lg">No appointments found.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-4">
+                                        {appointments.map(apt => (
+                                            <div key={apt.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div>
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <span className="font-bold text-lg text-gray-800">{apt.patient_name}</span>
+                                                            <span className={`text-xs px-2 py-1 rounded font-bold ${apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+                                                                    apt.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                                                        apt.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
+                                                                            'bg-red-100 text-red-700'
+                                                                }`}>
+                                                                {apt.status}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-gray-600 mb-1">
+                                                            📅 {new Date(apt.appointment_date).toLocaleString()}
+                                                        </p>
+                                                        <p className="text-gray-500 text-sm italic">
+                                                            "{apt.reason}"
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex gap-2">
+                                                        {apt.status === 'PENDING' && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleUpdateAppointment(apt.id, 'CONFIRMED')}
+                                                                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
+                                                                >
+                                                                    Accept
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleUpdateAppointment(apt.id, 'REJECTED')}
+                                                                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {apt.status === 'CONFIRMED' && (
+                                                            <button
+                                                                onClick={() => handleUpdateAppointment(apt.id, 'COMPLETED')}
+                                                                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
+                                                            >
+                                                                Mark Completed
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -760,8 +860,8 @@ const DoctorDashboard = () => {
                                         <option value="O+">O+</option>
                                         <option value="O-">O-</option>
                                     </select>
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         className="md:col-span-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 font-bold text-lg shadow-xl hover:shadow-2xl transition-all"
                                     >
                                         ✨ Register & Generate Health ID

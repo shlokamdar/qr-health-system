@@ -15,6 +15,8 @@ from permissions.roles import IsDoctor, IsPatient, IsPatientOwner
 from audit.models import AccessLog
 
 
+from utils.notifications import send_access_granted_email, send_access_revoked_email
+
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
@@ -79,6 +81,38 @@ class PatientViewSet(viewsets.ModelViewSet):
         patient = get_object_or_404(Patient, user=request.user)
         serializer = self.get_serializer(patient)
         return Response(serializer.data)
+
+    @decorators.action(detail=False, methods=['get'])
+    def download_pdf(self, request):
+        """Generate and return a PDF of the patient's medical history."""
+        patient = get_object_or_404(Patient, user=request.user)
+        
+        # Gather Data
+        from records.models import Consultation
+        from labs.models import LabReport
+        from utils.pdf_generator import generate_patient_pdf
+        from django.http import FileResponse
+        
+        records = Consultation.objects.filter(patient=patient).order_by('-created_at')
+        prescriptions = OldPrescription.objects.filter(patient=patient).order_by('-prescription_date')
+        lab_reports = LabReport.objects.filter(patient=patient).order_by('-created_at')
+        
+        # Generate PDF
+        pdf_buffer = generate_patient_pdf(patient, records, prescriptions, lab_reports)
+        
+        # Log Access
+        AccessLog.objects.create(
+            actor=request.user,
+            patient=patient,
+            action=AccessLog.Action.VIEW_PROFILE,
+            details="Downloaded medical history PDF"
+        )
+        
+        return FileResponse(
+            pdf_buffer, 
+            as_attachment=True, 
+            filename=f"Medical_Report_{patient.health_id}.pdf"
+        )
 
 
 class EmergencyContactViewSet(viewsets.ModelViewSet):
@@ -173,6 +207,9 @@ class SharingPermissionViewSet(viewsets.ModelViewSet):
             action=AccessLog.Action.GRANT_ACCESS,
             details=f"Granted {permission.access_type} access to Dr. {doctor.user.username}"
         )
+
+        # Send Email Notification
+        send_access_granted_email(patient, doctor, permission.access_type)
         
         return Response(
             SharingPermissionSerializer(permission).data, 
@@ -194,6 +231,9 @@ class SharingPermissionViewSet(viewsets.ModelViewSet):
             action=AccessLog.Action.REVOKE_ACCESS,
             details=f"Revoked access from Dr. {permission.doctor.user.username}"
         )
+
+        # Send Email Notification
+        send_access_revoked_email(patient, permission.doctor)
         
         return Response({"detail": "Access revoked successfully."})
 
@@ -310,5 +350,8 @@ class OTPVerifyView(APIView):
             action=AccessLog.Action.GRANT_ACCESS,
             details=f"OTP Verified. Full Access Granted to Dr. {doctor.user.username}"
         )
+
+        # Send Email Notification
+        send_access_granted_email(patient, doctor, "OTP_FULL")
 
         return Response({"message": "OTP Verified! Full Access Granted."})
