@@ -1,6 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import api from '../utils/api';
+import PatientService from '../services/patient.service';
+import DoctorService from '../services/doctor.service';
 import Header from '../components/Header';
+
+import MedicalRecordList from '../components/patient/MedicalRecordList';
+import AppointmentList from '../components/patient/AppointmentList';
+import AppointmentBooking from '../components/patient/AppointmentBooking';
+import DocumentsList from '../components/patient/DocumentsList';
+import UploadDocumentForm from '../components/patient/UploadDocumentForm';
+import PrescriptionsList from '../components/patient/PrescriptionsList';
+import UploadPrescriptionForm from '../components/patient/UploadPrescriptionForm';
+import LabReportsList from '../components/patient/LabReportsList';
+import SharingPermissionsList from '../components/patient/SharingPermissionsList';
+import AccessHistoryList from '../components/patient/AccessHistoryList';
+import EmergencyContactsList from '../components/patient/EmergencyContactsList';
+import AddEmergencyContactForm from '../components/patient/AddEmergencyContactForm';
+import ProfileEditModal from '../components/patient/ProfileEditModal';
 
 const PatientDashboard = () => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -50,35 +65,45 @@ const PatientDashboard = () => {
         can_grant_access: true
     });
 
+    // Edit Profile State
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        contact_number: '',
+        address: '',
+        blood_group: '',
+        allergies: '',
+        chronic_conditions: ''
+    });
+
     useEffect(() => {
         fetchData();
     }, []);
 
     const fetchData = async () => {
         try {
-            const [patientRes, recordsRes, docsRes, prescRes, sharingRes, historyRes, contactsRes, labRes, aptRes, docRes] = await Promise.all([
-                api.get('patients/me/'),
-                api.get('records/'),
-                api.get('patients/documents/').catch(() => ({ data: [] })),
-                api.get('patients/prescriptions/').catch(() => ({ data: [] })),
-                api.get('patients/sharing/').catch(() => ({ data: [] })),
-                api.get('patients/sharing-history/').catch(() => ({ data: [] })),
-                api.get('patients/emergency-contacts/').catch(() => ({ data: [] })),
-                api.get('labs/reports/').catch(() => ({ data: [] })),
-                api.get('doctors/appointments/').catch(() => ({ data: [] })),
-                api.get('doctors/verified/').catch(() => ({ data: [] }))
+            const [patientData, recordsData, docsData, prescData, sharingData, historyData, contactsData, labData, aptData, docData] = await Promise.all([
+                PatientService.getProfile(),
+                PatientService.getRecords(),
+                PatientService.getDocuments().catch(() => []),
+                PatientService.getPrescriptions().catch(() => []),
+                PatientService.getSharingPermissions().catch(() => []),
+                PatientService.getAccessHistory().catch(() => []),
+                PatientService.getEmergencyContacts().catch(() => []),
+                PatientService.getLabReports().catch(() => []),
+                PatientService.getMyAppointments().catch(() => []),
+                DoctorService.getVerifiedDoctors().catch(() => [])
             ]);
 
-            setPatient(patientRes.data);
-            setRecords(recordsRes.data);
-            setDocuments(docsRes.data);
-            setPrescriptions(prescRes.data);
-            setSharingPermissions(sharingRes.data);
-            setAccessHistory(historyRes.data);
-            setEmergencyContacts(contactsRes.data);
-            setLabReports(labRes.data);
-            setAppointments(aptRes.data);
-            setDoctorsList(docRes.data);
+            setPatient(patientData);
+            setRecords(recordsData);
+            setDocuments(docsData);
+            setPrescriptions(prescData);
+            setSharingPermissions(sharingData);
+            setAccessHistory(historyData);
+            setEmergencyContacts(contactsData);
+            setLabReports(labData);
+            setAppointments(aptData);
+            setDoctorsList(docData);
         } catch (err) {
             console.error(err);
         }
@@ -93,9 +118,7 @@ const PatientDashboard = () => {
         if (newDocument.file) formData.append('file', newDocument.file);
 
         try {
-            await api.post('patients/documents/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await PatientService.uploadDocument(formData);
             alert('Document uploaded!');
             setNewDocument({ document_type: 'REPORT', title: '', description: '', file: null });
             fetchData();
@@ -128,9 +151,7 @@ const PatientDashboard = () => {
         if (newPrescription.file) formData.append('file', newPrescription.file);
 
         try {
-            await api.post('patients/prescriptions/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await PatientService.uploadPrescription(formData);
             alert('Prescription saved!');
             setNewPrescription({
                 prescription_date: '', doctor_name: '', hospital_name: '',
@@ -145,7 +166,7 @@ const PatientDashboard = () => {
     const handleAddContact = async (e) => {
         e.preventDefault();
         try {
-            await api.post('patients/emergency-contacts/', newContact);
+            await PatientService.addEmergencyContact(newContact);
             alert('Emergency contact added!');
             setNewContact({ name: '', relationship: '', phone: '', can_grant_access: true });
             fetchData();
@@ -157,7 +178,7 @@ const PatientDashboard = () => {
     const handleRevokeAccess = async (id) => {
         if (!confirm('Are you sure you want to revoke this access?')) return;
         try {
-            await api.post(`patients/sharing/${id}/revoke/`);
+            await PatientService.revokeAccess(id);
             alert('Access revoked!');
             fetchData();
         } catch (err) {
@@ -168,7 +189,7 @@ const PatientDashboard = () => {
     const handleBookAppointment = async (e) => {
         e.preventDefault();
         try {
-            await api.post('doctors/appointments/', newAppointment);
+            await PatientService.bookAppointment(newAppointment);
             alert('Appointment request sent!');
             setNewAppointment({ doctor: '', appointment_date: '', reason: '' });
             fetchData();
@@ -186,16 +207,6 @@ const PatientDashboard = () => {
         }
     };
 
-    // Edit Profile State
-    const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({
-        contact_number: '',
-        address: '',
-        blood_group: '',
-        allergies: '',
-        chronic_conditions: ''
-    });
-
     const handleEditClick = () => {
         setEditForm({
             contact_number: patient.contact_number || '',
@@ -210,7 +221,7 @@ const PatientDashboard = () => {
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         try {
-            await api.patch(`patients/${patient.health_id}/`, editForm);
+            await PatientService.updateProfile(patient.health_id, editForm);
             alert('Profile updated successfully!');
             setIsEditing(false);
             fetchData();
@@ -225,7 +236,6 @@ const PatientDashboard = () => {
         <div className="min-h-screen bg-gray-50">
             <Header />
             <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-                {/* Health ID Card */}
                 {/* Health ID Card */}
                 <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-lg shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>
@@ -250,7 +260,7 @@ const PatientDashboard = () => {
                                 Download QR
                             </button>
                             <button
-                                onClick={() => window.open(`${api.defaults.baseURL}patients/me/download_pdf/`, '_blank')}
+                                onClick={() => window.open(PatientService.getDownloadPdfUrl(), '_blank')}
                                 className="bg-white/20 hover:bg-white/30 text-xs px-3 py-1 rounded transition mt-1"
                             >
                                 Download Record (PDF)
@@ -305,28 +315,7 @@ const PatientDashboard = () => {
                                 </div>
 
                                 {/* Medical Records */}
-                                <div className="bg-gray-50 p-4 rounded">
-                                    <h3 className="font-bold mb-3">Recent Medical Records</h3>
-                                    {records.length === 0 ? (
-                                        <p className="text-gray-500 text-sm">No records yet.</p>
-                                    ) : (
-                                        <ul className="divide-y max-h-48 overflow-y-auto">
-                                            {records.slice(0, 5).map(rec => (
-                                                <li key={rec.id} className="py-2">
-                                                    <div className="flex justify-between">
-                                                        <div>
-                                                            <p className="font-semibold text-sm">{rec.title}</p>
-                                                            <p className="text-xs text-gray-500">{rec.record_type}</p>
-                                                        </div>
-                                                        {rec.file && (
-                                                            <a href={rec.file} target="_blank" className="text-indigo-500 text-sm">View</a>
-                                                        )}
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
+                                 <MedicalRecordList records={records.slice(0, 5)} />
                             </div>
                         )}
 
@@ -335,67 +324,14 @@ const PatientDashboard = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h3 className="font-bold mb-3">My Appointments</h3>
-                                    {appointments.length === 0 ? (
-                                        <p className="text-gray-500 text-sm">No appointments scheduled.</p>
-                                    ) : (
-                                        <ul className="divide-y">
-                                            {appointments.map(apt => (
-                                                <li key={apt.id} className="py-3">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <p className="font-semibold text-gray-800">Dr. {apt.doctor_name}</p>
-                                                            <p className="text-xs text-gray-500">{apt.doctor_hospital}</p>
-                                                            <p className="text-sm mt-1">📅 {new Date(apt.appointment_date).toLocaleString()}</p>
-                                                        </div>
-                                                        <span className={`text-xs px-2 py-1 rounded font-bold ${apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                                                                apt.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                                                                    apt.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
-                                                                        'bg-red-100 text-red-700'
-                                                            }`}>
-                                                            {apt.status}
-                                                        </span>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
+                                    <AppointmentList appointments={appointments} />
                                 </div>
-                                <div className="bg-gray-50 p-4 rounded">
-                                    <h3 className="font-bold mb-3">Book Appointment</h3>
-                                    <form onSubmit={handleBookAppointment} className="space-y-3">
-                                        <select
-                                            className="w-full border p-2 rounded"
-                                            required
-                                            value={newAppointment.doctor}
-                                            onChange={e => setNewAppointment({ ...newAppointment, doctor: e.target.value })}
-                                        >
-                                            <option value="">Select Doctor</option>
-                                            {doctorsList.map(doc => (
-                                                <option key={doc.id} value={doc.id}>
-                                                    Dr. {doc.user.first_name} {doc.user.last_name} ({doc.specialization})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <input
-                                            type="datetime-local"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            value={newAppointment.appointment_date}
-                                            onChange={e => setNewAppointment({ ...newAppointment, appointment_date: e.target.value })}
-                                        />
-                                        <textarea
-                                            placeholder="Reason for visit *"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            rows="3"
-                                            value={newAppointment.reason}
-                                            onChange={e => setNewAppointment({ ...newAppointment, reason: e.target.value })}
-                                        />
-                                        <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
-                                            Request Appointment
-                                        </button>
-                                    </form>
-                                </div>
+                                <AppointmentBooking 
+                                    newAppointment={newAppointment}
+                                    setNewAppointment={setNewAppointment}
+                                    doctorsList={doctorsList}
+                                    handleBookAppointment={handleBookAppointment}
+                                />
                             </div>
                         )}
 
@@ -404,61 +340,13 @@ const PatientDashboard = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h3 className="font-bold mb-3">My Documents</h3>
-                                    {documents.length === 0 ? (
-                                        <p className="text-gray-500 text-sm">No documents uploaded.</p>
-                                    ) : (
-                                        <ul className="divide-y">
-                                            {documents.map(doc => (
-                                                <li key={doc.id} className="py-3 flex justify-between items-center">
-                                                    <div>
-                                                        <p className="font-semibold">{doc.title}</p>
-                                                        <p className="text-xs text-gray-500">{doc.document_type} - {new Date(doc.uploaded_at).toLocaleDateString()}</p>
-                                                    </div>
-                                                    {doc.file && (
-                                                        <a href={doc.file} target="_blank" className="text-indigo-500 text-sm">View</a>
-                                                    )}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
+                                    <DocumentsList documents={documents} />
                                 </div>
-                                <div className="bg-gray-50 p-4 rounded">
-                                    <h3 className="font-bold mb-3">Upload Document</h3>
-                                    <form onSubmit={handleUploadDocument} className="space-y-3">
-                                        <select
-                                            className="w-full border p-2 rounded"
-                                            value={newDocument.document_type}
-                                            onChange={e => setNewDocument({ ...newDocument, document_type: e.target.value })}
-                                        >
-                                            <option value="REPORT">Medical Report</option>
-                                            <option value="INSURANCE">Insurance Document</option>
-                                            <option value="ID_PROOF">ID Proof</option>
-                                            <option value="OTHER">Other</option>
-                                        </select>
-                                        <input
-                                            type="text"
-                                            placeholder="Title *"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            value={newDocument.title}
-                                            onChange={e => setNewDocument({ ...newDocument, title: e.target.value })}
-                                        />
-                                        <textarea
-                                            placeholder="Description"
-                                            className="w-full border p-2 rounded"
-                                            value={newDocument.description}
-                                            onChange={e => setNewDocument({ ...newDocument, description: e.target.value })}
-                                        />
-                                        <input
-                                            type="file"
-                                            className="w-full"
-                                            onChange={e => setNewDocument({ ...newDocument, file: e.target.files[0] })}
-                                        />
-                                        <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
-                                            Upload
-                                        </button>
-                                    </form>
-                                </div>
+                                <UploadDocumentForm 
+                                    newDocument={newDocument}
+                                    setNewDocument={setNewDocument}
+                                    handleUpload={handleUploadDocument}
+                                />
                             </div>
                         )}
 
@@ -467,80 +355,13 @@ const PatientDashboard = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h3 className="font-bold mb-3">Old Prescriptions</h3>
-                                    {prescriptions.length === 0 ? (
-                                        <p className="text-gray-500 text-sm">No prescriptions added.</p>
-                                    ) : (
-                                        <ul className="divide-y">
-                                            {prescriptions.map(presc => (
-                                                <li key={presc.id} className="py-3">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <p className="font-semibold">{new Date(presc.prescription_date).toLocaleDateString()}</p>
-                                                            <p className="text-sm text-gray-600">{presc.doctor_name} - {presc.hospital_name}</p>
-                                                            <p className="text-xs text-gray-500 mt-1">{presc.symptoms}</p>
-                                                        </div>
-                                                        {presc.file && (
-                                                            <a href={presc.file} target="_blank" className="text-indigo-500 text-sm">View</a>
-                                                        )}
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
+                                    <PrescriptionsList prescriptions={prescriptions} />
                                 </div>
-                                <div className="bg-gray-50 p-4 rounded">
-                                    <h3 className="font-bold mb-3">Add Old Prescription</h3>
-                                    <form onSubmit={handleUploadPrescription} className="space-y-3">
-                                        <input
-                                            type="date"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            value={newPrescription.prescription_date}
-                                            onChange={e => setNewPrescription({ ...newPrescription, prescription_date: e.target.value })}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Doctor Name"
-                                            className="w-full border p-2 rounded"
-                                            value={newPrescription.doctor_name}
-                                            onChange={e => setNewPrescription({ ...newPrescription, doctor_name: e.target.value })}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Hospital Name"
-                                            className="w-full border p-2 rounded"
-                                            value={newPrescription.hospital_name}
-                                            onChange={e => setNewPrescription({ ...newPrescription, hospital_name: e.target.value })}
-                                        />
-                                        <textarea
-                                            placeholder="Symptoms *"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            value={newPrescription.symptoms}
-                                            onChange={e => setNewPrescription({ ...newPrescription, symptoms: e.target.value })}
-                                        />
-                                        <textarea
-                                            placeholder="Diagnosis"
-                                            className="w-full border p-2 rounded"
-                                            value={newPrescription.diagnosis}
-                                            onChange={e => setNewPrescription({ ...newPrescription, diagnosis: e.target.value })}
-                                        />
-                                        <textarea
-                                            placeholder="Medicines (one per line: name, dosage, frequency)"
-                                            className="w-full border p-2 rounded text-sm"
-                                            value={newPrescription.medicines}
-                                            onChange={e => setNewPrescription({ ...newPrescription, medicines: e.target.value })}
-                                        />
-                                        <input
-                                            type="file"
-                                            className="w-full"
-                                            onChange={e => setNewPrescription({ ...newPrescription, file: e.target.files[0] })}
-                                        />
-                                        <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-                                            Save Prescription
-                                        </button>
-                                    </form>
-                                </div>
+                                <UploadPrescriptionForm 
+                                    newPrescription={newPrescription}
+                                    setNewPrescription={setNewPrescription}
+                                    handleUpload={handleUploadPrescription}
+                                />
                             </div>
                         )}
 
@@ -548,28 +369,7 @@ const PatientDashboard = () => {
                         {activeTab === 'reports' && (
                             <div>
                                 <h3 className="font-bold mb-3">Lab Reports</h3>
-                                {labReports.length === 0 ? (
-                                    <p className="text-gray-500 text-sm">No lab reports found.</p>
-                                ) : (
-                                    <ul className="divide-y">
-                                        {labReports.map(report => (
-                                            <li key={report.id} className="py-3 flex justify-between items-center">
-                                                <div>
-                                                    <p className="font-semibold">{report.test_type_data?.name}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        Lab: {report.hospital_name} | Tech: {report.technician_name}
-                                                    </p>
-                                                    <p className="text-sm mt-1 text-gray-700">{report.comments}</p>
-                                                </div>
-                                                {report.file && (
-                                                    <a href={report.file} target="_blank" className="text-indigo-500 text-sm font-medium hover:underline">
-                                                        View Report
-                                                    </a>
-                                                )}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                <LabReportsList labReports={labReports} />
                             </div>
                         )}
 
@@ -577,34 +377,10 @@ const PatientDashboard = () => {
                         {activeTab === 'sharing' && (
                             <div>
                                 <h3 className="font-bold mb-3">Active Permissions</h3>
-                                {sharingPermissions.filter(p => p.is_active).length === 0 ? (
-                                    <p className="text-gray-500 text-sm">No active permissions.</p>
-                                ) : (
-                                    <ul className="divide-y">
-                                        {sharingPermissions.filter(p => p.is_active).map(perm => (
-                                            <li key={perm.id} className="py-3 flex justify-between items-center">
-                                                <div>
-                                                    <p className="font-semibold">{perm.doctor_name}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        {perm.access_type} - Granted {new Date(perm.granted_at).toLocaleDateString()}
-                                                        {perm.expires_at && ` (Expires: ${new Date(perm.expires_at).toLocaleDateString()})`}
-                                                    </p>
-                                                    <div className="flex gap-2 mt-1">
-                                                        {perm.can_view_records && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Records</span>}
-                                                        {perm.can_view_documents && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Documents</span>}
-                                                        {perm.can_add_records && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Add Records</span>}
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleRevokeAccess(perm.id)}
-                                                    className="text-red-500 hover:text-red-700 text-sm"
-                                                >
-                                                    Revoke
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                <SharingPermissionsList 
+                                    sharingPermissions={sharingPermissions}
+                                    handleRevokeAccess={handleRevokeAccess}
+                                />
                             </div>
                         )}
 
@@ -612,25 +388,7 @@ const PatientDashboard = () => {
                         {activeTab === 'history' && (
                             <div>
                                 <h3 className="font-bold mb-3">Access History</h3>
-                                {accessHistory.length === 0 ? (
-                                    <p className="text-gray-500 text-sm">No access history.</p>
-                                ) : (
-                                    <ul className="divide-y max-h-96 overflow-y-auto">
-                                        {accessHistory.map((log, idx) => (
-                                            <li key={idx} className="py-2">
-                                                <div className="flex justify-between">
-                                                    <div>
-                                                        <p className="font-semibold text-sm">{log.actor}</p>
-                                                        <p className="text-xs text-gray-500">{log.action}: {log.details}</p>
-                                                    </div>
-                                                    <p className="text-xs text-gray-400">
-                                                        {new Date(log.timestamp).toLocaleString()}
-                                                    </p>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                <AccessHistoryList accessHistory={accessHistory} />
                             </div>
                         )}
 
@@ -639,150 +397,26 @@ const PatientDashboard = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h3 className="font-bold mb-3">Emergency Contacts</h3>
-                                    {emergencyContacts.length === 0 ? (
-                                        <p className="text-gray-500 text-sm">No emergency contacts added.</p>
-                                    ) : (
-                                        <ul className="divide-y">
-                                            {emergencyContacts.map(contact => (
-                                                <li key={contact.id} className="py-3">
-                                                    <p className="font-semibold">{contact.name}</p>
-                                                    <p className="text-sm text-gray-600">{contact.relationship} - {contact.phone}</p>
-                                                    {contact.can_grant_access && (
-                                                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">Can grant access</span>
-                                                    )}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
+                                    <EmergencyContactsList emergencyContacts={emergencyContacts} />
                                 </div>
-                                <div className="bg-gray-50 p-4 rounded">
-                                    <h3 className="font-bold mb-3">Add Emergency Contact</h3>
-                                    <form onSubmit={handleAddContact} className="space-y-3">
-                                        <input
-                                            type="text"
-                                            placeholder="Name *"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            value={newContact.name}
-                                            onChange={e => setNewContact({ ...newContact, name: e.target.value })}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Relationship *"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            value={newContact.relationship}
-                                            onChange={e => setNewContact({ ...newContact, relationship: e.target.value })}
-                                        />
-                                        <input
-                                            type="tel"
-                                            placeholder="Phone *"
-                                            required
-                                            className="w-full border p-2 rounded"
-                                            value={newContact.phone}
-                                            onChange={e => setNewContact({ ...newContact, phone: e.target.value })}
-                                        />
-                                        <label className="flex items-center gap-2 text-sm">
-                                            <input
-                                                type="checkbox"
-                                                checked={newContact.can_grant_access}
-                                                onChange={e => setNewContact({ ...newContact, can_grant_access: e.target.checked })}
-                                            />
-                                            Can grant access on my behalf (emergencies)
-                                        </label>
-                                        <button type="submit" className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600">
-                                            Add Contact
-                                        </button>
-                                    </form>
-                                </div>
+                                <AddEmergencyContactForm 
+                                    newContact={newContact}
+                                    setNewContact={setNewContact}
+                                    handleAddContact={handleAddContact}
+                                />
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Edit Profile Modal */}
-                {
-                    isEditing && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 animate-fade-in">
-                                <h3 className="text-xl font-bold mb-4">Edit Profile</h3>
-                                <form onSubmit={handleUpdateProfile} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded-lg p-2"
-                                            value={editForm.contact_number}
-                                            onChange={e => setEditForm({ ...editForm, contact_number: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
-                                        <select
-                                            className="w-full border rounded-lg p-2"
-                                            value={editForm.blood_group}
-                                            onChange={e => setEditForm({ ...editForm, blood_group: e.target.value })}
-                                        >
-                                            <option value="">Select Blood Group</option>
-                                            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
-                                                <option key={bg} value={bg}>{bg}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                        <textarea
-                                            className="w-full border rounded-lg p-2"
-                                            rows="2"
-                                            value={editForm.address}
-                                            onChange={e => setEditForm({ ...editForm, address: e.target.value })}
-                                        ></textarea>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Allergies (Optional)</label>
-                                        <textarea
-                                            className="w-full border rounded-lg p-2"
-                                            rows="2"
-                                            value={editForm.allergies}
-                                            onChange={e => setEditForm({ ...editForm, allergies: e.target.value })}
-                                            placeholder="e.g. Penicillin, Peanuts"
-                                        ></textarea>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Chronic Conditions (Optional)</label>
-                                        <textarea
-                                            className="w-full border rounded-lg p-2"
-                                            rows="2"
-                                            value={editForm.chronic_conditions}
-                                            onChange={e => setEditForm({ ...editForm, chronic_conditions: e.target.value })}
-                                            placeholder="e.g. Diabetes, Hypertension"
-                                        ></textarea>
-                                    </div>
-
-                                    <div className="flex justify-end gap-3 mt-6">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsEditing(false)}
-                                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold"
-                                        >
-                                            Save Changes
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )
-                }
+                <ProfileEditModal 
+                    isEditing={isEditing}
+                    setIsEditing={setIsEditing}
+                    editForm={editForm}
+                    setEditForm={setEditForm}
+                    handleUpdateProfile={handleUpdateProfile}
+                />
             </div>
         </div >
     );

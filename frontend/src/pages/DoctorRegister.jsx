@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../utils/api';
+import DoctorService from '../services/doctor.service';
 
 const DoctorRegister = () => {
     const [formData, setFormData] = useState({
@@ -22,8 +22,8 @@ const DoctorRegister = () => {
 
     useEffect(() => {
         // Fetch verified hospitals
-        api.get('doctors/hospitals/')
-            .then(res => setHospitals(res.data))
+        DoctorService.getHospitals()
+            .then(data => setHospitals(data))
             .catch(() => setHospitals([]));
     }, []);
 
@@ -47,7 +47,7 @@ const DoctorRegister = () => {
 
         setLoading(true);
         try {
-            await api.post('doctors/register/', {
+            await DoctorService.registerDoctor({
                 username: formData.username,
                 email: formData.email,
                 password: formData.password,

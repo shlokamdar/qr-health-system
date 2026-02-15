@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '../utils/api';
+import DoctorService from '../services/doctor.service';
+import PatientService from '../services/patient.service';
 // Scanner is now simulated/handled inside ScannerModal or PatientSearch if needed, 
 // but actually we moved Scanner logic to ScannerModal. 
 // However, the dashboard logic still uses some scanner state.
@@ -68,8 +69,8 @@ const DoctorDashboard = () => {
 
     const fetchDoctorProfile = async () => {
         try {
-            const res = await api.get('doctors/me/');
-            setDoctorProfile(res.data);
+            const data = await DoctorService.getProfile();
+            setDoctorProfile(data);
         } catch (err) {
             console.error('Could not fetch doctor profile');
         }
@@ -77,8 +78,8 @@ const DoctorDashboard = () => {
 
     const fetchMyConsultations = async () => {
         try {
-            const res = await api.get('doctors/consultations/');
-            setMyConsultations(res.data);
+            const data = await DoctorService.getConsultations();
+            setMyConsultations(data);
         } catch (err) {
             console.error('Could not fetch consultations');
         }
@@ -89,8 +90,8 @@ const DoctorDashboard = () => {
 
     const fetchAppointments = async () => {
         try {
-            const res = await api.get('doctors/appointments/');
-            setAppointments(res.data);
+            const data = await DoctorService.getAppointments();
+            setAppointments(data);
         } catch (err) {
             console.error('Could not fetch appointments');
         }
@@ -98,7 +99,7 @@ const DoctorDashboard = () => {
 
     const handleUpdateAppointment = async (id, status) => {
         try {
-            await api.patch(`doctors/appointments/${id}/`, { status });
+            await DoctorService.updateAppointmentStatus(id, status);
             alert(`Appointment ${status.toLowerCase()}!`);
             fetchAppointments();
         } catch (err) {
@@ -113,10 +114,8 @@ const DoctorDashboard = () => {
     const handleRequestOTP = async () => {
         if (!patientResult) return;
         try {
-            const res = await api.post('patients/otp/request/', {
-                health_id: patientResult.health_id
-            });
-            alert(res.data.message + '\n' + (res.data.dev_note || ''));
+            const res = await PatientService.requestOTP(patientResult.health_id);
+            alert(res.message + '\n' + (res.dev_note || ''));
             setIsOTPModalOpen(true);
         } catch (err) {
             console.error(err);
@@ -127,10 +126,7 @@ const DoctorDashboard = () => {
     const handleVerifyOTP = async (e) => {
         e.preventDefault();
         try {
-            await api.post('patients/otp/verify/', {
-                health_id: patientResult.health_id,
-                otp_code: otpCode
-            });
+            await PatientService.verifyOTP(patientResult.health_id, otpCode);
             alert('Access Granted!');
             setIsOTPModalOpen(false);
             setOtpCode('');
@@ -166,17 +162,17 @@ const DoctorDashboard = () => {
                 setIsCameraLoading(false);
 
                 // Fetch patient data
-                api.get(`patients/${healthId}/`)
-                    .then(res => {
-                        setPatientResult(res.data);
+                PatientService.getByHealthId(healthId)
+                    .then(data => {
+                        setPatientResult(data);
                         return Promise.all([
-                            api.get(`records/?patient=${healthId}`),
-                            api.get(`doctors/patient-history/${healthId}/`)
+                            PatientService.getRecords(healthId),
+                            DoctorService.getPatientHistory(healthId)
                         ]);
                     })
-                    .then(([recRes, consRes]) => {
-                        setRecords(recRes.data);
-                        setConsultations(consRes.data);
+                    .then(([recData, consData]) => {
+                        setRecords(recData);
+                        setConsultations(consData);
                     })
                     .catch(() => {
                         alert('Patient not found or Access Denied');
@@ -226,14 +222,14 @@ const DoctorDashboard = () => {
         if (!idToSearch) return;
 
         try {
-            const res = await api.get(`patients/${idToSearch}/`);
-            setPatientResult(res.data);
+            const data = await PatientService.getByHealthId(idToSearch);
+            setPatientResult(data);
 
-            const recRes = await api.get(`records/?patient=${idToSearch}`);
-            setRecords(recRes.data);
+            const recData = await PatientService.getRecords(idToSearch);
+            setRecords(recData);
 
-            const consRes = await api.get(`doctors/patient-history/${idToSearch}/`);
-            setConsultations(consRes.data);
+            const consData = await DoctorService.getPatientHistory(idToSearch);
+            setConsultations(consData);
             
             // If we are not already on search tab, switch to it
             if (activeTab !== 'search') {
@@ -269,13 +265,13 @@ const DoctorDashboard = () => {
 
         try {
             // Let axios and browser handle Content-Type boundary for FormData
-            await api.post('records/', formData);
+            await PatientService.uploadRecord(formData);
             
             alert('Record Uploaded Successfully!');
             // Refresh records if we are viewing the same patient
             if (searchId === patientResult.health_id) {
-                const recRes = await api.get(`records/?patient=${searchId}`);
-                setRecords(recRes.data);
+                const recData = await PatientService.getRecords(searchId);
+                setRecords(recData);
             }
             setNewRecord({ title: '', description: '', record_type: 'PRESCRIPTION', file: null });
         } catch (err) {
@@ -290,13 +286,13 @@ const DoctorDashboard = () => {
         if (!patientResult) return;
 
         try {
-            await api.post('doctors/consultations/', {
+            await DoctorService.createConsultation({
                 patient_health_id: patientResult.health_id,
                 ...newConsultation
             });
             alert('Consultation Created!');
-            const consRes = await api.get(`doctors/patient-history/${searchId}/`);
-            setConsultations(consRes.data);
+            const consData = await DoctorService.getPatientHistory(searchId);
+            setConsultations(consData);
             fetchMyConsultations();
             setNewConsultation({
                 consultation_date: new Date().toISOString().slice(0, 16),
@@ -315,8 +311,8 @@ const DoctorDashboard = () => {
     const handleRegisterPatient = async (e) => {
         e.preventDefault();
         try {
-            const res = await api.post('doctors/register-patient/', newPatient);
-            alert(`Patient registered! Health ID: ${res.data.health_id}`);
+            const data = await DoctorService.registerPatient(newPatient);
+            alert(`Patient registered! Health ID: ${data.health_id}`);
             setNewPatient({
                 username: '',
                 password: '',

@@ -26,8 +26,10 @@
     - `ConsultationHistory.jsx`, `DashboardStats.jsx`, `ScannerModal.jsx`
     - `ConsultationForm.jsx`, `UploadRecordForm.jsx`
   - **Key Features**: Glassmorphism UI, Detail Modals, File Viewing.
-- [ ] **Centralize API Logic**
-  - **Task**: Move `axios` calls from pages to `src/services/api.js` or `src/hooks/useMedicalRecords.js`.
+- [x] **Extract Reusable Components** from `PatientDashboard.jsx`
+  - **Completed**: Extracted `MedicalRecordList`, `AppointmentList`, `DocumentsList`, `PrescriptionsList`, etc.
+- [x] **Centralize API Logic**
+  - **Completed**: Moved `axios` calls to `src/services/` (`doctor.service.js`, `patient.service.js`, `auth.service.js`). Refactored dashboards to use these services.
 
 #### 🧹 Backend Cleanup
 - [ ] **Standardize Prescription Model**
@@ -41,9 +43,9 @@
 *Focus: Filling the gaps in the "Essential" feature set.*
 
 #### 🏥 Dashboard Enhancements
-- [ ] **Appointment Scheduling UI**
+- [x] **Appointment Scheduling UI**
   - **Backend**: `Appointment` model exists.
-  - **Frontend**: Create a booking modal in `PatientDashboard` and a request list in `DoctorDashboard`.
+  - **Frontend**: Added `AppointmentBooking` component in `PatientDashboard` and list view.
 - [ ] **Lab Technician Interface**
   - **Task**: Flesh out `LabDashboard.jsx` to allow uploading report PDFs directly to a Patient's record via Health ID.
 
