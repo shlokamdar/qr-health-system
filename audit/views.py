@@ -1,23 +1,43 @@
-from rest_framework import generics, permissions
+from rest_framework import viewsets, permissions
+from .models import AccessLog
+from .serializers import AccessLogSerializer
+
+class IsSuperUser(permissions.BasePermission):
+    """
+    Allows access only to superusers.
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_superuser)
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows audit logs to be viewed by superusers.
+    """
+    queryset = AccessLog.objects.all().order_by('-timestamp')
+    serializer_class = AccessLogSerializer
+    permission_classes = [IsSuperUser]
+    filterset_fields = ['action', 'actor', 'patient']
+    search_fields = ['details', 'ip_address', 'actor__username', 'patient__health_id']
+
+
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
-from doctors.models import Doctor, Hospital, Consultation
+from doctors.models import Doctor, Hospital, Appointment
 from patients.models import Patient
 
-User = get_user_model()
+class AdminDashboardStatsView(APIView):
+    """
+    Returns statistics for the admin dashboard.
+    """
+    permission_classes = [IsSuperUser]
 
-
-class AdminDashboardStatsView(generics.RetrieveAPIView):
-    permission_classes = [permissions.IsAdminUser]
-
-    def get(self, request, *args, **kwargs):
-        data = {
-            'total_patients': Patient.objects.count(),
+    def get(self, request):
+        stats = {
             'total_doctors': Doctor.objects.count(),
-            'total_hospitals': Hospital.objects.count(),
-            'total_consultations': Consultation.objects.count(),
-            'pending_hospitals': Hospital.objects.filter(is_verified=False).count(),
+            'verified_doctors': Doctor.objects.filter(is_verified=True).count(),
             'pending_doctors': Doctor.objects.filter(is_verified=False).count(),
-            'recent_users': User.objects.order_by('-date_joined')[:5].values('username', 'role', 'date_joined')
+            'total_hospitals': Hospital.objects.count(),
+            'total_patients': Patient.objects.count(),
+            'total_appointments': Appointment.objects.count(),
         }
-        return Response(data)
+        return Response(stats)

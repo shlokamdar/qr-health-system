@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, throttling
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import LabTechnician, LabTest, LabReport
@@ -8,12 +8,17 @@ from .serializers import (
 )
 from patients.models import Patient
 from audit.models import AccessLog
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 class IsLabTechnician(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == 'LAB_TECH'
 
 class LabTechnicianViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing Lab Technicians.
+    """
     queryset = LabTechnician.objects.all()
     serializer_class = LabTechnicianSerializer
     
@@ -29,6 +34,9 @@ class LabTechnicianViewSet(viewsets.ModelViewSet):
 
 
 class LabTestViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing available Lab Tests.
+    """
     queryset = LabTest.objects.all()
     serializer_class = LabTestSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -37,6 +45,8 @@ class LabTestViewSet(viewsets.ModelViewSet):
 class LabReportViewSet(viewsets.ModelViewSet):
     queryset = LabReport.objects.all()
     serializer_class = LabReportSerializer
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'uploads'
     
     def get_permissions(self):
         if self.action == 'create':
@@ -55,6 +65,14 @@ class LabReportViewSet(viewsets.ModelViewSet):
             # ideally, we check individual patient access in retrieve
             return LabReport.objects.all() # Filtering should happen via patient filter
         return LabReport.objects.none()
+
+    @swagger_auto_schema(
+        operation_description="Upload a new lab report for a patient.",
+        request_body=LabReportSerializer,
+        responses={201: LabReportSerializer}
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         patient = serializer.validated_data['patient']

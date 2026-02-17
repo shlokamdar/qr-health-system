@@ -64,3 +64,35 @@ def send_record_uploaded_email(patient, record_type, doctor_name):
     """
     if patient.user.email:
         send_email_async(subject, message, [patient.user.email])
+
+def send_lab_report_notification(patient, report):
+    """Notify patient that a lab report has been uploaded."""
+    subject = f"New Lab Report Available: {report.test_type.name}"
+    message = f"""
+    Hello {patient.user.get_full_name() or patient.user.username},
+
+    A new lab report for {report.test_type.name} has been uploaded by {report.technician.user.get_full_name() or 'Lab Technician'}.
+    
+    Log in to your dashboard to view and download the report.
+    
+    Regards,
+    QR Health System
+    """
+    if patient.user.email:
+        send_email_async(subject, message, [patient.user.email])
+
+def send_consultation_notification(patient, consultation):
+    """Notify patient that a consultation record has been added."""
+    subject = f"New Consultation Record: Dr. {consultation.doctor.user.get_full_name()}"
+    message = f"""
+    Hello {patient.user.get_full_name() or patient.user.username},
+
+    Dr. {consultation.doctor.user.get_full_name()} has added a new consultation record involved with your visit on {consultation.consultation_date.date()}.
+    
+    You can view the prescription and notes in your dashboard.
+    
+    Regards,
+    QR Health System
+    """
+    if patient.user.email:
+        send_email_async(subject, message, [patient.user.email])

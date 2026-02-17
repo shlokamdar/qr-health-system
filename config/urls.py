@@ -47,6 +47,7 @@ urlpatterns = [
     path('api/records/', include('records.urls')),
     path('api/doctors/', include('doctors.urls')),
     path('api/labs/', include('labs.urls')),
+    path('api/audit/', include('audit.urls')),
 
     # Admin Dashboard API
     path('api/admin/stats/', AdminDashboardStatsView.as_view(), name='admin-stats'),

@@ -16,6 +16,8 @@ from audit.models import AccessLog
 
 
 from utils.notifications import send_access_granted_email, send_access_revoked_email
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
@@ -44,8 +46,9 @@ class PatientViewSet(viewsets.ModelViewSet):
         # Check permissions manually for finer control and logging
         is_owner = instance.user == user
         is_doctor = user.role == 'DOCTOR'
+        is_lab_tech = user.role == 'LAB_TECH'
         
-        if is_owner or is_doctor:
+        if is_owner or is_doctor or is_lab_tech:
             # Log the successful access
             AccessLog.objects.create(
                 actor=user,
@@ -268,6 +271,17 @@ class OTPRequestView(APIView):
     """Generate and send OTP to patient."""
     permission_classes = [IsDoctor]
 
+    @swagger_auto_schema(
+        operation_description="Generate and send OTP to a patient.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'health_id': openapi.Schema(type=openapi.TYPE_STRING, description='Patient Health ID'),
+            },
+            required=['health_id']
+        ),
+        responses={200: 'OTP sent successfully', 400: 'Bad Request'}
+    )
     def post(self, request):
         health_id = request.data.get('health_id')
         if not health_id:
@@ -301,6 +315,18 @@ class OTPVerifyView(APIView):
     """Verify OTP and grant full access."""
     permission_classes = [IsDoctor]
 
+    @swagger_auto_schema(
+        operation_description="Verify OTP and grant full access to patient records.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'health_id': openapi.Schema(type=openapi.TYPE_STRING, description='Patient Health ID'),
+                'otp_code': openapi.Schema(type=openapi.TYPE_STRING, description='6-digit OTP code'),
+            },
+            required=['health_id', 'otp_code']
+        ),
+        responses={200: 'Full Access Granted', 400: 'Invalid OTP'}
+    )
     def post(self, request):
         health_id = request.data.get('health_id')
         otp_code = request.data.get('otp_code')

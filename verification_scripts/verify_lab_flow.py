@@ -1,87 +1,111 @@
-import os
-import django
-import sys
-from django.core.files.uploadedfile import SimpleUploadedFile
 
-# Add project root to path
+import os
+import sys
+import django
+import random
+
+# Setup Django
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
+from labs.models import LabTechnician, LabTest, LabReport
 from patients.models import Patient
-from labs.models import LabTechnician, LabReport, LabTest
-from rest_framework.test import APIRequestFactory
+from rest_framework.test import APIClient
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 User = get_user_model()
 
-def verify_lab_flow():
-    print("--- Verifying Lab Workflow ---")
 
-    # 1. Setup Data
-    print("\n[SETUP] Creating Test Data...")
-    patient_user, _ = User.objects.get_or_create(username='lab_patient', email='patient@lab.com', role='PATIENT')
-    patient, _ = Patient.objects.get_or_create(user=patient_user)
+def verify_lab_flow():
+    print("Starting Lab Flow Verification...")
+
+    # 1. Create Data
+    # Lab Tech
+    tech_user, created = User.objects.get_or_create(
+        username='test_tech',
+        defaults={
+            'email': 'tech@test.com',
+            'first_name': 'Test',
+            'last_name': 'Tech',
+            'role': 'LAB_TECH'
+        }
+    )
+    if created:
+        tech_user.set_password('password123')
+        tech_user.save()
+        LabTechnician.objects.create(
+            user=tech_user,
+            license_number=f"LIC-{random.randint(1000,9999)}"
+        )
+    print(f"Lab Tech User: {tech_user.username}")
+
+    # Patient
+    patient_user, created = User.objects.get_or_create(
+        username='test_patient_lab',
+        defaults={
+            'email': 'patient@test.com',
+            'role': 'PATIENT'
+        }
+    )
+    if created:
+        patient_user.set_password('password123')
+        patient_user.save()
+        Patient.objects.create(user=patient_user)
+    
+    patient = patient_user.patient_profile
     print(f"Patient: {patient.health_id}")
 
-    lab_user, _ = User.objects.get_or_create(username='lab_tech_test', email='tech@lab.com', role='LAB_TECH')
-    if not hasattr(lab_user, 'lab_profile'):
-        LabTechnician.objects.create(
-            user=lab_user, 
-            license_number='LAB-12345',
-            is_verified=True # Auto-verify for test
-        )
-    else:
-        lab_tech = lab_user.lab_profile
-        lab_tech.is_verified = True
-        lab_tech.save()
-    print(f"Lab Tech: {lab_user.username} (Verified)")
-
-    test_type, _ = LabTest.objects.get_or_create(
+    # Lab Test
+    test, _ = LabTest.objects.get_or_create(
         code='CBC',
-        defaults={'name': 'Complete Blood Count', 'normal_range': 'N/A'}
+        defaults={'name': 'Complete Blood Count'}
     )
-    print(f"Lab Test: {test_type.name}")
 
-    # 2. Simulate Upload via Model (Backend logic check)
-    print("\n[ACTION] Lab Tech uploading report...")
-    
-    # Create dummy file
-    dummy_file = SimpleUploadedFile("report.pdf", b"file_content", content_type="application/pdf")
+    # 2. Test API client
+    client = APIClient()
+    client.force_authenticate(user=tech_user)
 
-    report = LabReport.objects.create(
-        patient=patient,
-        technician=lab_user.lab_profile,
-        test_type=test_type,
-        file=dummy_file,
-        comments="Everything looks normal.",
-        result_data={"wbc": 5.5, "rbc": 4.8}
-    )
-    
-    print(f"Report Created. ID: {report.id}")
-
-    # 3. Verify Patient Can See It (API Level)
-    print("\n[VERIFY] Checking Patient API Access...")
-    factory = APIRequestFactory()
-    request = factory.get('/api/labs/reports/')
-    request.user = patient_user
-    
-    from labs.views import LabReportViewSet
-    from rest_framework.test import force_authenticate
-    
-    view = LabReportViewSet.as_view({'get': 'list'})
-    force_authenticate(request, user=patient_user)
-    response = view(request)
+    # 2a. Search Patient
+    print(f"Searching for patient {patient.health_id}...")
+    response = client.get(f'/api/patients/{patient.health_id}/')
     
     if response.status_code == 200:
-        print(f"API Success (200). Count: {len(response.data)}")
-        if len(response.data) > 0:
-            rep = response.data[0]
-            print(f"API Data: Tech={rep.get('technician_name')}, Hospital={rep.get('hospital_name')}")
+        print("Patient search successful")
     else:
-        print(f"API Failed: {response.status_code}")
+        print(f"Patient search failed: {response.status_code} - {response.data}")
+        return
 
-    print("\n--- Verification Complete ---")
+    # 2b. Upload Report
+    print("Uploading Report...")
+    file = SimpleUploadedFile("report.pdf", b"dummy pdf content", content_type="application/pdf")
+    
+    data = {
+        'patient': patient.id,
+        'test_type': test.id,
+        'file': file,
+        'comments': 'Test upload from script'
+    }
+    
+    response = client.post('/api/labs/reports/', data, format='multipart')
+    
+    if response.status_code == 201:
+        print("Report upload successful")
+        report_id = response.data['id']
+    else:
+        print(f"Report upload failed: {response.status_code} - {response.data}")
+        return
 
-if __name__ == '__main__':
+    # 2c. Verify Report
+    print("Verifying report existence...")
+    if LabReport.objects.filter(id=report_id).exists():
+        print("Report found in database")
+    else:
+        print("Report not found in database")
+
+    print("\nVerification Complete!")
+
+
+if __name__ == "__main__":
     verify_lab_flow()

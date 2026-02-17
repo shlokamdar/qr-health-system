@@ -6,3 +6,5 @@ class PatientsConfig(AppConfig):
 
     def ready(self):
         import patients.signals
+
+

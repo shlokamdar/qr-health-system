@@ -85,7 +85,12 @@ class Consultation(models.Model):
     consultation_date = models.DateTimeField()
     chief_complaint = models.TextField(help_text=_("Primary reason for visit"))
     diagnosis = models.TextField(blank=True)
-    prescription = models.TextField(blank=True)
+    prescription = models.TextField(blank=True, help_text=_("Legacy text prescription or general notes"))
+    medicines = models.JSONField(
+        default=list, 
+        blank=True, 
+        help_text=_("List of medicines, e.g., [{'name': 'Paracetamol', 'dosage': '500mg', 'frequency': 'twice daily'}]")
+    )
     notes = models.TextField(blank=True, help_text=_("Additional clinical notes"))
     follow_up_date = models.DateField(null=True, blank=True)
     
