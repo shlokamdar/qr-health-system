@@ -32,8 +32,16 @@ class Patient(models.Model):
     
     # New enhanced fields
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUPS, blank=True)
+    organ_donor = models.BooleanField(default=False, help_text=_("Willing to donate organs"))
     allergies = models.TextField(blank=True, help_text=_("Known allergies"))
     chronic_conditions = models.TextField(blank=True, help_text=_("Ongoing health conditions"))
+    
+    GENDER_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+    ]
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='Male')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

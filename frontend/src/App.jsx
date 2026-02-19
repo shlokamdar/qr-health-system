@@ -14,6 +14,8 @@ import HospitalRegister from './pages/HospitalRegister';
 import LabRegister from './pages/LabRegister';
 import LabLogin from './pages/LabLogin';
 import LabDashboard from './pages/LabDashboard';
+import UnifiedLogin from './pages/UnifiedLogin';
+import SystemAdminLogin from './pages/SystemAdminLogin';
 
 // Protected Route — requires authentication
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -110,7 +112,8 @@ function App() {
 
                     {/* Legacy redirect */}
                     <Route path="/dashboard" element={<DashboardRedirect />} />
-                    <Route path="/login" element={<Navigate to="/" replace />} />
+                    <Route path="/login" element={<UnifiedLogin />} />
+                    <Route path="/system/login" element={<SystemAdminLogin />} />
                     <Route path="/register" element={<Navigate to="/" replace />} />
 
                     {/* Catch all */}

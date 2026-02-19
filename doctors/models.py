@@ -47,6 +47,15 @@ class Doctor(models.Model):
         related_name='doctors'
     )
     license_number = models.CharField(max_length=50, unique=True)
+    issuing_medical_council = models.CharField(max_length=200, blank=True)
+    license_expiry_date = models.DateField(null=True, blank=True)
+    years_of_experience = models.PositiveIntegerField(default=0)
+    
+    # Documents
+    license_document = models.FileField(upload_to='doctor_documents/licenses/', blank=True, null=True)
+    degree_certificate = models.FileField(upload_to='doctor_documents/degrees/', blank=True, null=True)
+    identity_proof = models.FileField(upload_to='doctor_documents/ids/', blank=True, null=True)
+
     specialization = models.CharField(max_length=100)
     authorization_level = models.CharField(
         max_length=20,

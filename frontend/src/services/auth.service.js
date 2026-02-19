@@ -19,6 +19,11 @@ const AuthService = {
     refreshToken: async (refresh) => {
         const response = await api.post('auth/refresh/', { refresh });
         return response.data;
+    },
+
+    checkUsername: async (username) => {
+        const response = await api.get(`auth/check-username/?username=${username}`);
+        return response.data;
     }
 };
 

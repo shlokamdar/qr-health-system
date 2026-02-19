@@ -24,3 +24,14 @@ class MeView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+class CheckUsernameView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        username = request.query_params.get('username', '')
+        if not username:
+             return Response({'available': False, 'error': 'Username required'}, status=400)
+        
+        is_taken = User.objects.filter(username__iexact=username).exists()
+        return Response({'available': not is_taken})
