@@ -9,7 +9,6 @@ from .serializers import (
     AppointmentSerializer
 )
 from permissions.roles import IsDoctor
-from audit.models import AccessLog
 from patients.models import Patient
 from accounts.serializers import UserSerializer
 
@@ -93,6 +92,7 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
         patient = Patient.objects.create(user=user, **patient_data)
         
         # Log the action
+        from audit.models import AccessLog
         AccessLog.objects.create(
             actor=request.user,
             patient=patient,

@@ -46,20 +46,20 @@
 - [x] **Appointment Scheduling UI**
   - **Backend**: `Appointment` model exists.
   - **Frontend**: Added `AppointmentBooking` component in `PatientDashboard` and list view.
-- [ ] **Lab Technician Interface**
+- [x] **Lab Technician Interface**
   - **Task**: Flesh out `LabDashboard.jsx` to allow uploading report PDFs directly to a Patient's record via Health ID.
 
 #### 🔔 Notifications & Communication
-- [ ] **Email/SMS Alerts**
+- [x] **Email/SMS Alerts**
   - **Trigger**: When a record is accessed via OTP or a new report is added.
   - **Tech**: Django Signals + SendGrid/Twilio (mock for now).
 
 #### 🛡️ Security Hardening
-- [ ] **Rate Limiting**
+- [x] **Rate Limiting**
   - **Task**: Configure `UserRateThrottle` properly in `settings.py` for sensitive endpoints (Auth, OTP).
 - [x] **OTP Bypass for Dev**
   - **Status**: Implemented `12345` specific bypass in `patients/views.py` for testing.
-- [ ] **Input Validation**
+- [x] **Input Validation**
   - **Task**: Ensure file uploads (Reports) validate file type (PDF/Images only) and size.
 
 ---
@@ -73,7 +73,7 @@
   - **Component**: Create a `MobileNav` for smaller screens.
 
 #### 💅 Visual Polish
-- [ ] **Loading States**
+- [x] **Loading States**
   - **Task**: Add Skeletons (Shimmer effect) while fetching data instead of just "Loading...".
 - [ ] **Better Feedback**
   - **Task**: Use `react-hot-toast` or similar for success/error messages (e.g., "Prescription Sent Successfully").
@@ -126,6 +126,7 @@ src/
 ## 📝 Immediate Action Items
 
 1. **Refactor `DoctorDashboard.jsx`**: It's the most critical and complex screen. Breaking it down will immediately improve code health.
-2. **Implement `Appointment` UI**: This is a high-value feature that is currently backend-only.
-3. **Verify Lab Workflow**: Ensure the Lab Tech -> Upload Report -> Patient View flow works end-to-end.
+2. **Implement `Appointment` UI**: [DONE] Basic UI implemented in Patient Dashboard.
+3. **Verify Lab Workflow**: [DONE] Ensure the Lab Tech -> Upload Report -> Patient View flow works end-to-end.
 
+complete steps in next_step.md 

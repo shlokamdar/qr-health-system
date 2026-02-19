@@ -100,7 +100,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'doctor', 'doctor_details', 'patient', 'patient_health_id',
             'consultation_date', 'chief_complaint', 'diagnosis', 
-            'prescription', 'notes', 'follow_up_date',
+            'prescription', 'medicines', 'notes', 'follow_up_date',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'doctor', 'created_at', 'updated_at']
@@ -113,8 +113,8 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Consultation
         fields = [
-            'patient_health_id', 'consultation_date', 'chief_complaint',
-            'diagnosis', 'prescription', 'notes', 'follow_up_date'
+            'id', 'patient_health_id', 'consultation_date', 'chief_complaint',
+            'diagnosis', 'prescription', 'medicines', 'notes', 'follow_up_date'
         ]
     
     def create(self, validated_data):

@@ -61,6 +61,24 @@ class LabReportSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['technician', 'created_at']
 
+    def validate_file(self, value):
+        """
+        Validate file size and extension.
+        """
+        # 1. Check File Size (Max 5MB)
+        limit_mb = 5
+        if value.size > limit_mb * 1024 * 1024:
+            raise serializers.ValidationError(f"File too large. Size should not exceed {limit_mb} MB.")
+
+        # 2. Check File Extension
+        import os
+        ext = os.path.splitext(value.name)[1].lower()
+        valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png']
+        if ext not in valid_extensions:
+            raise serializers.ValidationError(f"Unsupported file extension. Allowed: {', '.join(valid_extensions)}")
+
+        return value
+
     def get_hospital_name(self, obj):
         if obj.technician and obj.technician.hospital:
             return obj.technician.hospital.name

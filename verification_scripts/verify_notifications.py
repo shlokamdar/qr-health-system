@@ -1,74 +1,80 @@
-import os
-import django
-import sys
 
-# Add project root to path (parent directory)
+import os
+import sys
+import django
+from django.conf import settings
+
+# Setup Django
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
+# Ensure EMAIL_BACKEND is dummy for testing, but we want to capture it?
+# Actually, the settings are already loaded. 
+# If settings.EMAIL_BACKEND is 'django.core.mail.backends.console.EmailBackend', it prints to stdout.
+# We can capture stdout to verify.
+
 from django.contrib.auth import get_user_model
+from doctors.models import Doctor, Consultation
 from patients.models import Patient
-from doctors.models import Doctor, Hospital
-from utils.notifications import send_access_granted_email, send_record_uploaded_email
+from labs.models import LabTechnician, LabTest, LabReport
+from django.core.files.uploadedfile import SimpleUploadedFile
+from datetime import datetime
 
 User = get_user_model()
 
 def verify_notifications():
-    print("--- Verifying Notification System ---")
+    print("Starting Notification Verification...")
+
+    # 1. Setup Users
+    # Patient with Email
+    patient_user, _ = User.objects.get_or_create(
+        username='notify_patient',
+        defaults={'email': 'patient@example.com', 'role': 'PATIENT'}
+    )
+    Patient.objects.get_or_create(user=patient_user)
+    patient = patient_user.patient_profile
     
-    # 1. Setup Test Data
-    try:
-        patient_user, _ = User.objects.get_or_create(username='test_notif_patient', email='patient@example.com', role='PATIENT')
-        patient, _ = Patient.objects.get_or_create(user=patient_user)
-        
-        doctor_user, _ = User.objects.get_or_create(username='test_notif_doctor', email='doctor@example.com', role='DOCTOR')
-        
-        # Use registration_number for lookup to avoid unique constraint errors
-        hospital, _ = Hospital.objects.get_or_create(
-            registration_number='REG-TEST-001',
-            defaults={
-                'name': "Test Hospital", 
-                'email': 'hospital@test.com', 
-                'is_verified': True,
-                'address': '123 Test St',
-                'phone': '1234567890'
-            }
-        )
-        
-        # Use license_number for lookup
-        doctor, _ = Doctor.objects.get_or_create(
-            license_number='LIC-TEST-001',
-            defaults={
-                'user': doctor_user,
-                'hospital': hospital, 
-                'is_verified': True,
-                'specialization': 'General'
-            }
-        )
-        # Ensure user is linked if doctor existed but user didn't match (though unlikely with this script structure)
-        if doctor.user != doctor_user:
-            doctor.user = doctor_user
-            doctor.save()
-        
-        print(f"Patient: {patient_user.email}")
-        print(f"Doctor: {doctor_user.email}")
-        
-    except Exception as e:
-        print(f"Setup failed: {e}")
-        return
+    # Doctor
+    doc_user, _ = User.objects.get_or_create(
+        username='notify_doctor',
+        defaults={'email': 'doctor@example.com', 'role': 'DOCTOR'}
+    )
+    Doctor.objects.get_or_create(user=doc_user, defaults={'license_number': 'LIC-NOTIFY'})
+    doctor = doc_user.doctor_profile
 
-    # 2. Test Access Granted Email
-    print("\n[TEST] Sending Access Granted Email...")
-    send_access_granted_email(patient, doctor, "QR_QUICK")
-    print("Check console for 'Access Granted' email content.")
-
-    # 3. Test Record Uploaded Email
-    print("\n[TEST] Sending Record Uploaded Email...")
-    send_record_uploaded_email(patient, "Consultation Note", "Dr. Test Doctor")
-    print("Check console for 'New Health Record' email content.")
+    # Lab Tech
+    tech_user, _ = User.objects.get_or_create(
+        username='notify_tech',
+        defaults={'email': 'tech@example.com', 'role': 'LAB_TECH'}
+    )
+    LabTechnician.objects.get_or_create(user=tech_user, defaults={'license_number': 'LIC-LAB-NOTIFY'})
+    tech = tech_user.lab_profile
     
-    print("\n--- Verification Complete ---")
+    # Lab Test
+    test, _ = LabTest.objects.get_or_create(code='NOTIFY-TEST', defaults={'name': 'Notification Test'})
 
-if __name__ == '__main__':
+    print("--- Testing Lab Report Notification ---")
+    # 2. Create Lab Report -> Should trigger signal
+    LabReport.objects.create(
+        patient=patient,
+        technician=tech,
+        test_type=test,
+        file=SimpleUploadedFile("report.pdf", b"content"),
+        comments="Notification Test"
+    )
+    print("Lab Report Created. Check console for email.")
+
+    print("\n--- Testing Consultation Notification ---")
+    # 3. Create Consultation -> Should trigger signal
+    Consultation.objects.create(
+        doctor=doctor,
+        patient=patient,
+        consultation_date=datetime.now(),
+        chief_complaint="Notification Check",
+        notes="Check email"
+    )
+    print("Consultation Created. Check console for email.")
+
+if __name__ == "__main__":
     verify_notifications()

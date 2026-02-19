@@ -16,6 +16,8 @@ import ConsultationForm from '../components/doctor/ConsultationForm';
 import UploadRecordForm from '../components/doctor/UploadRecordForm';
 import AppointmentList from '../components/doctor/AppointmentList';
 import PatientRegisterForm from '../components/doctor/PatientRegisterForm';
+import MobileNav from '../components/doctor/MobileNav';
+import toast from 'react-hot-toast';
 
 const DoctorDashboard = () => {
     const [activeTab, setActiveTab] = useState('search');
@@ -100,10 +102,10 @@ const DoctorDashboard = () => {
     const handleUpdateAppointment = async (id, status) => {
         try {
             await DoctorService.updateAppointmentStatus(id, status);
-            alert(`Appointment ${status.toLowerCase()}!`);
+            toast.success(`Appointment ${status.toLowerCase()}!`);
             fetchAppointments();
         } catch (err) {
-            alert('Failed to update status');
+            toast.error('Failed to update status');
         }
     };
 
@@ -115,11 +117,12 @@ const DoctorDashboard = () => {
         if (!patientResult) return;
         try {
             const res = await PatientService.requestOTP(patientResult.health_id);
-            alert(res.message + '\n' + (res.dev_note || ''));
+            toast.success(res.message);
+            if (res.dev_note) console.info(res.dev_note);
             setIsOTPModalOpen(true);
         } catch (err) {
             console.error(err);
-            alert('Failed to send OTP');
+            toast.error('Failed to send OTP');
         }
     };
 
@@ -127,13 +130,13 @@ const DoctorDashboard = () => {
         e.preventDefault();
         try {
             await PatientService.verifyOTP(patientResult.health_id, otpCode);
-            alert('Access Granted!');
+            toast.success('Access Granted!');
             setIsOTPModalOpen(false);
             setOtpCode('');
             handleSearch({ preventDefault: () => { } });
         } catch (err) {
             console.error(err);
-            alert('Invalid OTP or Expired');
+            toast.error('Invalid OTP or Expired');
         }
     };
 
@@ -175,7 +178,7 @@ const DoctorDashboard = () => {
                         setConsultations(consData);
                     })
                     .catch(() => {
-                        alert('Patient not found or Access Denied');
+                        toast.error('Patient not found or Access Denied');
                         setPatientResult(null);
                     });
             }
@@ -218,7 +221,7 @@ const DoctorDashboard = () => {
     const handleSearch = async (e, overrideId = null) => {
         if (e && e.preventDefault) e.preventDefault();
         const idToSearch = overrideId || searchId;
-        
+
         if (!idToSearch) return;
 
         try {
@@ -230,14 +233,14 @@ const DoctorDashboard = () => {
 
             const consData = await DoctorService.getPatientHistory(idToSearch);
             setConsultations(consData);
-            
+
             // If we are not already on search tab, switch to it
             if (activeTab !== 'search') {
                 setActiveTab('search');
                 setSearchId(idToSearch);
             }
         } catch (err) {
-            alert('Patient not found or Access Denied');
+            toast.error('Patient not found or Access Denied');
             setPatientResult(null);
         }
     };
@@ -266,7 +269,7 @@ const DoctorDashboard = () => {
         try {
             // Let axios and browser handle Content-Type boundary for FormData
             await PatientService.uploadRecord(formData);
-            
+
             alert('Record Uploaded Successfully!');
             // Refresh records if we are viewing the same patient
             if (searchId === patientResult.health_id) {
@@ -290,7 +293,7 @@ const DoctorDashboard = () => {
                 patient_health_id: patientResult.health_id,
                 ...newConsultation
             });
-            alert('Consultation Created!');
+            toast.success('Consultation Created!');
             const consData = await DoctorService.getPatientHistory(searchId);
             setConsultations(consData);
             fetchMyConsultations();
@@ -304,7 +307,7 @@ const DoctorDashboard = () => {
             });
         } catch (err) {
             console.error(err);
-            alert('Failed to create consultation');
+            toast.error('Failed to create consultation');
         }
     };
 
@@ -312,7 +315,7 @@ const DoctorDashboard = () => {
         e.preventDefault();
         try {
             const data = await DoctorService.registerPatient(newPatient);
-            alert(`Patient registered! Health ID: ${data.health_id}`);
+            toast.success(`Patient registered! Health ID: ${data.health_id}`);
             setNewPatient({
                 username: '',
                 password: '',
@@ -325,7 +328,7 @@ const DoctorDashboard = () => {
             });
         } catch (err) {
             console.error(err);
-            alert('Failed to register patient');
+            toast.error('Failed to register patient');
         }
     };
 
@@ -333,21 +336,21 @@ const DoctorDashboard = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-800">
-             {/* Background decorative elements */}
-             <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-br from-indigo-50/80 via-purple-50/50 to-slate-50 z-0 pointer-events-none" />
-             <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-100/40 rounded-full blur-3xl pointer-events-none" />
-             <div className="absolute top-[20%] left-[-10%] w-72 h-72 bg-purple-100/40 rounded-full blur-3xl pointer-events-none" />
+            {/* Background decorative elements */}
+            <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-br from-indigo-50/80 via-purple-50/50 to-slate-50 z-0 pointer-events-none" />
+            <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-100/40 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-[20%] left-[-10%] w-72 h-72 bg-purple-100/40 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10">
                 <Header />
                 <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
-                    
+
                     <DashboardStats doctorProfile={doctorProfile} />
 
                     {/* Main Dashboard Card */}
-                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/60 overflow-hidden ring-1 ring-slate-900/5">
+                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/60 overflow-hidden ring-1 ring-slate-900/5 mb-16 md:mb-0">
                         {/* Tab Navigation */}
-                        <div className="flex border-b border-slate-100 bg-white/50 backdrop-blur-md overflow-x-auto scroller-none">
+                        <div className="hidden md:flex border-b border-slate-100 bg-white/50 backdrop-blur-md overflow-x-auto scroller-none">
                             {['search', 'consultations', 'appointments', 'register'].map(tab => (
                                 <button
                                     key={tab}
@@ -400,7 +403,7 @@ const DoctorDashboard = () => {
                                                     handleRequestOTP={handleRequestOTP}
                                                 />
                                                 <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white shadow-sm hover:shadow-md transition-all">
-                                                     <UploadRecordForm
+                                                    <UploadRecordForm
                                                         newRecord={newRecord}
                                                         setNewRecord={setNewRecord}
                                                         handleUpload={handleUpload}
@@ -423,17 +426,17 @@ const DoctorDashboard = () => {
                                                         <ConsultationHistory consultations={consultations} />
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                                                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                                                        <h3 className="font-bold text-slate-700 flex items-center gap-2">
                                                             <span>📂</span> Medical Records
                                                         </h3>
                                                         <span className="text-xs font-medium bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
                                                             {records.length} Files
                                                         </span>
                                                     </div>
-                                                     <div className="p-6 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                    <div className="p-6 max-h-[300px] overflow-y-auto custom-scrollbar">
                                                         <MedicalRecordList records={records} />
                                                     </div>
                                                 </div>
@@ -451,7 +454,7 @@ const DoctorDashboard = () => {
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {!patientResult && (
                                         <div className="text-center py-20 opacity-60">
                                             <div className="text-6xl mb-4">🔍</div>
@@ -462,92 +465,92 @@ const DoctorDashboard = () => {
                                 </div>
                             )}
 
-                        {/* My Consultations Tab */}
-                        {activeTab === 'consultations' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
-                                    <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📋</span>
-                                    <span>Recent Consultations</span>
-                                </h3>
-                                {myConsultations.length === 0 ? (
-                                    <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                        <p className="text-slate-400 text-lg">No consultations yet.</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid gap-6">
-                                        {myConsultations.map(con => (
-                                            <div key={con.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-                                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                                                    <div className="flex-1 space-y-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider border border-indigo-100">
-                                                                {con.patient_health_id}
-                                                            </span>
-                                                            <span className="text-slate-400 text-sm">•</span>
-                                                            <span className="text-slate-500 text-sm font-medium">
-                                                                {new Date(con.consultation_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                                            </span>
+                            {/* My Consultations Tab */}
+                            {activeTab === 'consultations' && (
+                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                                        <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📋</span>
+                                        <span>Recent Consultations</span>
+                                    </h3>
+                                    {myConsultations.length === 0 ? (
+                                        <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                            <p className="text-slate-400 text-lg">No consultations yet.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-6">
+                                            {myConsultations.map(con => (
+                                                <div key={con.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                                                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                                                        <div className="flex-1 space-y-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider border border-indigo-100">
+                                                                    {con.patient_health_id}
+                                                                </span>
+                                                                <span className="text-slate-400 text-sm">•</span>
+                                                                <span className="text-slate-500 text-sm font-medium">
+                                                                    {new Date(con.consultation_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xl font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                                                                {con.chief_complaint}
+                                                            </p>
+                                                            {con.diagnosis && (
+                                                                <div className="flex items-start gap-2">
+                                                                    <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mt-1">Diagnosis:</span>
+                                                                    <span className="text-slate-700 bg-slate-100 px-3 py-1 rounded-lg text-sm">{con.diagnosis}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <p className="text-xl font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
-                                                            {con.chief_complaint}
-                                                        </p>
-                                                        {con.diagnosis && (
-                                                            <div className="flex items-start gap-2">
-                                                                <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mt-1">Diagnosis:</span>
-                                                                <span className="text-slate-700 bg-slate-100 px-3 py-1 rounded-lg text-sm">{con.diagnosis}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex flex-col items-end gap-3 min-w-[140px]">
-                                                        <button 
-                                                            onClick={() => handleViewPatient(con.patient_health_id)}
-                                                            className="text-indigo-600 font-medium text-sm hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors w-full justify-center group-hover:bg-indigo-600 group-hover:text-white"
-                                                        >
-                                                            View Profile <span>→</span>
-                                                        </button>
-                                                        {con.follow_up_date && (
-                                                            <div className="text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100 w-full text-center">
-                                                                Follow-up: {new Date(con.follow_up_date).toLocaleDateString()}
-                                                            </div>
-                                                        )}
+                                                        <div className="flex flex-col items-end gap-3 min-w-[140px]">
+                                                            <button
+                                                                onClick={() => handleViewPatient(con.patient_health_id)}
+                                                                className="text-indigo-600 font-medium text-sm hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors w-full justify-center group-hover:bg-indigo-600 group-hover:text-white"
+                                                            >
+                                                                View Profile <span>→</span>
+                                                            </button>
+                                                            {con.follow_up_date && (
+                                                                <div className="text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100 w-full text-center">
+                                                                    Follow-up: {new Date(con.follow_up_date).toLocaleDateString()}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
-                        {/* Appointments Tab */}
-                        {activeTab === 'appointments' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
-                                    <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📅</span>
-                                    <span>Manage Appointments</span>
-                                </h3>
-                                <AppointmentList
-                                    appointments={appointments}
-                                    handleUpdateStatus={handleUpdateAppointment}
-                                    handleViewPatient={handleViewPatient}
-                                />
-                            </div>
-                        )}
+                            {/* Appointments Tab */}
+                            {activeTab === 'appointments' && (
+                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                                        <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📅</span>
+                                        <span>Manage Appointments</span>
+                                    </h3>
+                                    <AppointmentList
+                                        appointments={appointments}
+                                        handleUpdateStatus={handleUpdateAppointment}
+                                        handleViewPatient={handleViewPatient}
+                                    />
+                                </div>
+                            )}
 
-                         {/* Register Patient Tab */}
-                         {activeTab === 'register' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                 <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
-                                    <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">➕</span>
-                                    <span>Register New Patient</span>
-                                </h3>
-                                <PatientRegisterForm
-                                    newPatient={newPatient}
-                                    setNewPatient={setNewPatient}
-                                    handleRegister={handleRegisterPatient}
-                                />
-                            </div>
-                        )}
+                            {/* Register Patient Tab */}
+                            {activeTab === 'register' && (
+                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                                        <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">➕</span>
+                                        <span>Register New Patient</span>
+                                    </h3>
+                                    <PatientRegisterForm
+                                        newPatient={newPatient}
+                                        setNewPatient={setNewPatient}
+                                        handleRegister={handleRegisterPatient}
+                                    />
+                                </div>
+                            )}
 
                         </div>
                     </div>
@@ -571,6 +574,8 @@ const DoctorDashboard = () => {
                 setOtpCode={setOtpCode}
                 handleVerifyOTP={handleVerifyOTP}
             />
+
+            <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
     );
 };
