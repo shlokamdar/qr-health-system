@@ -7,7 +7,12 @@ const AuthService = {
     },
 
     register: async (userData) => {
-        const response = await api.post('auth/register/', userData);
+        const config = {};
+        if (userData instanceof FormData) {
+            // Set to undefined to let the browser set the Content-Type with boundary
+            config.headers = { 'Content-Type': undefined };
+        }
+        const response = await api.post('auth/register/', userData, config);
         return response.data;
     },
 

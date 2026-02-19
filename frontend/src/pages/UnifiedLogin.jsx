@@ -125,6 +125,44 @@ const UnifiedLogin = () => {
         return () => clearTimeout(timeoutId);
     }, [patientData.username]);
 
+    // Generate Suggested Usernames for Doctor
+    useEffect(() => {
+        if (registerRole === 'DOCTOR' && doctorData.firstName && doctorData.lastName) {
+            const base = (doctorData.firstName + doctorData.lastName).toLowerCase().replace(/\s/g, '');
+            const rand = Math.floor(Math.random() * 100);
+            setSuggestedUsernames([
+                `dr.${base}`,
+                `dr_${base}${rand}`,
+                `${base}.md`
+            ]);
+        }
+    }, [doctorData.firstName, doctorData.lastName, registerRole]);
+
+    // Check Doctor Username Availability
+    useEffect(() => {
+        const checkAvailability = async () => {
+             if (!doctorData.username || doctorData.username.length < 3) {
+                setUsernameAvailable(null);
+                return;
+            }
+            
+            setIsCheckingUsername(true);
+            try {
+                const response = await fetch(`http://localhost:8000/api/auth/check-username/?username=${doctorData.username}`);
+                const data = await response.json();
+                setUsernameAvailable(data.available);
+            } catch (err) {
+                console.error("Failed to check username", err);
+                setUsernameAvailable(null); 
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        };
+
+        const timeoutId = setTimeout(checkAvailability, 500);
+        return () => clearTimeout(timeoutId);
+    }, [doctorData.username]);
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -857,7 +895,7 @@ const UnifiedLogin = () => {
                                  <div>
                                       <ProgressBar step={doctorStep} total={4} />
 
-                                      {/* Doctor Step 1: Personal */}
+                                      {/* Doctor Step 1: Account */}
                                       {doctorStep === 1 && (
                                           <div className="space-y-5">
                                               <div className="flex gap-4">
@@ -871,6 +909,45 @@ const UnifiedLogin = () => {
                                                   </div>
                                               </div>
                                               
+                                              <div>
+                                                  <label className={labelStyle}>Username</label>
+                                                  <div className="relative">
+                                                     <input 
+                                                         type="text" 
+                                                         className={`${inputStyle} pr-10 ${
+                                                             usernameAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                             usernameAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                         }`} 
+                                                         value={doctorData.username || ''} 
+                                                         onChange={e => setDoctorData({...doctorData, username: e.target.value})} 
+                                                         placeholder="dr_jane_smith" 
+                                                     />
+                                                     <div className="absolute right-3 top-3.5">
+                                                         {isCheckingUsername ? (
+                                                             <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                         ) : (doctorData.username && doctorData.username.length >= 3) ? (
+                                                             usernameAvailable === true ? (
+                                                                 <Check className="w-5 h-5 text-green-500" />
+                                                             ) : usernameAvailable === false ? (
+                                                                 <X className="w-5 h-5 text-red-500" />
+                                                             ) : null
+                                                         ) : null}
+                                                     </div>
+                                                  </div>
+                                                  {usernameAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Username is already taken.</p>}
+                                                  
+                                                  {suggestedUsernames.length > 0 && !doctorData.username && (
+                                                      <div className="mt-2 text-xs text-slate-500">
+                                                          Available suggestions: 
+                                                          {suggestedUsernames.map(s => (
+                                                              <button key={s} onClick={() => setDoctorData({...doctorData, username: s})} className="ml-2 text-[#3B9EE2] hover:underline font-medium">
+                                                                  {s}
+                                                              </button>
+                                                          ))}
+                                                      </div>
+                                                  )}
+                                              </div>
+
                                               <div>
                                                   <label className={labelStyle}>Email Address</label>
                                                   <input type="email" className={inputStyle} value={doctorData.email} onChange={e => setDoctorData({...doctorData, email: e.target.value})} placeholder="doctor@hospital.com" />
@@ -908,13 +985,46 @@ const UnifiedLogin = () => {
                                           </div>
                                       )}
 
-                                      {/* Doctor Step 2: Professional */}
+                                      {/* Doctor Step 2: Personal Details (NEW) */}
                                       {doctorStep === 2 && (
+                                          <div className="space-y-5">
+                                              <h3 className="text-lg font-semibold text-slate-800 mb-2">Personal Details</h3>
+                                              
+                                              <div className="flex gap-4">
+                                                  <div className="flex-1">
+                                                      <label className={labelStyle}>Date of Birth</label>
+                                                      <input type="date" className={inputStyle} value={doctorData.dob || ''} onChange={e => setDoctorData({...doctorData, dob: e.target.value})} />
+                                                  </div>
+                                                  <div className="flex-1">
+                                                      <label className={labelStyle}>Phone Number</label>
+                                                      <input type="tel" className={inputStyle} value={doctorData.phone || ''} onChange={e => setDoctorData({...doctorData, phone: e.target.value})} placeholder="+91 98765 43210" />
+                                                  </div>
+                                              </div>
+
+                                              <div>
+                                                  <label className={labelStyle}>Address</label>
+                                                  <textarea className={inputStyle} rows="3" value={doctorData.address || ''} onChange={e => setDoctorData({...doctorData, address: e.target.value})} placeholder="Full residential address" />
+                                              </div>
+                                              
+                                              <div className="flex gap-3">
+                                                  <input type="text" placeholder="City" className="flex-[2] w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={doctorData.city || ''} onChange={e => setDoctorData({...doctorData, city: e.target.value})} />
+                                                  <input type="text" placeholder="PIN Code" className="flex-1 w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={doctorData.pin || ''} onChange={e => setDoctorData({...doctorData, pin: e.target.value})} />
+                                              </div>
+
+                                              <div className="flex gap-4 pt-4">
+                                                 <button onClick={() => setDoctorStep(1)} className={btnGhostStyle}>Back</button>
+                                                 <button onClick={() => setDoctorStep(3)} className={btnPrimaryStyle}>Continue</button>
+                                              </div>
+                                          </div>
+                                      )}
+
+                                      {/* Doctor Step 3: Professional */}
+                                      {doctorStep === 3 && (
                                           <div className="space-y-6">
                                               <div>
                                                   <label className={labelStyle}>Specialization</label>
                                                   <div className="relative">
-                                                      <select className={`${inputStyle} appearance-none cursor-pointer`}>
+                                                      <select className={`${inputStyle} appearance-none cursor-pointer`} value={doctorData.specialization} onChange={e => setDoctorData({...doctorData, specialization: e.target.value})}>
                                                           <option>General Medicine</option>
                                                           <option>Cardiology</option>
                                                           <option>Pediatrics</option>
@@ -930,71 +1040,60 @@ const UnifiedLogin = () => {
                                               <div className="flex gap-4">
                                                    <div className="flex-1">
                                                        <label className={labelStyle}>Experience (Yrs)</label>
-                                                       <input type="number" className={inputStyle} placeholder="5" />
+                                                       <input type="number" className={inputStyle} placeholder="5" value={doctorData.experience} onChange={e => setDoctorData({...doctorData, experience: e.target.value})} />
                                                    </div>
                                                    <div className="flex-[2]">
                                                        <label className={labelStyle}>Department</label>
-                                                       <input type="text" className={inputStyle} placeholder="e.g. Outpatient" />
+                                                       <input type="text" className={inputStyle} placeholder="e.g. Outpatient" value={doctorData.department} onChange={e => setDoctorData({...doctorData, department: e.target.value})} />
                                                    </div>
                                               </div>
                                               <div>
                                                   <label className={labelStyle}>Hospital / Clinic Name</label>
-                                                  <input type="text" className={inputStyle} placeholder="Full name of establishment" />
+                                                  <input type="text" className={inputStyle} placeholder="Full name of establishment" value={doctorData.hospitalName} onChange={e => setDoctorData({...doctorData, hospitalName: e.target.value})} />
                                               </div>
                                               <div>
                                                   <label className={labelStyle}>City</label>
-                                                  <input type="text" className={inputStyle} placeholder="Practice location" />
+                                                  <input type="text" className={inputStyle} placeholder="Practice location" value={doctorData.hospitalAddress} onChange={e => setDoctorData({...doctorData, hospitalAddress: e.target.value})} />
                                               </div>
                                               <div className="flex gap-4 pt-4">
-                                                 <button onClick={() => setDoctorStep(1)} className={btnGhostStyle}>Back</button>
-                                                 <button onClick={() => setDoctorStep(3)} className={btnPrimaryStyle}>Continue</button>
+                                                 <button onClick={() => setDoctorStep(2)} className={btnGhostStyle}>Back</button>
+                                                 <button onClick={() => setDoctorStep(4)} className={btnPrimaryStyle}>Continue</button>
                                               </div>
                                           </div>
                                       )}
 
-                                      {/* Doctor Step 3: Licensing */}
-                                      {doctorStep === 3 && (
+                                      {/* Doctor Step 4: Licensing & Documents */}
+                                      {doctorStep === 4 && (
                                           <div className="space-y-6">
                                               <div>
                                                    <label className={labelStyle}>Medical License Number</label>
-                                                   <input type="text" className={inputStyle} placeholder="e.g. MCI/1234/5678" />
+                                                   <input type="text" className={inputStyle} placeholder="e.g. MCI/1234/5678" value={doctorData.licenseNumber} onChange={e => setDoctorData({...doctorData, licenseNumber: e.target.value})} />
                                               </div>
                                               <div>
                                                    <label className={labelStyle}>Issuing Council</label>
-                                                   <input type="text" className={inputStyle} placeholder="State Medical Council" />
+                                                   <input type="text" className={inputStyle} placeholder="State Medical Council" value={doctorData.issuingCouncil} onChange={e => setDoctorData({...doctorData, issuingCouncil: e.target.value})} />
                                               </div>
                                               
-                                              <div 
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-[#3B9EE2]/50 transition-all cursor-pointer group bg-slate-50/50"
-                                              >
-                                                  <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm border border-slate-100">
-                                                      {doctorData.licenseDoc ? <Check className="w-7 h-7 text-[#2EC4A9]"/> : <Upload className="w-7 h-7 text-[#3B9EE2]" />}
-                                                  </div>
-                                                  
-                                                  {doctorData.licenseDoc ? (
-                                                      <div>
-                                                          <span className="text-sm font-bold text-[#0D1B2A] block mb-1">Document Selected</span>
-                                                          <span className="text-xs text-[#2EC4A9] font-medium">{doctorData.licenseDoc.name}</span>
-                                                      </div>
-                                                  ) : (
-                                                      <div>
-                                                          <span className="text-sm font-bold text-[#0D1B2A] block mb-1">Upload License Document</span>
-                                                          <span className="text-xs text-slate-400 font-medium">PDF or JPG, max 5MB</span>
-                                                      </div>
-                                                  )}
+                                              {/* License Document */}
+                                              <div className="py-2">
+                                                  <label className="text-sm font-semibold text-slate-700 mb-2 block">License Document</label>
+                                                  <input type="file" onChange={(e) => setDoctorData({...doctorData, licenseDoc: e.target.files[0]})} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                              </div>
 
-                                                  <input 
-                                                    type="file" 
-                                                    ref={fileInputRef} 
-                                                    className="hidden" 
-                                                    accept=".pdf,.jpg,.jpeg,.png"
-                                                    onChange={handleFileChange}
-                                                  />
+                                              {/* Degree Certificate */}
+                                              <div className="py-2">
+                                                  <label className="text-sm font-semibold text-slate-700 mb-2 block">Degree Certificate</label>
+                                                  <input type="file" onChange={(e) => setDoctorData({...doctorData, degreeCertificate: e.target.files[0]})} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                              </div>
+
+                                              {/* Identity Proof */}
+                                              <div className="py-2">
+                                                  <label className="text-sm font-semibold text-slate-700 mb-2 block">Identity Proof (Aadhaar/PAN)</label>
+                                                  <input type="file" onChange={(e) => setDoctorData({...doctorData, identityProof: e.target.files[0]})} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
                                               </div>
 
                                               <div className="flex gap-4 pt-4">
-                                                 <button onClick={() => setDoctorStep(2)} className={btnGhostStyle}>Back</button>
+                                                 <button onClick={() => setDoctorStep(3)} className={btnGhostStyle}>Back</button>
                                                  <button onClick={handleDoctorRegister} className={btnPrimaryStyle}>Submit Application</button>
                                               </div>
                                           </div>

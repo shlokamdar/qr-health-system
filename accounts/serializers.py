@@ -67,8 +67,14 @@ class RegisterSerializer(serializers.ModelSerializer):
                 specialization=profile_data.get('specialization', 'General'),
                 license_number=profile_data.get('licenseNumber', ''), # Mapped from frontend 'licenseNumber'
                 issuing_medical_council=profile_data.get('issuingCouncil', ''), # Mapped from frontend
-                license_expiry_date=profile_data.get('licenseExpiry'), # Mapped from frontend
+                license_expiry_date=profile_data.get('licenseExpiry') or None, # Mapped from frontend
                 years_of_experience=profile_data.get('experience', 0),
+                
+                # New fields
+                date_of_birth=profile_data.get('dob') or None,
+                contact_number=profile_data.get('phone', ''),
+                address=f"{profile_data.get('addressLine1', '')}, {profile_data.get('city', '')}, {profile_data.get('state', '')} - {profile_data.get('pin', '')}",
+                
                 license_document=license_document,
                 degree_certificate=degree_certificate,
                 identity_proof=identity_proof
