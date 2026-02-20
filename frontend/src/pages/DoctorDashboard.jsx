@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import DoctorService from '../services/doctor.service';
 import PatientService from '../services/patient.service';
-// Scanner is now simulated/handled inside ScannerModal or PatientSearch if needed, 
-// but actually we moved Scanner logic to ScannerModal. 
-// However, the dashboard logic still uses some scanner state.
 import Header from '../components/Header';
 import DashboardStats from '../components/doctor/DashboardStats';
 import PatientSearch from '../components/doctor/PatientSearch';
@@ -18,6 +15,26 @@ import AppointmentList from '../components/doctor/AppointmentList';
 import PatientRegisterForm from '../components/doctor/PatientRegisterForm';
 import MobileNav from '../components/doctor/MobileNav';
 import toast from 'react-hot-toast';
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import {
+    Search,
+    ClipboardList,
+    Calendar,
+    UserPlus,
+    History,
+    FileText,
+    Stethoscope,
+    Activity,
+    ChevronRight,
+    ArrowRight,
+    Clock,
+    XCircle,
+    AlertTriangle,
+    LogOut,
+    CheckCircle,
+    Mail
+} from 'lucide-react';
 
 const DoctorDashboard = () => {
     const [activeTab, setActiveTab] = useState('search');
@@ -145,7 +162,6 @@ const DoctorDashboard = () => {
             const rawValue = result[0]?.rawValue;
             if (rawValue) {
                 let healthId = rawValue;
-                // Extract health ID from URL if needed
                 if (rawValue.includes('/api/patients/')) {
                     const parts = rawValue.split('/api/patients/');
                     if (parts.length > 1) {
@@ -153,7 +169,6 @@ const DoctorDashboard = () => {
                     }
                 }
 
-                // Validate health ID format (basic check)
                 if (!healthId || healthId.trim() === '') {
                     setScannerError('Invalid QR code scanned');
                     return;
@@ -164,7 +179,6 @@ const DoctorDashboard = () => {
                 setScannerError(null);
                 setIsCameraLoading(false);
 
-                // Fetch patient data
                 PatientService.getByHealthId(healthId)
                     .then(data => {
                         setPatientResult(data);
@@ -191,7 +205,6 @@ const DoctorDashboard = () => {
 
         if (error?.message) {
             const errorMsg = error.message.toLowerCase();
-
             if (errorMsg.includes('permission') || errorMsg.includes('notallowederror')) {
                 setScannerError('Camera permission denied. Please allow camera access in your browser settings.');
             } else if (errorMsg.includes('notfound') || errorMsg.includes('notfounderror')) {
@@ -221,7 +234,6 @@ const DoctorDashboard = () => {
     const handleSearch = async (e, overrideId = null) => {
         if (e && e.preventDefault) e.preventDefault();
         const idToSearch = overrideId || searchId;
-
         if (!idToSearch) return;
 
         try {
@@ -234,7 +246,6 @@ const DoctorDashboard = () => {
             const consData = await DoctorService.getPatientHistory(idToSearch);
             setConsultations(consData);
 
-            // If we are not already on search tab, switch to it
             if (activeTab !== 'search') {
                 setActiveTab('search');
                 setSearchId(idToSearch);
@@ -255,10 +266,8 @@ const DoctorDashboard = () => {
         e.preventDefault();
         if (!patientResult) return;
 
-        console.log("Uploading record for patient:", patientResult.id, newRecord);
-
         const formData = new FormData();
-        formData.append('patient', patientResult.id); // Ensure this is the PK
+        formData.append('patient', patientResult.id);
         formData.append('title', newRecord.title);
         formData.append('description', newRecord.description || '');
         formData.append('record_type', newRecord.record_type);
@@ -267,11 +276,8 @@ const DoctorDashboard = () => {
         }
 
         try {
-            // Let axios and browser handle Content-Type boundary for FormData
             await PatientService.uploadRecord(formData);
-
-            alert('Record Uploaded Successfully!');
-            // Refresh records if we are viewing the same patient
+            toast.success('Record Uploaded Successfully!');
             if (searchId === patientResult.health_id) {
                 const recData = await PatientService.getRecords(searchId);
                 setRecords(recData);
@@ -279,8 +285,7 @@ const DoctorDashboard = () => {
             setNewRecord({ title: '', description: '', record_type: 'PRESCRIPTION', file: null });
         } catch (err) {
             console.error("Upload Error Details:", err.response?.data || err.message);
-            const errMsg = err.response?.data ? JSON.stringify(err.response.data) : 'Upload failed. Check console for details.';
-            alert(`Upload Failed: ${errMsg}`);
+            toast.error('Upload failed. Please check file format.');
         }
     };
 
@@ -332,60 +337,223 @@ const DoctorDashboard = () => {
         }
     };
 
+    const { logout } = useContext(AuthContext);
+    const navigate = useNavigate();
 
+    const handleLogout = () => {
+        logout();
+        navigate('/doctor/login');
+    };
+
+    const tabs = [
+        { id: 'search', label: 'Patient Lookup', icon: Search },
+        { id: 'consultations', label: 'Recent History', icon: History },
+        { id: 'appointments', label: 'Schedule', icon: Calendar },
+        { id: 'register', label: 'New Registration', icon: UserPlus },
+    ];
+
+    // ── Verification Gate ──────────────────────────────────────────────────────
+    if (doctorProfile && !doctorProfile.is_verified) {
+        const isRejected = !!doctorProfile.rejection_reason;
+        return (
+            <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 font-sans">
+                {/* Subtle background */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-[#3B9EE2]/5 rounded-full blur-[100px]" />
+                    <div className="absolute bottom-[-10%] left-[-5%] w-80 h-80 bg-[#2EC4A9]/5 rounded-full blur-[100px]" />
+                </div>
+
+                {/* Logo strip */}
+                <div className="relative z-10 flex items-center gap-2 mb-10">
+                    <Activity className="w-7 h-7 text-[#0D1B2A]" />
+                    <span className="text-xl font-bold text-[#0D1B2A] tracking-tight">PulseID</span>
+                </div>
+
+                <div className="relative z-10 w-full max-w-lg">
+                    {isRejected ? (
+                        /* ─── REJECTED STATE ─────────────────────────────── */
+                        <div className="bg-white rounded-3xl shadow-xl border border-red-100 overflow-hidden">
+                            <div className="bg-red-50 px-8 py-6 border-b border-red-100 flex items-center gap-4">
+                                <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center shrink-0">
+                                    <XCircle className="w-6 h-6 text-red-600" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-red-800">Registration Rejected</h1>
+                                    <p className="text-sm text-red-600 mt-0.5">Your application was not approved</p>
+                                </div>
+                            </div>
+                            <div className="px-8 py-6 space-y-5">
+                                <div>
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reason from Admin</p>
+                                    <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+                                        <p className="text-sm text-red-800 leading-relaxed">{doctorProfile.rejection_reason}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 rounded-2xl px-5 py-4 space-y-2">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Your Submission</p>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Name</span>
+                                        <span className="font-medium text-gray-800">Dr. {doctorProfile.user?.first_name} {doctorProfile.user?.last_name}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">License No.</span>
+                                        <span className="font-mono font-medium text-gray-800">{doctorProfile.license_number}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Specialization</span>
+                                        <span className="font-medium text-gray-800">{doctorProfile.specialization}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+                                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-amber-800 leading-relaxed">
+                                        Please contact support at <span className="font-semibold">support@pulseid.health</span> or re-register with corrected information.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center justify-center gap-2 py-3 border border-gray-200 text-gray-600 font-medium text-sm rounded-2xl hover:bg-gray-50 transition-colors"
+                                >
+                                    <LogOut className="w-4 h-4" /> Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        /* ─── PENDING STATE ──────────────────────────────── */
+                        <div className="bg-white rounded-3xl shadow-xl border border-amber-100 overflow-hidden">
+                            <div className="bg-amber-50 px-8 py-6 border-b border-amber-100 flex items-center gap-4">
+                                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
+                                    <Clock className="w-6 h-6 text-amber-600 animate-pulse" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-amber-800">Verification Pending</h1>
+                                    <p className="text-sm text-amber-600 mt-0.5">Your registration is under review</p>
+                                </div>
+                            </div>
+                            <div className="px-8 py-6 space-y-5">
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    Our admin team is reviewing your submitted credentials. This usually takes <strong>1–2 business days</strong>. You'll receive an email notification once your account is approved.
+                                </p>
+
+                                {/* Submitted details */}
+                                <div className="bg-gray-50 rounded-2xl px-5 py-4 space-y-2">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Your Submission</p>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Name</span>
+                                        <span className="font-medium text-gray-800">Dr. {doctorProfile.user?.first_name} {doctorProfile.user?.last_name}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">License No.</span>
+                                        <span className="font-mono font-medium text-gray-800">{doctorProfile.license_number}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Specialization</span>
+                                        <span className="font-medium text-gray-800">{doctorProfile.specialization}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Status</span>
+                                        <span className="inline-flex items-center gap-1 text-amber-600 font-semibold text-xs">
+                                            <Clock className="w-3 h-3" /> Awaiting Review
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Steps */}
+                                <div className="space-y-2">
+                                    {[
+                                        { label: 'Registration submitted', done: true },
+                                        { label: 'Document verification by admin', done: false, active: true },
+                                        { label: 'Account activation', done: false },
+                                    ].map((step, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${step.done ? 'bg-emerald-100' : step.active ? 'bg-amber-100' : 'bg-gray-100'}`}>
+                                                {step.done
+                                                    ? <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                                    : <div className={`w-2 h-2 rounded-full ${step.active ? 'bg-amber-500 animate-pulse' : 'bg-gray-300'}`} />
+                                                }
+                                            </div>
+                                            <span className={`text-sm ${step.done ? 'text-emerald-700 font-medium' : step.active ? 'text-amber-700 font-medium' : 'text-gray-400'}`}>
+                                                {step.label}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-5 py-3">
+                                    <Mail className="w-4 h-4 text-blue-500 shrink-0" />
+                                    <p className="text-xs text-blue-700">
+                                        Notification will be sent to <span className="font-semibold">{doctorProfile.user?.email}</span>
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center justify-center gap-2 py-3 border border-gray-200 text-gray-600 font-medium text-sm rounded-2xl hover:bg-gray-50 transition-colors"
+                                >
+                                    <LogOut className="w-4 h-4" /> Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-800">
+        <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden font-sans text-[#0D1B2A]">
             {/* Background decorative elements */}
-            <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-br from-indigo-50/80 via-purple-50/50 to-slate-50 z-0 pointer-events-none" />
-            <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-100/40 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute top-[20%] left-[-10%] w-72 h-72 bg-purple-100/40 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-[600px] bg-[#0D1B2A] z-0 pointer-events-none skew-y-[-2deg] origin-top-left translate-y-[-100px]" />
+            <div className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-[#3B9EE2]/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
+            <div className="absolute bottom-[20%] left-[-10%] w-[400px] h-[400px] bg-[#2EC4A9]/5 rounded-full blur-[100px] pointer-events-none" />
 
-            <div className="relative z-10">
+            <div className="relative z-10 flex flex-col min-h-screen">
                 <Header />
-                <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+                <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 flex-1 w-full">
 
                     <DashboardStats doctorProfile={doctorProfile} />
 
                     {/* Main Dashboard Card */}
-                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/60 overflow-hidden ring-1 ring-slate-900/5 mb-16 md:mb-0">
+                    <div className="bg-white/80 backdrop-blur-md rounded-[2.5rem] shadow-2xl shadow-[#0D1B2A]/5 border border-white/60 overflow-hidden mb-24 md:mb-0 transition-all duration-500">
                         {/* Tab Navigation */}
-                        <div className="hidden md:flex border-b border-slate-100 bg-white/50 backdrop-blur-md overflow-x-auto scroller-none">
-                            {['search', 'consultations', 'appointments', 'register'].map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`flex-1 py-5 px-6 text-center font-medium transition-all duration-300 relative group min-w-[140px] ${activeTab === tab
-                                        ? 'text-indigo-600'
-                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
-                                        }`}
-                                >
-                                    <div className="flex flex-col items-center justify-center gap-1.5 relative z-10">
-                                        <span className={`text-2xl transition-transform duration-300 ${activeTab === tab ? 'scale-110 drop-shadow-sm' : 'group-hover:scale-105 grayscale opacity-70'}`}>
-                                            {tab === 'search' && '🔍'}
-                                            {tab === 'consultations' && '📋'}
-                                            {tab === 'appointments' && '📅'}
-                                            {tab === 'register' && '➕'}
-                                        </span>
-                                        <span className={`text-xs font-bold tracking-wide uppercase transition-colors duration-300 ${activeTab === tab ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                            {tab === 'search' ? 'Patient Search' :
-                                                tab === 'consultations' ? 'My Consultations' :
-                                                    tab === 'appointments' ? 'Appointments' :
-                                                        'Register Patient'}
-                                        </span>
-                                    </div>
-                                    {activeTab === tab && (
-                                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-full shadow-lg shadow-indigo-500/20" />
-                                    )}
-                                </button>
-                            ))}
+                        <div className="hidden md:flex bg-slate-50/50 border-b border-slate-100 p-2">
+                            {tabs.map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex-1 py-4 px-6 rounded-2xl font-black transition-all duration-500 relative group overflow-hidden ${isActive
+                                            ? 'bg-white shadow-lg text-[#0D1B2A]'
+                                            : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-center gap-3 relative z-10">
+                                            <div className={`p-2 rounded-xl transition-all duration-500 ${isActive ? 'bg-[#3B9EE2]/10 text-[#3B9EE2]' : 'bg-slate-100 text-slate-300'}`}>
+                                                <Icon size={18} />
+                                            </div>
+                                            <span className="text-[10px] tracking-[0.1em] uppercase">
+                                                {tab.label}
+                                            </span>
+                                        </div>
+                                        {isActive && (
+                                            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[#3B9EE2] to-[#2EC4A9]" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
 
-                        <div className="p-6 md:p-8 bg-gradient-to-b from-white/40 to-transparent">
+                        <div className="p-8 md:p-12">
                             {/* Patient Search Tab */}
                             {activeTab === 'search' && (
-                                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="bg-white rounded-2xl p-1 shadow-sm border border-slate-100 max-w-2xl mx-auto">
+                                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="max-w-3xl mx-auto">
+                                        <div className="text-center mb-8">
+                                            <h3 className="text-3xl font-black text-[#0D1B2A] tracking-tight mb-2">Patient Lookup</h3>
+                                            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Import digital health profile via ID or Scan</p>
+                                        </div>
                                         <PatientSearch
                                             searchId={searchId}
                                             setSearchId={setSearchId}
@@ -394,72 +562,87 @@ const DoctorDashboard = () => {
                                         />
                                     </div>
 
-                                    {patientResult && (
-                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    {patientResult ? (
+                                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                                             {/* Left Column: Profile & Quick Actions */}
-                                            <div className="space-y-6 lg:col-span-1">
+                                            <div className="lg:col-span-4 space-y-8">
                                                 <PatientProfile
                                                     patient={patientResult}
                                                     handleRequestOTP={handleRequestOTP}
                                                 />
-                                                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white shadow-sm hover:shadow-md transition-all">
-                                                    <UploadRecordForm
-                                                        newRecord={newRecord}
-                                                        setNewRecord={setNewRecord}
-                                                        handleUpload={handleUpload}
-                                                    />
-                                                </div>
+                                                <UploadRecordForm
+                                                    newRecord={newRecord}
+                                                    setNewRecord={setNewRecord}
+                                                    handleUpload={handleUpload}
+                                                />
                                             </div>
 
                                             {/* Right Column: History & Forms */}
-                                            <div className="space-y-8 lg:col-span-2">
-                                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                                                    <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                                        <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                                            <span>📝</span> Clinical History
-                                                        </h3>
-                                                        <span className="text-xs font-medium bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
-                                                            {consultations.length} Visits
-                                                        </span>
+                                            <div className="lg:col-span-8 space-y-12">
+                                                <div className="space-y-6">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2.5 bg-[#3B9EE2]/10 rounded-2xl text-[#3B9EE2]">
+                                                                <History className="w-6 h-6" />
+                                                            </div>
+                                                            <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Clinical History</h3>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
+                                                            <Activity className="w-3 h-3 text-[#2EC4A9]" />
+                                                            <span>{consultations.length} Visits Traceable</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="p-6 max-h-[400px] overflow-y-auto custom-scrollbar">
-                                                        <ConsultationHistory consultations={consultations} />
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                                                    <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                                        <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                                            <span>📂</span> Medical Records
-                                                        </h3>
-                                                        <span className="text-xs font-medium bg-slate-200 text-slate-600 px-2 py-1 rounded-full">
-                                                            {records.length} Files
-                                                        </span>
-                                                    </div>
-                                                    <div className="p-6 max-h-[300px] overflow-y-auto custom-scrollbar">
-                                                        <MedicalRecordList records={records} />
+                                                    <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
+                                                        <div className="max-h-[500px] overflow-y-auto custom-scrollbar p-2">
+                                                            <ConsultationHistory consultations={consultations} />
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-indigo-50/50 rounded-2xl border border-indigo-100 p-6">
-                                                    <h3 className="font-bold text-indigo-900 mb-4 flex items-center gap-2">
-                                                        <span>🩺</span> New Consultation
-                                                    </h3>
-                                                    <ConsultationForm
-                                                        newConsultation={newConsultation}
-                                                        setNewConsultation={setNewConsultation}
-                                                        handleSubmit={handleCreateConsultation}
-                                                    />
+                                                <div className="space-y-6">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2.5 bg-[#2EC4A9]/10 rounded-2xl text-[#2EC4A9]">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                            <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Medical Ledger</h3>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
+                                                            <span>{records.length} Documents Encrypted</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
+                                                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
+                                                            <MedicalRecordList records={records} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2.5 bg-[#0D1B2A] rounded-2xl text-white">
+                                                            <Stethoscope className="w-6 h-6" />
+                                                        </div>
+                                                        <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">New Consultation</h3>
+                                                    </div>
+                                                    <div className="bg-[#0D1B2A] rounded-[2.5rem] p-10 text-white shadow-2xl shadow-[#0D1B2A]/20 relative overflow-hidden group">
+                                                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#3B9EE2]/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+                                                        <ConsultationForm
+                                                            newConsultation={newConsultation}
+                                                            setNewConsultation={setNewConsultation}
+                                                            handleSubmit={handleCreateConsultation}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
-
-                                    {!patientResult && (
-                                        <div className="text-center py-20 opacity-60">
-                                            <div className="text-6xl mb-4">🔍</div>
-                                            <h3 className="text-xl font-medium text-slate-600">Search for a patient to begin</h3>
-                                            <p className="text-slate-400 mt-2">Enter a Health ID or scan a QR code</p>
+                                    ) : (
+                                        <div className="text-center py-32 animate-in fade-in duration-700">
+                                            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                <Search className="w-10 h-10 text-slate-200" />
+                                            </div>
+                                            <h3 className="text-2xl font-black text-slate-400 tracking-tight">Enter Health ID to Begin</h3>
+                                            <p className="text-sm text-slate-300 font-bold uppercase tracking-widest mt-2 px-12">Secure patient search powered by PulseID Network</p>
                                         </div>
                                     )}
                                 </div>
@@ -468,48 +651,63 @@ const DoctorDashboard = () => {
                             {/* My Consultations Tab */}
                             {activeTab === 'consultations' && (
                                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
-                                        <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📋</span>
-                                        <span>Recent Consultations</span>
-                                    </h3>
+                                    <div className="flex items-center justify-between mb-12">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-4 bg-[#3B9EE2]/10 rounded-[1.5rem] text-[#3B9EE2] shadow-sm">
+                                                <ClipboardList className="w-8 h-8" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-3xl font-black text-[#0D1B2A] tracking-tight">Provider History</h3>
+                                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Your recent clinical activities</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {myConsultations.length === 0 ? (
-                                        <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                            <p className="text-slate-400 text-lg">No consultations yet.</p>
+                                        <div className="text-center py-24 bg-slate-50/50 backdrop-blur-sm rounded-[3rem] border border-dashed border-slate-200">
+                                            <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                                <History className="w-8 h-8 text-slate-100" />
+                                            </div>
+                                            <p className="text-slate-300 font-black uppercase tracking-widest text-xs">No clinical logs detected</p>
                                         </div>
                                     ) : (
                                         <div className="grid gap-6">
                                             {myConsultations.map(con => (
-                                                <div key={con.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-                                                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                                                        <div className="flex-1 space-y-3">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider border border-indigo-100">
-                                                                    {con.patient_health_id}
+                                                <div key={con.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 hover:scale-[1.01] transition-all duration-500 group">
+                                                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-8">
+                                                        <div className="flex-1 space-y-4">
+                                                            <div className="flex items-center gap-4 flex-wrap">
+                                                                <span className="bg-[#3B9EE2]/10 text-[#3B9EE2] px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border border-[#3B9EE2]/20">
+                                                                    ID: {con.patient_health_id}
                                                                 </span>
-                                                                <span className="text-slate-400 text-sm">•</span>
-                                                                <span className="text-slate-500 text-sm font-medium">
-                                                                    {new Date(con.consultation_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                                                </span>
+                                                                <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                                                                    <Calendar className="w-3.5 h-3.5" />
+                                                                    <span>{new Date(con.consultation_date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                                                                </div>
                                                             </div>
-                                                            <p className="text-xl font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                                                            <p className="text-2xl font-black text-[#0D1B2A] group-hover:text-[#3B9EE2] transition-colors leading-tight">
                                                                 {con.chief_complaint}
                                                             </p>
                                                             {con.diagnosis && (
-                                                                <div className="flex items-start gap-2">
-                                                                    <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide mt-1">Diagnosis:</span>
-                                                                    <span className="text-slate-700 bg-slate-100 px-3 py-1 rounded-lg text-sm">{con.diagnosis}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#2EC4A9] bg-[#2EC4A9]/5 px-3 py-1 rounded-full">
+                                                                        <Activity className="w-3 h-3" />
+                                                                        <span>Diagnosis</span>
+                                                                    </div>
+                                                                    <span className="text-slate-600 font-bold text-sm tracking-tight">{con.diagnosis}</span>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="flex flex-col items-end gap-3 min-w-[140px]">
+                                                        <div className="flex flex-col sm:flex-row xl:flex-col gap-3 min-w-[200px]">
                                                             <button
                                                                 onClick={() => handleViewPatient(con.patient_health_id)}
-                                                                className="text-indigo-600 font-medium text-sm hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors w-full justify-center group-hover:bg-indigo-600 group-hover:text-white"
+                                                                className="flex-1 bg-[#0D1B2A] text-white px-6 py-4 rounded-2xl hover:bg-[#1a2e41] transition-all font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#0D1B2A]/10 active:scale-95 group/btn"
                                                             >
-                                                                View Profile <span>→</span>
+                                                                <span>Access Profile</span>
+                                                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                                             </button>
                                                             {con.follow_up_date && (
-                                                                <div className="text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100 w-full text-center">
+                                                                <div className="text-[10px] font-black uppercase tracking-widest text-white bg-[#2EC4A9] px-4 py-4 rounded-2xl text-center shadow-xl shadow-[#2EC4A9]/20">
                                                                     Follow-up: {new Date(con.follow_up_date).toLocaleDateString()}
                                                                 </div>
                                                             )}
@@ -525,10 +723,15 @@ const DoctorDashboard = () => {
                             {/* Appointments Tab */}
                             {activeTab === 'appointments' && (
                                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
-                                        <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">📅</span>
-                                        <span>Manage Appointments</span>
-                                    </h3>
+                                    <div className="flex items-center gap-4 mb-12">
+                                        <div className="p-4 bg-[#2EC4A9]/10 rounded-[1.5rem] text-[#2EC4A9] shadow-sm">
+                                            <Calendar className="w-8 h-8" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-3xl font-black text-[#0D1B2A] tracking-tight">Clinical Schedule</h3>
+                                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Manage patient queues & meetings</p>
+                                        </div>
+                                    </div>
                                     <AppointmentList
                                         appointments={appointments}
                                         handleUpdateStatus={handleUpdateAppointment}
@@ -540,15 +743,22 @@ const DoctorDashboard = () => {
                             {/* Register Patient Tab */}
                             {activeTab === 'register' && (
                                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <h3 className="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
-                                        <span className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm">➕</span>
-                                        <span>Register New Patient</span>
-                                    </h3>
-                                    <PatientRegisterForm
-                                        newPatient={newPatient}
-                                        setNewPatient={setNewPatient}
-                                        handleRegister={handleRegisterPatient}
-                                    />
+                                    <div className="flex items-center gap-4 mb-12">
+                                        <div className="p-4 bg-[#3B9EE2] rounded-[1.5rem] text-white shadow-xl shadow-[#3B9EE2]/20">
+                                            <UserPlus className="w-8 h-8" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-3xl font-black text-[#0D1B2A] tracking-tight">Network Enrollment</h3>
+                                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Onboard new patient to PulseID ecosystem</p>
+                                        </div>
+                                    </div>
+                                    <div className="max-w-4xl">
+                                        <PatientRegisterForm
+                                            newPatient={newPatient}
+                                            setNewPatient={setNewPatient}
+                                            handleRegister={handleRegisterPatient}
+                                        />
+                                    </div>
                                 </div>
                             )}
 

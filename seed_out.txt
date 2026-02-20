@@ -1,0 +1,4 @@
+=== Seeding Hospital Admin Data ===
+  Hospital: Metro General Hospital
+  Hospital Admin linked to Metro General Hospital
+  Doctor: Chloe Kim linked to Metro General Hospital

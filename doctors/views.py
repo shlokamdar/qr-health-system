@@ -1,14 +1,15 @@
 from rest_framework import viewsets, generics, permissions, status, decorators
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Hospital, Doctor, Consultation, Appointment
+from rest_framework.views import APIView
+from .models import Hospital, HospitalAdmin, Doctor, Consultation, Appointment
 from .serializers import (
     HospitalSerializer, HospitalRegisterSerializer,
     DoctorSerializer, DoctorRegisterSerializer,
     ConsultationSerializer, ConsultationCreateSerializer,
     AppointmentSerializer
 )
-from permissions.roles import IsDoctor
+from role_permissions.roles import IsDoctor, IsHospitalAdmin
 from patients.models import Patient
 from accounts.serializers import UserSerializer
 
@@ -129,9 +130,17 @@ class DoctorVerificationView(generics.UpdateAPIView):
         doctor = self.get_object()
         
         if 'verify' in request.data:
-            doctor.is_verified = True
+            is_verified = request.data.get('verify', False)
+            doctor.is_verified = bool(is_verified)
+            if not doctor.is_verified:
+                # Save rejection reason when rejecting
+                doctor.rejection_reason = request.data.get('rejection_reason', '')
+            else:
+                # Clear rejection reason on approval
+                doctor.rejection_reason = ''
             doctor.save()
-            return Response({'message': 'Doctor verified successfully'})
+            action = 'verified' if doctor.is_verified else 'rejected'
+            return Response({'message': f'Doctor {action} successfully'})
             
         if 'auth_level' in request.data:
             level = request.data.get('auth_level')
@@ -140,9 +149,6 @@ class DoctorVerificationView(generics.UpdateAPIView):
                 doctor.save()
                 return Response({'message': f'Authorization level set to {level}'})
             return Response({'error': 'Invalid authorization level'}, status=status.HTTP_400_BAD_REQUEST)
-
-        return super().update(request, *args, **kwargs)
-
 
         return super().update(request, *args, **kwargs)
 
@@ -255,3 +261,60 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         # Allow partial updates for status change
         kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
+
+class HospitalMeView(generics.RetrieveUpdateAPIView):
+    """View for current hospital admin's hospital profile."""
+    permission_classes = [IsHospitalAdmin]
+    serializer_class = HospitalSerializer
+
+    def get_object(self):
+        admin_profile = get_object_or_404(HospitalAdmin, user=self.request.user)
+        return admin_profile.hospital
+
+
+class HospitalDoctorListView(generics.ListAPIView):
+    """List all doctors affiliated with the current hospital."""
+    permission_classes = [IsHospitalAdmin]
+    serializer_class = DoctorSerializer
+
+    def get_queryset(self):
+        admin_profile = get_object_or_404(HospitalAdmin, user=self.request.user)
+        return Doctor.objects.filter(hospital=admin_profile.hospital)
+
+
+class HospitalLabListView(generics.ListAPIView):
+    """List all labs affiliated with the current hospital."""
+    permission_classes = [IsHospitalAdmin]
+
+    def get_serializer_class(self):
+        from labs.serializers import DiagnosticLabSerializer
+        return DiagnosticLabSerializer
+
+    def get_queryset(self):
+        from labs.models import DiagnosticLab
+        admin_profile = get_object_or_404(HospitalAdmin, user=self.request.user)
+        return DiagnosticLab.objects.filter(hospital=admin_profile.hospital)
+
+
+class HospitalStatsView(APIView):
+    permission_classes = [IsHospitalAdmin]
+
+    def get(self, request):
+        admin_profile = get_object_or_404(HospitalAdmin, user=self.request.user)
+        hospital = admin_profile.hospital
+        
+        doctors_count = Doctor.objects.filter(hospital=hospital).count()
+        pending_doctors = Doctor.objects.filter(hospital=hospital, is_verified=False).count()
+        
+        from labs.models import DiagnosticLab
+        labs_count = DiagnosticLab.objects.filter(hospital=hospital).count()
+        
+        # Consultations in this hospital
+        consultations_count = Consultation.objects.filter(doctor__hospital=hospital).count()
+
+        return Response({
+            'total_doctors': doctors_count,
+            'pending_doctors': pending_doctors,
+            'total_labs': labs_count,
+            'total_consultations': consultations_count
+        })

@@ -86,6 +86,19 @@ class RegisterSerializer(serializers.ModelSerializer):
                 identity_proof=identity_proof
             )
         
+        elif role == 'HOSPITAL_ADMIN':
+            from doctors.models import HospitalAdmin, Hospital
+            hospital_id = profile_data.get('hospital_id')
+            if hospital_id:
+                hospital = Hospital.objects.get(id=hospital_id)
+                HospitalAdmin.objects.create(
+                    user=user,
+                    hospital=hospital
+                )
+            else:
+                # Handle case where hospital is not yet created (e.g. initial hospital registration)
+                pass
+        
         return user
 
 

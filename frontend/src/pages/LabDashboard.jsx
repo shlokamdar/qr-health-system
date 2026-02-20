@@ -28,6 +28,7 @@ const LabDashboard = () => {
     const [verifyingPatient, setVerifyingPatient] = useState(false);
     const [recentUploads, setRecentUploads] = useState([]);
     const [loadingRecent, setLoadingRecent] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchTests();
@@ -54,8 +55,6 @@ const LabDashboard = () => {
         setLoadingRecent(true);
         try {
             const response = await labService.getRecentUploads();
-            // Filter only reports uploaded by this technician if the API returns all
-            // Ideally backend filters it, but let's be safe if we reuse the endpoint
             setRecentUploads(response.data.results || response.data);
         } catch (err) {
             console.error("Failed to fetch recent uploads", err);
@@ -63,6 +62,12 @@ const LabDashboard = () => {
             setLoadingRecent(false);
         }
     };
+
+    const filteredHistory = recentUploads.filter(report =>
+        report.patient_health_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.test_type?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.comments?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const verifyPatient = async () => {
         if (!patientHealthId) return;
@@ -74,7 +79,6 @@ const LabDashboard = () => {
         try {
             const response = await labService.searchPatient(patientHealthId);
             const p = response.data;
-            // Assuming the patient serializer returns user.first_name + last_name or similar
             const name = p.user?.first_name ? `${p.user.first_name} ${p.user.last_name}` : p.user?.username || 'Unknown';
             setPatientName(name);
             setPatientVerified(true);
@@ -98,17 +102,6 @@ const LabDashboard = () => {
         setUploadStatus({ type: '', message: '' });
 
         try {
-            // We need the patient's ID (primary key) for the upload, 
-            // but the search might have given us the full object.
-            // Let's assume we re-fetch or use the ID from the verification step if we stored it.
-            // Actually, verifyPatient just verified existence. 
-            // We can chain the call: search -> get ID -> upload.
-            // Or cleaner: store the patient object in state.
-
-            // Let's re-fetch to be safe or improve the flow. 
-            // Better: verifyPatient stores the patient ID.
-
-            // Re-fetching user ID for simplicity in this flow implementation
             const patientRes = await labService.searchPatient(patientHealthId);
             const patientId = patientRes.data.id;
 
@@ -121,17 +114,13 @@ const LabDashboard = () => {
             await labService.uploadReport(formData);
 
             setUploadStatus({ type: 'success', message: 'Report uploaded successfully!' });
-            // Reset form
             setPatientHealthId('');
             setPatientName('');
             setPatientVerified(false);
             setFile(null);
             setComments('');
             setSelectedTest('');
-
-            // Refresh recent list
             fetchRecentUploads();
-
         } catch (err) {
             console.error(err);
             const errMsg = err.response?.data?.detail || 'Upload failed. Check inputs and try again.';
@@ -151,210 +140,261 @@ const LabDashboard = () => {
             <Header />
 
             <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-
-                {/* Welcome Section */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Lab Technician Dashboard</h1>
-                    <p className="mt-1 text-sm text-gray-500">Manage lab reports and uploads.</p>
+                <div className="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Lab Technician Dashboard</h1>
+                        <p className="mt-1 text-sm text-gray-500">Manage patient lab reports and digital record uploads.</p>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column: Upload Form */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white/80 backdrop-blur-md shadow-lg rounded-2xl overflow-hidden border border-white/20">
-                            <div className="p-6 border-b border-gray-100">
-                                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                                    <DocumentArrowUpIcon className="h-6 w-6 text-purple-600" />
-                                    Upload New Report
-                                </h2>
-                            </div>
+                {/* Tab Navigation */}
+                <div className="bg-white rounded-xl shadow-sm mb-8 p-1 flex w-fit border border-gray-200">
+                    <button
+                        onClick={() => setActiveTab('upload')}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'upload' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}
+                    >
+                        <DocumentArrowUpIcon className="h-5 w-5" />
+                        New Upload
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'history' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}
+                    >
+                        <ClockIcon className="h-5 w-5" />
+                        Upload History
+                    </button>
+                </div>
 
-                            <div className="p-6">
-                                {uploadStatus.message && (
-                                    <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${uploadStatus.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
-                                        }`}>
-                                        {uploadStatus.type === 'success' ?
-                                            <CheckCircleIcon className="h-5 w-5 mt-0.5 flex-shrink-0" /> :
-                                            <XCircleIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                                        }
-                                        <div className="text-sm font-medium">{uploadStatus.message}</div>
-                                    </div>
-                                )}
+                {activeTab === 'upload' ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Column: Upload Form */}
+                        <div className="lg:col-span-2">
+                            <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+                                <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                        <BeakerIcon className="h-6 w-6 text-purple-600" />
+                                        Upload Lab Report
+                                    </h2>
+                                </div>
 
-                                <form onSubmit={handleUpload} className="space-y-6">
-                                    {/* Patient Lookup */}
-                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Patient Health ID</label>
-                                        <div className="flex gap-2">
-                                            <div className="relative flex-grow">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    className="block w-full pl-10 sm:text-sm border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 py-2.5"
-                                                    placeholder="e.g. HID-123456"
-                                                    value={patientHealthId}
-                                                    onChange={(e) => {
-                                                        setPatientHealthId(e.target.value);
-                                                        setPatientVerified(false);
-                                                        setPatientName('');
-                                                    }}
-                                                />
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={verifyPatient}
-                                                disabled={verifyingPatient || !patientHealthId}
-                                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 transition-colors"
-                                            >
-                                                {verifyingPatient ? 'Checking...' : 'Verify'}
-                                            </button>
+                                <div className="p-6">
+                                    {uploadStatus.message && (
+                                        <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${uploadStatus.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
+                                            }`}>
+                                            {uploadStatus.type === 'success' ?
+                                                <CheckCircleIcon className="h-5 w-5 mt-0.5 flex-shrink-0" /> :
+                                                <XCircleIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                                            }
+                                            <div className="text-sm font-bold">{uploadStatus.message}</div>
                                         </div>
-                                        {patientName && (
-                                            <div className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
-                                                <CheckCircleIcon className="h-4 w-4" />
-                                                Verified: {patientName}
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Test Type */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Test Type</label>
-                                            <select
-                                                required
-                                                className="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-lg"
-                                                value={selectedTest}
-                                                onChange={(e) => setSelectedTest(e.target.value)}
-                                            >
-                                                <option value="">Select a test...</option>
-                                                {labTests.map(test => (
-                                                    <option key={test.id} value={test.id}>{test.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        {/* File Upload */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Report File</label>
-                                            <div className="flex items-center justify-center w-full">
-                                                <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-purple-400 transition-all">
-                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                        <DocumentArrowUpIcon className="w-8 h-8 text-gray-400 mb-2" />
-                                                        <p className="text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                                        <p className="text-xs text-gray-500">PDF, PNG, JPG (MAX. 10MB)</p>
+                                    <form onSubmit={handleUpload} className="space-y-6">
+                                        <div className="bg-purple-50/50 p-5 rounded-xl border border-purple-100">
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Patient Health ID Verification</label>
+                                            <div className="flex gap-3">
+                                                <div className="relative flex-grow">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                                                     </div>
                                                     <input
-                                                        id="file-upload"
-                                                        type="file"
-                                                        className="hidden"
-                                                        onChange={(e) => setFile(e.target.files[0])}
+                                                        type="text"
+                                                        required
+                                                        className="block w-full pl-10 sm:text-sm border-gray-300 rounded-xl focus:ring-purple-500 focus:border-purple-500 py-3 shadow-sm"
+                                                        placeholder="Enter Health ID (e.g. HID-123456)"
+                                                        value={patientHealthId}
+                                                        onChange={(e) => {
+                                                            setPatientHealthId(e.target.value);
+                                                            setPatientVerified(false);
+                                                            setPatientName('');
+                                                        }}
                                                     />
-                                                </label>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={verifyPatient}
+                                                    disabled={verifyingPatient || !patientHealthId}
+                                                    className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 transition-all shadow-md active:scale-95"
+                                                >
+                                                    {verifyingPatient ? 'Checking...' : 'Verify Patient'}
+                                                </button>
                                             </div>
-                                            {file && (
-                                                <p className="mt-2 text-sm text-purple-600 font-medium truncate">
-                                                    Selected: {file.name}
-                                                </p>
+                                            {patientName && (
+                                                <div className="mt-3 text-sm text-green-700 font-bold flex items-center gap-1.5 bg-green-50 w-fit px-3 py-1 rounded-full border border-green-100">
+                                                    <CheckCircleIcon className="h-4 w-4" />
+                                                    Identity Confirmed: {patientName}
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
 
-                                    {/* Comments */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Results Summary / Comments</label>
-                                        <textarea
-                                            rows={3}
-                                            className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-lg"
-                                            placeholder="Enter key findings..."
-                                            value={comments}
-                                            onChange={(e) => setComments(e.target.value)}
-                                        />
-                                    </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700 mb-2">Diagnostic Test Type</label>
+                                                <select
+                                                    required
+                                                    className="block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-xl shadow-sm cursor-pointer"
+                                                    value={selectedTest}
+                                                    onChange={(e) => setSelectedTest(e.target.value)}
+                                                >
+                                                    <option value="">Choose a test category...</option>
+                                                    {labTests.map(test => (
+                                                        <option key={test.id} value={test.id}>{test.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                    {/* Submit Button */}
-                                    <div className="pt-2">
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700 mb-2">Upload Result (PDF/Image)</label>
+                                                <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-purple-50 hover:border-purple-300 transition-all p-4 text-center">
+                                                    <DocumentArrowUpIcon className="w-8 h-8 text-gray-400 mb-1" />
+                                                    <p className="text-sm text-gray-600 font-semibold">{file ? file.name : 'Select or drop report file'}</p>
+                                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">MAX 10MB • SECURE ENCRYPTION</p>
+                                                    <input id="file-upload" type="file" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Technician Comments / Key Findings</label>
+                                            <textarea
+                                                rows={3}
+                                                className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-xl p-4"
+                                                placeholder="Enter a brief summary of the findings..."
+                                                value={comments}
+                                                onChange={(e) => setComments(e.target.value)}
+                                            />
+                                        </div>
+
                                         <button
                                             type="submit"
                                             disabled={uploading || !patientVerified || !file || !selectedTest}
-                                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.01]"
+                                            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.01] active:scale-95 uppercase tracking-wide"
                                         >
-                                            {uploading ? 'Uploading...' : 'Submit Report'}
+                                            {uploading ? 'Processing Secure Upload...' : 'Commit Report to Blockchain Record'}
                                         </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Column: Recent Uploads & Stats */}
-                    <div className="space-y-8">
-                        {/* Stats Card */}
-                        <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Today's Overview</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-purple-50 p-4 rounded-xl">
-                                    <p className="text-xs text-purple-600 font-medium uppercase tracking-wide">Uploads</p>
-                                    <p className="text-2xl font-bold text-gray-900">{recentUploads.length}</p>
-                                </div>
-                                <div className="bg-blue-50 p-4 rounded-xl">
-                                    <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Pending</p>
-                                    <p className="text-2xl font-bold text-gray-900">-</p>
+                                    </form>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Recent Uploads List */}
-                        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                            <div className="p-4 border-b border-gray-100 bg-gray-50/50">
-                                <h3 className="text-lg font-medium text-gray-900">Recent Uploads</h3>
+                        {/* Right Column: Quick Stats */}
+                        <div className="space-y-6">
+                            <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">Daily Statistics</h3>
+                                <div className="space-y-4">
+                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 flex justify-between items-center">
+                                        <div>
+                                            <p className="text-xs text-purple-600 font-bold uppercase">Total Uploads</p>
+                                            <p className="text-2xl font-black text-gray-900">{recentUploads.length}</p>
+                                        </div>
+                                        <DocumentArrowUpIcon className="h-8 w-8 text-purple-200" />
+                                    </div>
+                                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
+                                        <div>
+                                            <p className="text-xs text-green-600 font-bold uppercase">Patients Verified</p>
+                                            <p className="text-2xl font-black text-gray-900">{new Set(recentUploads.map(r => r.patient)).size}</p>
+                                        </div>
+                                        <CheckCircleIcon className="h-8 w-8 text-green-200" />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
-                                {loadingRecent ? (
-                                    <div className="p-4 space-y-4">
-                                        {[1, 2, 3].map((i) => (
-                                            <div key={i} className="flex flex-col gap-2">
-                                                <div className="flex justify-between">
-                                                    <Skeleton className="h-4 w-32" />
-                                                    <Skeleton className="h-3 w-16" />
-                                                </div>
-                                                <Skeleton className="h-3 w-24" />
-                                                <Skeleton className="h-4 w-16 rounded-full" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : recentUploads.length === 0 ? (
-                                    <div className="p-8 text-center text-gray-500 text-sm">
-                                        No uploads yet today.
-                                    </div>
-                                ) : (
-                                    recentUploads.map((report) => (
+
+                            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+                                <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Quick History</h3>
+                                    <button onClick={() => setActiveTab('history')} className="text-xs text-purple-600 font-bold hover:underline">View All</button>
+                                </div>
+                                <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
+                                    {recentUploads.slice(0, 5).map((report) => (
                                         <div key={report.id} className="p-4 hover:bg-gray-50 transition-colors">
                                             <div className="flex justify-between items-start mb-1">
-                                                <span className="text-sm font-medium text-gray-900">
-                                                    {report.test_type?.name || 'Lab Test'}
-                                                </span>
-                                                <span className="text-xs text-gray-400 flex items-center">
-                                                    <ClockIcon className="h-3 w-3 mr-1" />
-                                                    {new Date(report.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                                <span className="text-sm font-bold text-gray-900">{report.test_type?.name}</span>
+                                                <span className="text-[10px] text-gray-400">{new Date(report.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                             </div>
-                                            <p className="text-xs text-gray-600 mb-2">
-                                                Patient: {report.patient_health_id || 'Top Secret'}
-                                            </p>
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                Completed
-                                            </span>
+                                            <p className="text-xs text-gray-500">PID: {report.patient_health_id}</p>
                                         </div>
-                                    ))
-                                )}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                ) : (
+                    /* History View */
+                    <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+                        <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <ClockIcon className="h-6 w-6 text-purple-600" />
+                                Report History
+                            </h2>
+                            <div className="relative max-w-sm w-full">
+                                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by Patient ID, Test, or Comments..."
+                                    className="w-full pl-10 pr-4 py-2 rounded-xl border-gray-300 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-4 text-left">Date & Time</th>
+                                        <th className="px-6 py-4 text-left">Patient Health ID</th>
+                                        <th className="px-6 py-4 text-left">Test Type</th>
+                                        <th className="px-6 py-4 text-left">Findings</th>
+                                        <th className="px-6 py-4 text-left">Status</th>
+                                        <th className="px-6 py-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-100">
+                                    {filteredHistory.map((report) => (
+                                        <tr key={report.id} className="hover:bg-purple-50/30 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                <div className="font-semibold">{new Date(report.created_at).toLocaleDateString()}</div>
+                                                <div className="text-[10px] text-gray-400">{new Date(report.created_at).toLocaleTimeString()}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-purple-700">
+                                                {report.patient_health_id}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                                {report.test_type?.name}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={report.comments}>
+                                                {report.comments || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-green-100 text-green-700 border border-green-200 shadow-sm">
+                                                    Recorded
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                                <a
+                                                    href={report.file}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-purple-600 hover:text-purple-900 font-bold bg-purple-50 px-3 py-1.5 rounded-lg transition-colors border border-purple-100"
+                                                >
+                                                    View Report
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredHistory.length === 0 && (
+                                        <tr>
+                                            <td colSpan="6" className="px-6 py-12 text-center text-gray-500 font-medium">
+                                                No matching reports found in your upload history.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );

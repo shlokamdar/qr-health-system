@@ -11,7 +11,7 @@ from .serializers import (
     PatientDocumentSerializer, OldPrescriptionSerializer,
     SharingPermissionSerializer, GrantAccessSerializer
 )
-from permissions.roles import IsDoctor, IsPatient, IsPatientOwner
+from role_permissions.roles import IsDoctor, IsPatient, IsPatientOwner
 from audit.models import AccessLog
 
 
@@ -85,7 +85,7 @@ class PatientViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(patient)
         return Response(serializer.data)
 
-    @decorators.action(detail=False, methods=['get'])
+    @decorators.action(detail=False, methods=['get'], url_path='me/download-pdf')
     def download_pdf(self, request):
         """Generate and return a PDF of the patient's medical history."""
         patient = get_object_or_404(Patient, user=request.user)

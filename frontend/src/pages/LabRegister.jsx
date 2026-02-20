@@ -1,222 +1,241 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { 
-  BuildingOffice2Icon, 
-  UserCircleIcon, 
-  KeyIcon, 
-  EnvelopeIcon, 
-  IdentificationIcon 
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api';
+import Header from '../components/Header';
+import {
+  BeakerIcon,
+  IdentificationIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  CheckCircleIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 
 const LabRegister = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
+    name: '',
+    accreditation_number: '',
+    address: '',
+    phone: '',
     email: '',
-    first_name: '',
-    last_name: '',
-    hospital: '',
-    license_number: '',
+    hospital: ''
   });
   const [hospitals, setHospitals] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    // Fetch verified hospitals for dropdown
     const fetchHospitals = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/doctors/hospitals/');
-        setHospitals(response.data);
+        // Fetch verified hospitals for the parent dropdown
+        const response = await api.get('/hospitals/');
+        setHospitals(response.data.results || response.data);
       } catch (err) {
-        console.error("Failed to load hospitals", err);
+        console.error('Failed to fetch hospitals');
       }
     };
     fetchHospitals();
   }, []);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
-    
+
+    // Convert empty hospital string to null for backend
+    const submissionData = { ...formData };
+    if (!submissionData.hospital) delete submissionData.hospital;
+
     try {
-      await axios.post('http://localhost:8000/api/labs/technicians/', formData);
+      await api.post('/labs/organizations/', submissionData);
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.detail || 'Registration failed. Please check your inputs.');
+      setError(err.response?.data?.detail || 'Registration failed. Please check the details and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (success) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center space-y-6">
+          <div className="bg-purple-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircleIcon className="h-12 w-12 text-purple-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-slate-800">Registration Submitted!</h2>
+          <p className="text-slate-600 leading-relaxed">
+            Your laboratory registration for <strong>{formData.name}</strong> has been received.
+            We will verify your accreditation credentials and notify you once approved.
+          </p>
+          <Link
+            to="/login"
+            className="block w-full py-4 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg"
+          >
+            Return to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-            <div className="rounded-full bg-purple-100 p-3">
-                <IdentificationIcon className="h-10 w-10 text-purple-600" />
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <Header />
+      <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-xl w-full space-y-8 bg-white p-10 rounded-3xl shadow-2xl border border-slate-100">
+          <div className="text-center">
+            <div className="bg-purple-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-purple-200">
+              <BeakerIcon className="h-8 w-8 text-purple-600" />
             </div>
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Lab Technician Registration
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Join the network to update patient records directly
-        </p>
-      </div>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Register Diagnostic Lab</h2>
+            <p className="mt-2 text-sm text-slate-500">Enable digital health records for your laboratory.</p>
+          </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {success ? (
-            <div className="rounded-md bg-green-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-green-800">Registration Successful!</h3>
-                  <div className="mt-2 text-sm text-green-700">
-                    <p>Your account has been created. Please wait for admin approval before logging in.</p>
-                  </div>
-                </div>
-              </div>
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg text-sm text-red-700">
+              {error}
             </div>
-          ) : (
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              {error && (
-                <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">First Name</label>
-                  <input
-                    type="text"
-                    name="first_name"
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                  <input
-                    type="text"
-                    name="last_name"
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <UserCircleIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    name="username"
-                    required
-                    className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="jdoe_lab"
-                    value={formData.username}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                        type="email"
-                        name="email"
-                        required
-                        className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={handleChange}
-                    />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">License Number</label>
-                <input
-                  type="text"
-                  name="license_number"
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-                  value={formData.license_number}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Hospital (Optional)</label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <BuildingOffice2Icon className="h-5 w-5 text-gray-400" />
-                 </div>
-                  <select
-                    name="hospital"
-                    className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                    value={formData.hospital}
-                    onChange={handleChange}
-                  >
-                    <option value="">Independent / No Affiliation</option>
-                    {hospitals.map(h => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <KeyIcon className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                        type="password"
-                        name="password"
-                        required
-                        className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                        value={formData.password}
-                        onChange={handleChange}
-                    />
-                </div>
-              </div>
-
-              <div>
-                <button
-                  type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                >
-                  Register as Lab Technician
-                </button>
-              </div>
-            </form>
           )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Lab Name</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <BeakerIcon className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    name="name"
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-11 pr-3 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm bg-slate-50/50 transition-all"
+                    placeholder="PulseID Molecular Diagnostics"
+                    value={formData.name}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Accreditation ID</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <IdentificationIcon className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      name="accreditation_number"
+                      type="text"
+                      required
+                      className="appearance-none block w-full pl-11 pr-3 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm bg-slate-50/50 transition-all"
+                      placeholder="NABL-12345"
+                      value={formData.accreditation_number}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Parent Hospital (Optional)</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <BuildingOfficeIcon className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <select
+                      name="hospital"
+                      className="appearance-none block w-full pl-11 pr-3 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm bg-slate-50/50 transition-all cursor-pointer"
+                      value={formData.hospital}
+                      onChange={handleChange}
+                    >
+                      <option value="">Independent Lab</option>
+                      {hospitals.map(h => (
+                        <option key={h.id} value={h.id}>{h.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Lab Phone</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <PhoneIcon className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      name="phone"
+                      type="tel"
+                      required
+                      className="appearance-none block w-full pl-11 pr-3 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm bg-slate-50/50 transition-all"
+                      placeholder="+91 9876543210"
+                      value={formData.phone}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Lab Email</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <EnvelopeIcon className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      className="appearance-none block w-full pl-11 pr-3 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm bg-slate-50/50 transition-all"
+                      placeholder="lab@diagnostic.com"
+                      value={formData.email}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Lab Address</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 pt-3.5 pointer-events-none">
+                    <MapPinIcon className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <textarea
+                    name="address"
+                    required
+                    rows={3}
+                    className="appearance-none block w-full pl-11 pr-3 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm bg-slate-50/50 transition-all"
+                    placeholder="Full address of the diagnostic center..."
+                    value={formData.address}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-xl text-base font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all transform hover:scale-[1.02] active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {loading ? 'Submitting Registration...' : 'Register Diagnostic Center'}
+            </button>
+          </form>
+
+          <div className="text-center pt-2">
+            <Link to="/login" className="text-sm font-semibold text-purple-600 hover:text-purple-500 transition-colors">
+              Already registered? Go back to Login
+            </Link>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

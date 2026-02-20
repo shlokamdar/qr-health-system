@@ -96,3 +96,60 @@ def send_consultation_notification(patient, consultation):
     """
     if patient.user.email:
         send_email_async(subject, message, [patient.user.email])
+
+def send_doctor_registration_email(doctor):
+    """Notify system administrators about a new doctor registration."""
+    subject = "New Doctor Registration Pending Verification"
+    message = f"""
+    Hello Admin,
+
+    A new doctor has registered and is awaiting verification:
+    
+    Name: Dr. {doctor.user.get_full_name() or doctor.user.username}
+    License Number: {doctor.license_number}
+    Specialization: {doctor.specialization}
+    Hospital: {doctor.hospital.name if doctor.hospital else 'Independent'}
+    
+    Please log in to the Superadmin Dashboard to review the documents and verify the account.
+    
+    Regards,
+    QR Health System
+    """
+    send_email_async(subject, message, [settings.ADMIN_EMAIL])
+
+def send_hospital_registration_email(hospital):
+    """Notify system administrators about a new hospital registration."""
+    subject = "New Hospital Registration Pending Verification"
+    message = f"""
+    Hello Admin,
+
+    A new hospital has registered and is awaiting verification:
+    
+    Name: {hospital.name}
+    Registration Number: {hospital.registration_number}
+    Address: {hospital.address}
+    
+    Please log in to the Superadmin Dashboard to verify the hospital.
+    
+    Regards,
+    QR Health System
+    """
+    send_email_async(subject, message, [settings.ADMIN_EMAIL])
+
+def send_doctor_approved_email(doctor):
+    """Notify doctor that their account has been verified."""
+    subject = "PulseID Account Verified"
+    message = f"""
+    Hello Dr. {doctor.user.get_full_name() or doctor.user.username},
+
+    Great news! Your PulseID account has been verified by our administration team.
+    
+    Authorization Level: {doctor.authorization_level}
+    
+    You can now log in to the Doctor Dashboard to manage your patients and medical records.
+    
+    Regards,
+    QR Health System
+    """
+    if doctor.user.email:
+        send_email_async(subject, message, [doctor.user.email])

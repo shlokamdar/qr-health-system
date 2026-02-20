@@ -24,6 +24,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from doctors.models import Doctor, Hospital, Appointment
 from patients.models import Patient
+from labs.models import DiagnosticLab
 
 class AdminDashboardStatsView(APIView):
     """
@@ -37,6 +38,8 @@ class AdminDashboardStatsView(APIView):
             'verified_doctors': Doctor.objects.filter(is_verified=True).count(),
             'pending_doctors': Doctor.objects.filter(is_verified=False).count(),
             'total_hospitals': Hospital.objects.count(),
+            'total_labs': DiagnosticLab.objects.count(),
+            'pending_labs': DiagnosticLab.objects.filter(is_verified=False).count(),
             'total_patients': Patient.objects.count(),
             'total_appointments': Appointment.objects.count(),
         }

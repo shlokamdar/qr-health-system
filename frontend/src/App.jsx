@@ -14,6 +14,7 @@ import HospitalRegister from './pages/HospitalRegister';
 import LabRegister from './pages/LabRegister';
 import LabLogin from './pages/LabLogin';
 import LabDashboard from './pages/LabDashboard';
+import HospitalDashboard from './pages/HospitalDashboard';
 import UnifiedLogin from './pages/UnifiedLogin';
 import SystemAdminLogin from './pages/SystemAdminLogin';
 
@@ -21,10 +22,10 @@ import SystemAdminLogin from './pages/SystemAdminLogin';
 const ProtectedRoute = ({ children, allowedRole }) => {
     const { user, loading } = useContext(AuthContext);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center text-white text-xl">Loading...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-900 text-xl">Loading...</div>;
 
     if (!user) {
-        if (allowedRole === 'ADMIN') return <Navigate to="/admin/login" replace />;
+        if (allowedRole === 'ADMIN') return <Navigate to="/system/login" replace />;
         return <Navigate to="/" replace />;
     }
 
@@ -34,7 +35,9 @@ const ProtectedRoute = ({ children, allowedRole }) => {
         const redirect =
             user.role === 'PATIENT' ? '/patient/dashboard' :
                 user.role === 'DOCTOR' ? '/doctor/dashboard' :
-                    user.role === 'LAB_TECH' ? '/lab/dashboard' : '/';
+                    user.role === 'LAB_TECH' ? '/lab/dashboard' :
+                        user.role === 'HOSPITAL_ADMIN' ? '/hospital/dashboard' :
+                            user.role === 'ADMIN' ? '/admin-dashboard' : '/';
         return <Navigate to={redirect} replace />;
     }
 
@@ -45,12 +48,14 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 const DashboardRedirect = () => {
     const { user, loading } = useContext(AuthContext);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center text-white text-xl">Loading...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-900 text-xl">Loading...</div>;
 
     if (!user) return <Navigate to="/" replace />;
 
+    if (user.role === 'ADMIN' || user.is_superuser) return <Navigate to="/admin-dashboard" replace />;
     if (user.role === 'DOCTOR') return <Navigate to="/doctor/dashboard" replace />;
     if (user.role === 'LAB_TECH') return <Navigate to="/lab/dashboard" replace />;
+    if (user.role === 'HOSPITAL_ADMIN') return <Navigate to="/hospital/dashboard" replace />;
     return <Navigate to="/patient/dashboard" replace />;
 };
 
@@ -62,8 +67,16 @@ function App() {
                     {/* Homepage */}
                     <Route path="/" element={<Homepage />} />
 
-                    {/* Hospital Registration */}
+                    {/* Organization Routes */}
                     <Route path="/hospital/register" element={<HospitalRegister />} />
+                    <Route
+                        path="/hospital/dashboard"
+                        element={
+                            <ProtectedRoute allowedRole="HOSPITAL_ADMIN">
+                                <HospitalDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route path="/lab/register" element={<LabRegister />} />
                     <Route path="/lab/login" element={<LabLogin />} />
                     <Route

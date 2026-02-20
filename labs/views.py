@@ -1,89 +1,111 @@
-from rest_framework import viewsets, permissions, status, throttling
+from rest_framework import viewsets, generics, permissions, status, decorators
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import LabTechnician, LabTest, LabReport
+from .models import DiagnosticLab, LabTechnician, LabTest, LabReport
 from .serializers import (
+    DiagnosticLabSerializer, DiagnosticLabRegisterSerializer,
     LabTechnicianSerializer, LabTechnicianRegisterSerializer,
     LabTestSerializer, LabReportSerializer
 )
-from patients.models import Patient
+from role_permissions.roles import IsLabTech
 from audit.models import AccessLog
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 
-class IsLabTechnician(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'LAB_TECH'
-
-class LabTechnicianViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for managing Lab Technicians.
-    """
-    queryset = LabTechnician.objects.all()
-    serializer_class = LabTechnicianSerializer
+class DiagnosticLabViewSet(viewsets.ModelViewSet):
+    """ViewSet for DiagnosticLab CRUD operations."""
+    queryset = DiagnosticLab.objects.all()
+    serializer_class = DiagnosticLabSerializer
     
     def get_permissions(self):
         if self.action == 'create':
             return [permissions.AllowAny()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
-
+    
     def get_serializer_class(self):
         if self.action == 'create':
-            return LabTechnicianRegisterSerializer
-        return LabTechnicianSerializer
+            return DiagnosticLabRegisterSerializer
+        return DiagnosticLabSerializer
+    
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return DiagnosticLab.objects.all()
+        return DiagnosticLab.objects.filter(is_verified=True)
 
 
-class LabTestViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for managing available Lab Tests.
-    """
-    queryset = LabTest.objects.all()
+class LabTechnicianRegisterView(generics.CreateAPIView):
+    """View for lab technician registration."""
+    permission_classes = [permissions.AllowAny]
+    serializer_class = LabTechnicianRegisterSerializer
+
+
+class LabTechnicianProfileView(generics.RetrieveUpdateAPIView):
+    """View for current lab technician's profile."""
+    permission_classes = [IsLabTech]
+    serializer_class = LabTechnicianSerializer
+    
+    def get_object(self):
+        return get_object_or_404(LabTechnician, user=self.request.user)
+
+
+class LabTestListView(generics.ListAPIView):
+    """View for listing available lab tests."""
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = LabTestSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = LabTest.objects.all()
 
 
 class LabReportViewSet(viewsets.ModelViewSet):
-    queryset = LabReport.objects.all()
+    """ViewSet for LabReport CRUD operations."""
+    permission_classes = [IsLabTech]
     serializer_class = LabReportSerializer
-    throttle_classes = [throttling.ScopedRateThrottle]
-    throttle_scope = 'uploads'
     
-    def get_permissions(self):
-        if self.action == 'create':
-            return [IsLabTechnician()]
-        return [permissions.IsAuthenticated()]
-
     def get_queryset(self):
-        user = self.request.user
-        if user.role == 'PATIENT':
-            return LabReport.objects.filter(patient__user=user)
-        elif user.role == 'LAB_TECH':
-            return LabReport.objects.filter(technician__user=user)
-        elif user.role == 'DOCTOR':
-            # Doctors can see reports if they have access to the patient
-            # This logic needs to align with SharingPermission 
-            # ideally, we check individual patient access in retrieve
-            return LabReport.objects.all() # Filtering should happen via patient filter
-        return LabReport.objects.none()
-
-    @swagger_auto_schema(
-        operation_description="Upload a new lab report for a patient.",
-        request_body=LabReportSerializer,
-        responses={201: LabReportSerializer}
-    )
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
+        technician = get_object_or_404(LabTechnician, user=self.request.user)
+        return LabReport.objects.filter(technician=technician)
+    
     def perform_create(self, serializer):
-        patient = serializer.validated_data['patient']
-        report = serializer.save(technician=self.request.user.lab_profile)
+        technician = get_object_or_404(LabTechnician, user=self.request.user)
+        report = serializer.save(technician=technician)
         
-        # Log Access
+        # Log the action
         AccessLog.objects.create(
             actor=self.request.user,
-            patient=patient,
-            action=AccessLog.Action.UPLOAD_DOCUMENT,
-            details=f"Uploaded Lab Report: {report.test_type.name}"
+            patient=report.patient,
+            action=AccessLog.Action.VIEW_RECORDS, # Or add a new action type if needed
+            details=f"Uploaded lab report: {report.test_type.name}"
         )
+
+
+class LabRecentUploadsView(generics.ListAPIView):
+    """View for technicians to see their recent uploads."""
+    permission_classes = [IsLabTech]
+    serializer_class = LabReportSerializer
+    
+    def get_queryset(self):
+        technician = get_object_or_404(LabTechnician, user=self.request.user)
+        return LabReport.objects.filter(technician=technician).order_by('-created_at')
+
+
+# Admin specific views
+class LabListView(generics.ListAPIView):
+    """View for admins to list all diagnostic labs."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = DiagnosticLabSerializer
+    queryset = DiagnosticLab.objects.all()
+
+
+class LabVerificationView(generics.UpdateAPIView):
+    """View for admins to verify diagnostic labs."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = DiagnosticLabSerializer
+    queryset = DiagnosticLab.objects.all()
+    
+    def patch(self, request, *args, **kwargs):
+        lab = self.get_object()
+        verify = request.data.get('verify', False)
+        lab.is_verified = verify
+        lab.save()
         
-        # We could also send notification here!
+        status = "verified" if verify else "unverified"
+        return Response({"message": f"Lab {status} successfully"}, status=status.HTTP_200_OK)

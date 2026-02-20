@@ -9,14 +9,14 @@ const Icon = ({ d, size = 20, className = '' }) => (
 );
 
 const ICONS = {
-  QrCode:   ['M3 3h7v7H3z', 'M14 3h7v7h-7z', 'M14 14h7v7h-7z', 'M3 14h7v7H3z'],
+  QrCode: ['M3 3h7v7H3z', 'M14 3h7v7h-7z', 'M14 14h7v7h-7z', 'M3 14h7v7H3z'],
   Download: ['M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4', 'M7 10l5 5 5-5', 'M12 15V3'],
 };
 
 const HealthIdCard = ({ patient, onDownloadQR, onDownloadCard }) => {
   return (
     <div style={{ width: '100%' }}>
-      <div style={{
+      <div id="patient-health-card" style={{
         background: '#0D1B2A', borderRadius: 16, padding: '24px 28px',
         position: 'relative', overflow: 'hidden', aspectRatio: '1.7 / 1',
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between',

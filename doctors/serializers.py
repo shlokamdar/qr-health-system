@@ -24,11 +24,38 @@ class HospitalSerializer(serializers.ModelSerializer):
 
 
 class HospitalRegisterSerializer(serializers.ModelSerializer):
-    """Serializer for hospital self-registration."""
+    """Serializer for hospital self-registration with admin creation."""
+    admin_username = serializers.CharField(write_only=True)
+    admin_password = serializers.CharField(write_only=True)
     
     class Meta:
         model = Hospital
-        fields = ['name', 'address', 'registration_number', 'phone', 'email']
+        fields = [
+            'name', 'address', 'registration_number', 'phone', 'email',
+            'admin_username', 'admin_password'
+        ]
+
+    def create(self, validated_data):
+        admin_username = validated_data.pop('admin_username')
+        admin_password = validated_data.pop('admin_password')
+        
+        hospital = Hospital.objects.create(**validated_data)
+        
+        # Create Hospital Admin user
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.create_user(
+            username=admin_username,
+            password=admin_password,
+            email=validated_data.get('email'),
+            role='HOSPITAL_ADMIN'
+        )
+        
+        # Create HospitalAdmin profile
+        from .models import HospitalAdmin
+        HospitalAdmin.objects.create(user=user, hospital=hospital)
+        
+        return hospital
 
 
 class DoctorSerializer(serializers.ModelSerializer):
@@ -40,15 +67,45 @@ class DoctorSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    
+    license_document_url = serializers.SerializerMethodField()
+    degree_certificate_url = serializers.SerializerMethodField()
+    identity_proof_url = serializers.SerializerMethodField()
+
+    def _build_url(self, file_field):
+        request = self.context.get('request')
+        if file_field and hasattr(file_field, 'url'):
+            try:
+                return request.build_absolute_uri(file_field.url) if request else file_field.url
+            except Exception:
+                return None
+        return None
+
+    def get_license_document_url(self, obj):
+        return self._build_url(obj.license_document)
+
+    def get_degree_certificate_url(self, obj):
+        return self._build_url(obj.degree_certificate)
+
+    def get_identity_proof_url(self, obj):
+        return self._build_url(obj.identity_proof)
+
     class Meta:
         model = Doctor
         fields = [
-            'id', 'user', 'hospital', 'hospital_details', 
-            'license_number', 'specialization', 'authorization_level',
-            'is_verified', 'created_at', 'updated_at'
+            'id', 'user', 'hospital', 'hospital_details',
+            'license_number', 'issuing_medical_council', 'license_expiry_date',
+            'specialization', 'years_of_experience',
+            'date_of_birth', 'contact_number', 'address',
+            'authorization_level',
+            'is_verified', 'rejection_reason',
+            'license_document_url', 'degree_certificate_url', 'identity_proof_url',
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'user', 'authorization_level', 'is_verified', 'created_at', 'updated_at']
+        read_only_fields = [
+            'id', 'user', 'authorization_level', 'is_verified', 'rejection_reason',
+            'license_document_url', 'degree_certificate_url', 'identity_proof_url',
+            'created_at', 'updated_at'
+        ]
 
 
 class DoctorRegisterSerializer(serializers.ModelSerializer):

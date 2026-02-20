@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-import os
 from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -180,6 +179,7 @@ SIMPLE_JWT = {
 # Email Configuration (Development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@qrhealthsystem.com'
+ADMIN_EMAIL = 'admin@qrhealthsystem.com'
 
 # Security Settings (Production)
 if not DEBUG:

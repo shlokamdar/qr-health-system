@@ -19,11 +19,35 @@ class Hospital(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        status = "✓" if self.is_verified else "⏳"
+        status = "Verified" if self.is_verified else "Pending"
         return f"{self.name} ({status})"
 
     class Meta:
         ordering = ['name']
+
+
+class HospitalAdmin(models.Model):
+    """Admin profile for a specific hospital."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='hospital_admin_profile'
+    )
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.CASCADE,
+        related_name='admins'
+    )
+    is_verified = models.BooleanField(
+        default=False,
+        help_text=_("Set to True after superadmin approval")
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Admin: {self.user.get_full_name() or self.user.username} ({self.hospital.name})"
 
 
 class Doctor(models.Model):
@@ -71,6 +95,10 @@ class Doctor(models.Model):
     is_verified = models.BooleanField(
         default=False,
         help_text=_("Set to True after superadmin approval")
+    )
+    rejection_reason = models.TextField(
+        blank=True,
+        help_text=_("Reason for rejection, if applicable")
     )
     
     created_at = models.DateTimeField(auto_now_add=True)

@@ -7,6 +7,7 @@ class User(AbstractUser):
         PATIENT = 'PATIENT', _('Patient')
         DOCTOR = 'DOCTOR', _('Doctor')
         LAB_TECH = 'LAB_TECH', _('Lab Technician')
+        HOSPITAL_ADMIN = 'HOSPITAL_ADMIN', _('Hospital Admin')
         ADMIN = 'ADMIN', _('Admin')
 
     role = models.CharField(

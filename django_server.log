@@ -1,0 +1,57 @@
+Watching for file changes with StatReloader
+[20/Feb/2026 21:28:01] "POST /api/auth/login/ HTTP/1.1" 200 748
+Not Found: /api/doctors/hospital/me/
+[20/Feb/2026 21:28:01] "GET /api/doctors/hospital/me/ HTTP/1.1" 404 9760
+[20/Feb/2026 21:28:35] "POST /api/auth/login/ HTTP/1.1" 200 748
+[20/Feb/2026 21:28:35] "GET /api/doctors/hospitals/me/ HTTP/1.1" 200 296
+C:\Users\Zalak\OneDrive\Documents\project\qr-health-system\doctors\models.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+February 20, 2026 - 20:15:22
+Django version 6.0.1, using settings 'config.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/6.0/howto/deployment/
+Watching for file changes with StatReloader
+C:\Users\Zalak\OneDrive\Documents\project\qr-health-system\doctors\views.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+February 20, 2026 - 21:33:38
+Django version 6.0.1, using settings 'config.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/6.0/howto/deployment/
+Watching for file changes with StatReloader
+Bad Request: /api/auth/login/
+[20/Feb/2026 21:38:22] "POST /api/auth/login/ HTTP/1.1" 400 76
+[20/Feb/2026 21:39:43] "POST /api/auth/login/ HTTP/1.1" 200 700
+C:\Users\Zalak\OneDrive\Documents\project\qr-health-system\doctors\serializers.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+February 20, 2026 - 21:37:42
+Django version 6.0.1, using settings 'config.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/6.0/howto/deployment/
+Watching for file changes with StatReloader
+C:\Users\Zalak\OneDrive\Documents\project\qr-health-system\doctors\serializers.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+February 20, 2026 - 21:44:35
+Django version 6.0.1, using settings 'config.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/6.0/howto/deployment/
+Watching for file changes with StatReloader

@@ -73,6 +73,15 @@ const PatientService = {
         return res.data;
     },
 
+    updateEmergencyContact: async (id, data) => {
+        const res = await api.patch(`patients/emergency-contacts/${id}/`, data);
+        return res.data;
+    },
+
+    deleteEmergencyContact: async (id) => {
+        await api.delete(`patients/emergency-contacts/${id}/`);
+    },
+
     updateProfile: async (healthId, data) => {
         const res = await api.patch(`patients/${healthId}/`, data);
         return res.data;
@@ -107,7 +116,11 @@ const PatientService = {
     },
 
     getDownloadPdfUrl: () => {
-        return api.defaults.baseURL + 'patients/me/download_pdf/';
+        return api.defaults.baseURL + 'patients/me/download-pdf/';
+    },
+
+    downloadPdf: async () => {
+        return api.get('patients/me/download-pdf/', { responseType: 'blob' });
     }
 };
 

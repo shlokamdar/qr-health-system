@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from .models import MedicalRecord
 from .serializers import MedicalRecordSerializer
-from permissions.roles import IsDoctor, IsPatient, IsLab
+from role_permissions.roles import IsDoctor, IsLabTech, IsPatient, IsPatientOwner
 from audit.models import AccessLog
 from patients.models import Patient
 from django.shortcuts import get_object_or_404

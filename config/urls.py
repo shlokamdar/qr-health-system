@@ -26,6 +26,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from audit.views import AdminDashboardStatsView
 from doctors.views import DoctorListView, DoctorVerificationView, HospitalListView, HospitalVerificationView
+from labs.views import LabListView, LabVerificationView
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -55,6 +56,8 @@ urlpatterns = [
     path('api/admin/doctors/<int:pk>/manage/', DoctorVerificationView.as_view(), name='admin-doctor-manage'),
     path('api/admin/hospitals/', HospitalListView.as_view(), name='admin-hospitals'),
     path('api/admin/hospitals/<int:pk>/manage/', HospitalVerificationView.as_view(), name='admin-hospital-manage'),
+    path('api/admin/labs/', LabListView.as_view(), name='admin-labs'),
+    path('api/admin/labs/<int:pk>/manage/', LabVerificationView.as_view(), name='admin-lab-manage'),
 
     # Documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
