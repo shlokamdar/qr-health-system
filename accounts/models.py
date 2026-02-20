@@ -16,5 +16,12 @@ class User(AbstractUser):
         help_text=_("User role for access control")
     )
 
+    # Enforce a unique email across all users
+    email = models.EmailField(
+        _('email address'),
+        unique=True,
+        blank=False,
+    )
+
     def __str__(self):
         return f"{self.username} ({self.role})"

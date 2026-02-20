@@ -25,3 +25,4 @@
 | Jane Doe | `jane_doe` | `jane_doe@example.com` | 1990-08-20 | O- |
 
 1. shloka921@gmail.com -- 1234@shL0
+2. taylor@gmail.com -- 1234@tay1

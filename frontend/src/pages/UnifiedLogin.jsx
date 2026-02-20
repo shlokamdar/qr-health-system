@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
     Activity, User, Stethoscope, Microscope, ShieldCheck, 
     Check, ArrowRight, ArrowLeft, Loader2, Download, Smartphone,
-    Eye, EyeOff, Upload, Clock, Lock, RefreshCw, X
+    Eye, EyeOff, Upload, Clock, Lock, RefreshCw, X, Image as ImageIcon
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -189,10 +189,17 @@ const UnifiedLogin = () => {
     };
     
     const ProgressBar = ({ step, total }) => (
-        <div className="flex gap-2 mb-8">
-            {[...Array(total)].map((_, i) => (
-                <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${i + 1 <= step ? 'bg-[#3B9EE2]' : 'bg-slate-100'}`} />
-            ))}
+        <div className="mb-8">
+            <div className="flex gap-2 mb-2">
+                {[...Array(total)].map((_, i) => (
+                    <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${
+                        i + 1 < step ? 'bg-[#2EC4A9]' : 
+                        i + 1 === step ? 'bg-[#3B9EE2]' : 
+                        'bg-slate-200'
+                    }`} />
+                ))}
+            </div>
+            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 text-right">Step {step} of {total}</p>
         </div>
     );
 
@@ -218,6 +225,9 @@ const UnifiedLogin = () => {
             const { firstName, lastName, email, password, confirmPassword, username } = patientData;
             if (!firstName || !lastName || !email || !password || !username) {
                  setError("Please fill all required fields."); return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                setError("Username can only contain letters, numbers, and underscores."); return;
             }
             if (!isEmailValid(email)) {
                 setError("Please enter a valid email address."); return;
@@ -264,29 +274,54 @@ const UnifiedLogin = () => {
 
         try {
             const canvas = await html2canvas(element, {
-                scale: 2, // Higher resolution
+                scale: 3,
                 useCORS: true,
-                backgroundColor: null, // Transparent bg if possible, or matches element
+                allowTaint: true,
+                backgroundColor: '#0D1B2A',
+                logging: false,
             });
 
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdf = new jsPDF('l', 'mm', [86, 54]); // Credit-card size landscape
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pdfHeight = pdf.internal.pageSize.getHeight();
 
-            // Add Header/Context to PDF (Optional)
-            pdf.setFontSize(16);
-            pdf.text('PulseID Health Card', 10, 10);
-            pdf.setFontSize(10);
-            pdf.text('Keep this card safe for emergency access.', 10, 16);
+            // Fill background
+            pdf.setFillColor('#0D1B2A');
+            pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
 
-            // Add the card image
-            pdf.addImage(imgData, 'PNG', 0, 25, pdfWidth, pdfHeight);
+            // Add card image filling the page
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             
-            pdf.save(`PulseID-${generatedID || 'Card'}.pdf`);
+            pdf.save(`PulseID-HealthCard-${patientData.lastName || 'Card'}.pdf`);
         } catch (err) {
             console.error("PDF generation failed", err);
-            setError("Failed to download PDF. Please try again.");
+            setError("Failed to download card. Please try again.");
+        }
+    };
+
+    const handleDownloadImage = async () => {
+        const element = document.getElementById('health-id-card');
+        if (!element) return;
+
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 4,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#0D1B2A',
+                logging: false,
+            });
+
+            const link = document.createElement('a');
+            link.download = `PulseID-Card-${patientData.lastName || 'Card'}.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            console.error("Image generation failed", err);
+            setError("Failed to download image. Please try again.");
         }
     };
 
@@ -411,8 +446,8 @@ const UnifiedLogin = () => {
 
             await register(formData);
             
-            // Move to Step 4 (Under Review)
-            setDoctorStep(4); 
+            // Move to Step 5 (Under Review)
+            setDoctorStep(5); 
             // We do NOT auto-login doctors as they are not verified yet (usually)
             // But if we want to confirm credentials work, we could.
             // Requirement says "redirect to dashboard" if registered? 
@@ -487,18 +522,19 @@ const UnifiedLogin = () => {
                     {activeTab === 'login' && (
                         <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                             {/* Role Selector */}
-                            <div className="flex gap-2 mb-8 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                            {/* Role Selector */}
+                            <div className="grid grid-cols-2 gap-2 mb-8">
                                 {loginRoles.map((role) => (
                                     <button 
                                         key={role.id}
                                         onClick={() => setLoginRole(role.id)}
-                                        className={`flex-1 flex flex-col items-center justify-center py-2.5 px-1 rounded-lg text-[10px] font-bold transition-all ${
+                                        className={`py-3 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                                             loginRole === role.id 
-                                            ? 'bg-white text-[#3B9EE2] shadow-sm ring-1 ring-slate-200 transform scale-105' 
-                                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                                            ? 'bg-[#3B9EE2] text-white shadow-md shadow-blue-500/20 scale-[1.02]' 
+                                            : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                                         }`}
                                     >
-                                        <role.icon className="w-4 h-4 mb-1.5 opacity-80" />
+                                        {role.id === 'ADMIN' && <Lock className="w-3 h-3 opacity-70" />}
                                         {role.label}
                                     </button>
                                 ))}
@@ -522,12 +558,12 @@ const UnifiedLogin = () => {
 
                             <form onSubmit={handleLogin} className="space-y-5">
                                 <div>
-                                    <label className={labelStyle}>Email Address</label>
+                                     <label className={labelStyle}>Email or Username</label>
                                     <input 
-                                        type="email" 
+                                        type="text" 
                                         value={username} onChange={e => setLoginUsername(e.target.value)}
                                         className={inputStyle}
-                                        placeholder="name@domain.com"
+                                        placeholder="name@domain.com or johndoe123"
                                     />
                                 </div>
                                 <div className="relative">
@@ -622,42 +658,41 @@ const UnifiedLogin = () => {
                                              </div>
 
                                              <div>
-                                                 <label className={labelStyle}>Username</label>
+                                                 <label className={labelStyle}>Choose a Username</label>
                                                  <div className="relative">
-                                                    <input 
-                                                        type="text" 
-                                                        className={`${inputStyle} pr-10 ${
-                                                            usernameAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
-                                                            usernameAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
-                                                        }`} 
-                                                        value={patientData.username} 
-                                                        onChange={e => setPatientData({...patientData, username: e.target.value})} 
-                                                        placeholder="johndoe123" 
-                                                    />
-                                                    <div className="absolute right-3 top-3.5">
-                                                        {isCheckingUsername ? (
-                                                            <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
-                                                        ) : patientData.username.length >= 3 ? (
-                                                            usernameAvailable === true ? (
-                                                                <Check className="w-5 h-5 text-green-500" />
-                                                            ) : usernameAvailable === false ? (
-                                                                <X className="w-5 h-5 text-red-500" />
-                                                            ) : null
-                                                        ) : null}
-                                                    </div>
-                                                 </div>
-                                                 {usernameAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Username is already taken.</p>}
-                                                 
-                                                 {suggestedUsernames.length > 0 && !patientData.username && (
-                                                     <div className="mt-2 text-xs text-slate-500">
-                                                         Available suggestions: 
-                                                         {suggestedUsernames.map(s => (
-                                                             <button key={s} onClick={() => setPatientData({...patientData, username: s})} className="ml-2 text-[#3B9EE2] hover:underline font-medium">
-                                                                 {s}
-                                                             </button>
-                                                         ))}
+                                                     <input 
+                                                         type="text" 
+                                                         autoComplete="off"
+                                                         className={`${inputStyle} pr-10 ${
+                                                             patientData.username && !/^[a-zA-Z0-9_]+$/.test(patientData.username) ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' :
+                                                             usernameAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                             usernameAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                         }`} 
+                                                         value={patientData.username} 
+                                                         onChange={e => setPatientData({...patientData, username: e.target.value.toLowerCase()})} 
+                                                         placeholder="johndoe123" 
+                                                     />
+                                                     <div className="absolute right-3 top-3.5">
+                                                         {isCheckingUsername ? (
+                                                             <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                         ) : patientData.username.length >= 3 ? (
+                                                             (usernameAvailable === true && /^[a-zA-Z0-9_]+$/.test(patientData.username)) ? (
+                                                                 <Check className="w-5 h-5 text-green-500" />
+                                                             ) : (usernameAvailable === false || !/^[a-zA-Z0-9_]+$/.test(patientData.username)) ? (
+                                                                 <X className="w-5 h-5 text-red-500" />
+                                                             ) : null
+                                                         ) : null}
                                                      </div>
-                                                 )}
+                                                 </div>
+                                                 <div className="flex flex-col mt-1.5 px-1 gap-1">
+                                                     <p className="text-[12px] text-[#9CA3AF] font-medium">Used for quick login. Letters, numbers, and underscores only.</p>
+                                                     {patientData.username && !/^[a-zA-Z0-9_]+$/.test(patientData.username) && (
+                                                         <p className="text-[12px] text-red-500 font-medium">Only letters, numbers, and underscores allowed</p>
+                                                     )}
+                                                     {usernameAvailable === false && /^[a-zA-Z0-9_]+$/.test(patientData.username) && (
+                                                         <p className="text-[12px] text-red-500 font-medium">Username is already taken.</p>
+                                                     )}
+                                                 </div>
                                              </div>
 
                                              <div>
@@ -802,43 +837,66 @@ const UnifiedLogin = () => {
                                              ) : (
                                                  <div className="animate-in zoom-in duration-500">
                                                      {/* Health ID Card */}
-                                                     <div id="health-id-card" className="relative mx-auto w-full max-w-[380px] aspect-[85/54] bg-[#0D1B2A] rounded-2xl shadow-2xl overflow-hidden text-left p-6 text-white mb-8 group hover:scale-[1.02] transition-transform duration-500 ring-4 ring-slate-100">
+                                                     <div id="health-id-card" className="relative mx-auto w-full max-w-[380px] aspect-[85/54] bg-[#0D1B2A] rounded-2xl shadow-2xl overflow-hidden text-left p-6 text-white mb-8 group hover:scale-[1.02] transition-all duration-500 ring-4 ring-slate-100/50">
                                                           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '4px 4px' }}></div>
                                                           <div className="relative z-10 flex flex-col justify-between h-full">
                                                               <div className="flex justify-between items-start">
                                                                   <div className="flex items-center gap-3"><div className="bg-white/10 p-1.5 rounded-lg backdrop-blur-sm"><Activity className="w-5 h-5 text-[#3B9EE2]" /></div><span className="font-bold tracking-tight text-xl">PulseID</span></div>
-                                                                  <div className="bg-[#2EC4A9]/20 text-[#2EC4A9] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-[#2EC4A9]/20 backdrop-blur-sm">Verified Patient</div>
+                                                                  <div className="bg-[#0d2e2a] text-[#2EC4A9] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-[#2EC4A9]/20 backdrop-blur-sm">Patient</div>
                                                               </div>
                                                               <div className="flex justify-between items-center mt-2 pl-1">
                                                                   <div>
-                                                                      <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Universal Health ID</div>
-                                                                      <div className="text-2xl font-mono font-bold tracking-widest text-[#3B9EE2] drop-shadow-lg">{generatedID}</div>
-                                                                      <div className="text-base mt-1.5 font-bold tracking-wide">{patientData.firstName} {patientData.lastName}</div>
+                                                                      <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Health ID</div>
+                                                                      <div className="text-2xl font-mono font-bold tracking-widest text-white drop-shadow-lg">{generatedID}</div>
+                                                                      <div className="text-base mt-1.5 font-bold tracking-wide capitalize">{patientData.firstName} {patientData.lastName}</div>
                                                                   </div>
-                                                                  <div className="bg-white p-1.5 rounded-xl shadow-lg border-2 border-slate-100"><div className="w-14 h-14 bg-[#0D1B2A] rounded-lg" /></div>
+                                                                  <div className="bg-white p-2 rounded-xl shadow-lg border-2 border-slate-100">
+                                                                      <svg width="64" height="64" viewBox="0 0 72 72" className="text-[#0D1B2A]">
+                                                                          <rect x="0" y="0" width="20" height="20" fill="currentColor" />
+                                                                          <rect x="4" y="4" width="12" height="12" fill="white" />
+                                                                          <rect x="6" y="6" width="8" height="8" fill="currentColor" />
+                                                                          <rect x="52" y="0" width="20" height="20" fill="currentColor" />
+                                                                          <rect x="56" y="4" width="12" height="12" fill="white" />
+                                                                          <rect x="58" y="6" width="8" height="8" fill="currentColor" />
+                                                                          <rect x="0" y="52" width="20" height="20" fill="currentColor" />
+                                                                          <rect x="4" y="56" width="12" height="12" fill="white" />
+                                                                          <rect x="6" y="58" width="8" height="8" fill="currentColor" />
+                                                                          <rect x="25" y="5" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="35" y="15" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="45" y="25" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="5" y="35" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="15" y="45" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="55" y="45" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="25" y="55" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="35" y="65" width="5" height="5" fill="currentColor" />
+                                                                          <rect x="25" y="30" width="10" height="10" fill="currentColor" opacity="0.5" />
+                                                                          <rect x="40" y="40" width="10" height="10" fill="currentColor" opacity="0.3" />
+                                                                      </svg>
+                                                                  </div>
                                                               </div>
                                                               <div className="flex justify-between items-end text-[10px] border-t border-white/10 pt-4 mt-2">
                                                                   <div className="flex gap-6">
                                                                       <div><span className="text-slate-400 block mb-0.5 uppercase tracking-wider">Blood Type</span><span className="font-bold text-base">{patientData.bloodGroup}</span></div>
-                                                                      {patientData.organDonor && <div><span className="text-slate-400 block mb-0.5 uppercase tracking-wider">Donor Status</span><span className="font-bold text-[#2EC4A9] text-base">Active</span></div>}
+                                                                      <div><span className="text-slate-400 block mb-0.5 uppercase tracking-wider">Organ Donor</span><span className="font-bold text-[#2EC4A9] text-base">{patientData.organDonor ? 'Yes' : 'No'}</span></div>
                                                                   </div>
-                                                                  <div className="text-slate-500 font-medium tracking-wide">Issued by PulseID Authority</div>
+                                                                  <div className="text-slate-500 font-medium tracking-wide">Valid across all providers</div>
                                                               </div>
                                                           </div>
                                                      </div>
                                                      
-                                                     <div className="flex gap-4 mb-8">
+                                                     <div className="flex gap-4 mb-4">
                                                          <button onClick={handleDownloadPDF} className="flex-1 py-3.5 rounded-xl border-2 border-[#3B9EE2]/20 bg-[#3B9EE2]/5 text-[#3B9EE2] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#3B9EE2]/10 transition-colors">
-                                                             <Download className="w-4 h-4" /> Download PDF
+                                                             <Download className="w-4 h-4" /> Download Card
                                                          </button>
-                                                         <button className="flex-1 py-3.5 rounded-xl border-2 border-[#3B9EE2]/20 bg-[#3B9EE2]/5 text-[#3B9EE2] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#3B9EE2]/10 transition-colors">
-                                                             <Smartphone className="w-4 h-4" /> Save to Wallet
+                                                         <button onClick={handleDownloadImage} className="flex-1 py-3.5 rounded-xl border-2 border-[#3B9EE2]/20 bg-[#3B9EE2]/5 text-[#3B9EE2] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#3B9EE2]/10 transition-colors">
+                                                             <ImageIcon className="w-4 h-4" /> Download as Image (PNG)
                                                          </button>
                                                      </div>
+                                                     <p className="text-[12px] text-slate-400 mb-8 font-medium">You can re-download your card anytime from your dashboard.</p>
                                                      
                                                      <div className="flex gap-4">
                                                          <button onClick={() => setPatientStep(3)} className={btnGhostStyle}>Back</button>
-                                                         <button onClick={() => setPatientStep(5)} className={btnPrimaryStyle}>Finalize</button>
+                                                         <button onClick={() => setPatientStep(5)} className={btnPrimaryStyle}>Continue →</button>
                                                      </div>
                                                  </div>
                                              )}
@@ -910,7 +968,7 @@ const UnifiedLogin = () => {
                                               </div>
                                               
                                               <div>
-                                                  <label className={labelStyle}>Username</label>
+                                                 <label className={labelStyle}>Choose a Username</label>
                                                   <div className="relative">
                                                      <input 
                                                          type="text" 
