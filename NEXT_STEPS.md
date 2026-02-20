@@ -25,9 +25,13 @@ Every page/section of the project should have a separate point in this file.
     b. Figure out the hosiptals and labs onboarding process with their employees (lab techs, doctors, etc)
 
 5. Patient Dashboard 
+    ** UI LAYOUT NEEDS TO BE UPDATED ** 
     a. NEW - EDIT DETAILS FEATURES ** 
              check if organ donation has some verification process, if so - implement it for registartion + editing process and let the system admin allow it. 
     b. Download the card DOES NOT WORK 
+        Page not found (404)
+        Request Method:	GET
+        Request URL:	http://localhost:8000/api/patients/me/download_pdf/
 6. Doctor Dashboard 
 7. Hospital Dashboard 
 8. Lab Dashboard 
