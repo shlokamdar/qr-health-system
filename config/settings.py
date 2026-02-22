@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'audit',
     'doctors',
     'labs',
+    'support',
 ]
 
 MIDDLEWARE = [

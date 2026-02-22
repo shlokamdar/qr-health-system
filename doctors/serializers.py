@@ -1,9 +1,22 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Hospital, Doctor, Consultation, Appointment
+from .models import Hospital, Department, Doctor, Consultation, Appointment
 from accounts.serializers import UserSerializer
 
 User = get_user_model()
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    """Serializer for Department model."""
+    doctor_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Department
+        fields = ['id', 'hospital', 'name', 'description', 'doctor_count', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_doctor_count(self, obj):
+        return obj.doctors.count()
 
 
 class HospitalSerializer(serializers.ModelSerializer):
@@ -21,6 +34,14 @@ class HospitalSerializer(serializers.ModelSerializer):
     
     def get_doctor_count(self, obj):
         return obj.doctors.filter(is_verified=True).count()
+
+
+class HospitalDetailSerializer(HospitalSerializer):
+    """Serializer for Hospital model with nested departments."""
+    departments = DepartmentSerializer(many=True, read_only=True)
+
+    class Meta(HospitalSerializer.Meta):
+        fields = HospitalSerializer.Meta.fields + ['departments']
 
 
 class HospitalRegisterSerializer(serializers.ModelSerializer):
@@ -59,11 +80,17 @@ class HospitalRegisterSerializer(serializers.ModelSerializer):
 
 
 class DoctorSerializer(serializers.ModelSerializer):
-    """Serializer for Doctor model with nested user and hospital details."""
+    """Serializer for Doctor model with nested user, hospital and department details."""
     user = UserSerializer(read_only=True)
     hospital_details = HospitalSerializer(source='hospital', read_only=True)
+    department_details = DepartmentSerializer(source='department', read_only=True)
     hospital = serializers.PrimaryKeyRelatedField(
         queryset=Hospital.objects.filter(is_verified=True),
+        required=False,
+        allow_null=True
+    )
+    department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(),
         required=False,
         allow_null=True
     )
@@ -93,6 +120,7 @@ class DoctorSerializer(serializers.ModelSerializer):
         model = Doctor
         fields = [
             'id', 'user', 'hospital', 'hospital_details',
+            'department', 'department_details',
             'license_number', 'issuing_medical_council', 'license_expiry_date',
             'specialization', 'years_of_experience',
             'date_of_birth', 'contact_number', 'address',

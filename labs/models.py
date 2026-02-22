@@ -24,6 +24,7 @@ class DiagnosticLab(models.Model):
         default=False,
         help_text=_("Set to True after admin approval")
     )
+    rejection_reason = models.TextField(blank=True, help_text=_("Reason if verification failed"))
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -58,6 +59,7 @@ class LabTechnician(models.Model):
         default=False,
         help_text=_("Set to True after admin approval")
     )
+    rejection_reason = models.TextField(blank=True, help_text=_("Reason if verification failed"))
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

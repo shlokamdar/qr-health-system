@@ -26,6 +26,27 @@ class Hospital(models.Model):
         ordering = ['name']
 
 
+class Department(models.Model):
+    """Department within a hospital."""
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.CASCADE,
+        related_name='departments'
+    )
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.hospital.name}"
+
+    class Meta:
+        unique_together = ['hospital', 'name']
+        ordering = ['name']
+
+
 class HospitalAdmin(models.Model):
     """Admin profile for a specific hospital."""
     user = models.OneToOneField(
@@ -67,6 +88,13 @@ class Doctor(models.Model):
         Hospital, 
         on_delete=models.SET_NULL, 
         null=True, 
+        blank=True,
+        related_name='doctors'
+    )
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
         related_name='doctors'
     )

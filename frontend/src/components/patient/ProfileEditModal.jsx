@@ -37,13 +37,37 @@ const ProfileEditModal = ({ isEditing, setIsEditing, editForm, setEditForm, hand
         {/* Form */}
         <form onSubmit={handleUpdateProfile}>
           <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>Phone Number</label>
-              <input type="text" style={inputStyle}
-                value={editForm.contact_number}
-                onChange={e => setEditForm({ ...editForm, contact_number: e.target.value })}
-                onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-                onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div>
+                <label style={labelStyle}>First Name</label>
+                <input type="text" style={inputStyle}
+                  value={editForm.first_name ?? ''}
+                  onChange={e => setEditForm({ ...editForm, first_name: e.target.value })} />
+              </div>
+              <div>
+                <label style={labelStyle}>Last Name</label>
+                <input type="text" style={inputStyle}
+                  value={editForm.last_name ?? ''}
+                  onChange={e => setEditForm({ ...editForm, last_name: e.target.value })} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div>
+                <label style={labelStyle}>Phone Number</label>
+                <input type="text" style={inputStyle}
+                  value={editForm.contact_number ?? ''}
+                  onChange={e => setEditForm({ ...editForm, contact_number: e.target.value })} />
+              </div>
+              <div>
+                <label style={labelStyle}>Gender</label>
+                <select style={inputStyle}
+                  value={editForm.gender ?? ''}
+                  onChange={e => setEditForm({ ...editForm, gender: e.target.value })}>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
             <div>
               <label style={labelStyle}>Blood Group</label>
@@ -51,7 +75,7 @@ const ProfileEditModal = ({ isEditing, setIsEditing, editForm, setEditForm, hand
                 value={editForm.blood_group}
                 onChange={e => setEditForm({ ...editForm, blood_group: e.target.value })}>
                 <option value="">Select Blood Group</option>
-                {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(bg => (
+                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
                   <option key={bg} value={bg}>{bg}</option>
                 ))}
               </select>
@@ -75,10 +99,41 @@ const ProfileEditModal = ({ isEditing, setIsEditing, editForm, setEditForm, hand
             <div>
               <label style={labelStyle}>Chronic Conditions (Optional)</label>
               <textarea rows={2} placeholder="e.g. Diabetes, Hypertension" style={{ ...inputStyle, resize: 'vertical' }}
-                value={editForm.chronic_conditions}
-                onChange={e => setEditForm({ ...editForm, chronic_conditions: e.target.value })}
-                onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-                onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+                value={editForm.chronic_conditions ?? ''}
+                onChange={e => setEditForm({ ...editForm, chronic_conditions: e.target.value })} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input type="checkbox" id="modal_organ_donor"
+                  checked={editForm.organ_donor ?? false}
+                  onChange={e => setEditForm({ ...editForm, organ_donor: e.target.checked })}
+                  style={{ width: 16, height: 16 }}
+                />
+                <label htmlFor="modal_organ_donor" style={{ fontSize: 13, fontWeight: 600, color: '#2D3748', cursor: 'pointer' }}>
+                  I am willing to donate organs
+                </label>
+
+                {editForm.organ_donor && (
+                  <span style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: 10,
+                    background: editForm.is_organ_donor_verified ? '#D1FAE5' : (editForm.organ_donor_rejection_reason ? '#FEE2E2' : '#FEF3C7'),
+                    color: editForm.is_organ_donor_verified ? '#065F46' : (editForm.organ_donor_rejection_reason ? '#991B1B' : '#92400E'),
+                    marginLeft: 'auto'
+                  }}>
+                    {editForm.is_organ_donor_verified ? 'VERIFIED' : (editForm.organ_donor_rejection_reason ? 'REJECTED' : 'PENDING')}
+                  </span>
+                )}
+              </div>
+
+              {editForm.organ_donor_rejection_reason && !editForm.is_organ_donor_verified && (
+                <div style={{ padding: '8px 12px', background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 8, fontSize: 11, color: '#C53030' }}>
+                  <strong>Rejection Reason:</strong> {editForm.organ_donor_rejection_reason}
+                </div>
+              )}
             </div>
           </div>
 

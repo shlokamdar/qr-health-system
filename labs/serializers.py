@@ -16,10 +16,10 @@ class DiagnosticLabSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'address', 'accreditation_number', 
             'phone', 'email', 'hospital', 'hospital_details',
-            'is_verified', 'technician_count',
+            'is_verified', 'rejection_reason', 'technician_count',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'is_verified', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'is_verified', 'rejection_reason', 'created_at', 'updated_at']
     
     def get_technician_count(self, obj):
         return obj.technicians.filter(is_verified=True).count()
@@ -37,15 +37,19 @@ class LabTechnicianSerializer(serializers.ModelSerializer):
     """Serializer for LabTechnician model."""
     user = UserSerializer(read_only=True)
     lab_details = DiagnosticLabSerializer(source='lab', read_only=True)
+    lab_name = serializers.SerializerMethodField()
     
     class Meta:
         model = LabTechnician
         fields = [
-            'id', 'user', 'lab', 'lab_details', 
-            'license_number', 'is_verified', 
+            'id', 'user', 'lab', 'lab_details', 'lab_name',
+            'license_number', 'is_verified', 'rejection_reason',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'user', 'is_verified', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'is_verified', 'rejection_reason', 'created_at', 'updated_at']
+    
+    def get_lab_name(self, obj):
+        return obj.lab.name if obj.lab else "Individual Practitioner"
 
 
 class LabTechnicianRegisterSerializer(serializers.ModelSerializer):
@@ -87,12 +91,16 @@ class LabTestSerializer(serializers.ModelSerializer):
 class LabReportSerializer(serializers.ModelSerializer):
     test_type_details = LabTestSerializer(source='test_type', read_only=True)
     patient_health_id = serializers.CharField(source='patient.health_id', read_only=True)
+    patient_name = serializers.SerializerMethodField()
     
     class Meta:
         model = LabReport
         fields = [
-            'id', 'patient', 'patient_health_id', 'technician', 
+            'id', 'patient', 'patient_health_id', 'patient_name', 'technician', 
             'test_type', 'test_type_details', 'file', 
             'result_data', 'comments', 'created_at'
         ]
         read_only_fields = ['id', 'technician', 'created_at']
+
+    def get_patient_name(self, obj):
+        return obj.patient.user.get_full_name() or obj.patient.user.username

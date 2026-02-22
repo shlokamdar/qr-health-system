@@ -1,38 +1,42 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000/api/';
-
-const getAuthHeader = () => {
-    const token = localStorage.getItem('access_token');
-    return { headers: { Authorization: `Bearer ${token}` } };
-};
-
-const getTests = () => {
-    return axios.get(API_URL + 'labs/tests/', getAuthHeader());
-};
-
-const searchPatient = (healthId) => {
-    return axios.get(API_URL + `patients/${healthId}/`, getAuthHeader());
-};
-
-const uploadReport = (formData) => {
-    return axios.post(API_URL + 'labs/reports/', formData, {
-        headers: {
-            ...getAuthHeader().headers,
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-};
-
-const getRecentUploads = () => {
-    return axios.get(API_URL + 'labs/reports/', getAuthHeader());
-};
+import api from '../utils/api';
 
 const labService = {
-    getTests,
-    searchPatient,
-    uploadReport,
-    getRecentUploads
+    getProfile: async () => {
+        const res = await api.get('labs/me/');
+        return res.data;
+    },
+
+    getTests: async () => {
+        const res = await api.get('labs/tests/');
+        return res.data;
+    },
+
+    searchPatient: async (healthId) => {
+        const res = await api.get(`patients/${healthId}/`);
+        return res;
+    },
+
+    uploadReport: async (formData) => {
+        const res = await api.post('labs/reports/', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return res.data;
+    },
+
+    getRecentUploads: async () => {
+        const res = await api.get('labs/recent-uploads/');
+        return res.data;
+    },
+
+    getPatientReports: async (healthId) => {
+        const res = await api.get(`labs/patient-reports/${healthId}/`);
+        return res.data;
+    },
+
+    deleteReport: async (id) => {
+        const res = await api.delete(`labs/reports/${id}/`);
+        return res.data;
+    },
 };
 
 export default labService;

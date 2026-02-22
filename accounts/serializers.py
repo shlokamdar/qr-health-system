@@ -68,19 +68,22 @@ class RegisterSerializer(serializers.ModelSerializer):
             patient.save()
             
         elif role == User.Role.DOCTOR:
-            from doctors.models import Doctor
+            from doctors.models import Doctor, Hospital
+            hospital_id = profile_data.get('hospital_id')
+            hospital = Hospital.objects.filter(id=hospital_id, is_verified=True).first() if hospital_id else None
             Doctor.objects.create(
                 user=user,
+                hospital=hospital,
                 specialization=profile_data.get('specialization', 'General'),
                 license_number=profile_data.get('licenseNumber', ''),
                 issuing_medical_council=profile_data.get('issuingCouncil', ''),
                 license_expiry_date=profile_data.get('licenseExpiry') or None,
                 years_of_experience=profile_data.get('experience', 0),
-                
+
                 date_of_birth=profile_data.get('dob') or None,
                 contact_number=profile_data.get('phone', ''),
                 address=f"{profile_data.get('addressLine1', '')}, {profile_data.get('city', '')}, {profile_data.get('state', '')} - {profile_data.get('pin', '')}",
-                
+
                 license_document=license_document,
                 degree_certificate=degree_certificate,
                 identity_proof=identity_proof
@@ -98,6 +101,23 @@ class RegisterSerializer(serializers.ModelSerializer):
             else:
                 # Handle case where hospital is not yet created (e.g. initial hospital registration)
                 pass
+
+        elif role == 'LAB_TECH':
+            from labs.models import LabTechnician, DiagnosticLab
+            lab_id = profile_data.get('lab')
+            lab = None
+            if lab_id:
+                try:
+                    lab = DiagnosticLab.objects.get(id=lab_id)
+                except DiagnosticLab.DoesNotExist:
+                    pass
+
+            LabTechnician.objects.create(
+                user=user,
+                lab=lab,
+                license_number=profile_data.get('license_number') or profile_data.get('licenseNumber', f"TEMP-{user.id}"),
+                is_verified=False  # Requires admin approval
+            )
         
         return user
 

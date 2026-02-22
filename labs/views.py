@@ -2,6 +2,7 @@ from rest_framework import viewsets, generics, permissions, status, decorators
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import DiagnosticLab, LabTechnician, LabTest, LabReport
+from patients.models import Patient
 from .serializers import (
     DiagnosticLabSerializer, DiagnosticLabRegisterSerializer,
     LabTechnicianSerializer, LabTechnicianRegisterSerializer,
@@ -87,6 +88,17 @@ class LabRecentUploadsView(generics.ListAPIView):
         return LabReport.objects.filter(technician=technician).order_by('-created_at')
 
 
+class PatientLabReportsView(generics.ListAPIView):
+    """Allows a verified lab tech to view all lab reports for a patient by health_id."""
+    permission_classes = [IsLabTech]
+    serializer_class = LabReportSerializer
+
+    def get_queryset(self):
+        health_id = self.kwargs['health_id']
+        patient = get_object_or_404(Patient, health_id=health_id)
+        return LabReport.objects.filter(patient=patient).order_by('-created_at')
+
+
 # Admin specific views
 class LabListView(generics.ListAPIView):
     """View for admins to list all diagnostic labs."""
@@ -104,8 +116,52 @@ class LabVerificationView(generics.UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         lab = self.get_object()
         verify = request.data.get('verify', False)
+        reason = request.data.get('rejection_reason', '')
+        
         lab.is_verified = verify
+        if not verify:
+            lab.rejection_reason = reason
+        else:
+            lab.rejection_reason = ""
         lab.save()
         
-        status = "verified" if verify else "unverified"
-        return Response({"message": f"Lab {status} successfully"}, status=status.HTTP_200_OK)
+        status_msg = "verified" if verify else "rejected"
+        return Response({"message": f"Lab {status_msg} successfully"}, status=status.HTTP_200_OK)
+
+
+class TechnicianListView(generics.ListAPIView):
+    """View for admins to list all lab technicians."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = LabTechnicianSerializer
+    queryset = LabTechnician.objects.all()
+
+
+class TechnicianVerificationView(generics.UpdateAPIView):
+    """View for admins to verify lab technicians."""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = LabTechnicianSerializer
+    queryset = LabTechnician.objects.all()
+    
+    def patch(self, request, *args, **kwargs):
+        tech = self.get_object()
+        verify = request.data.get('verify', False)
+        reason = request.data.get('rejection_reason', '')
+        
+        tech.is_verified = verify
+        if not verify:
+            tech.rejection_reason = reason
+        else:
+            tech.rejection_reason = ""
+        
+        if 'lab' in request.data:
+            lab_id = request.data.get('lab')
+            if lab_id:
+                lab = get_object_or_404(DiagnosticLab, id=lab_id)
+                tech.lab = lab
+            else:
+                tech.lab = None
+        
+        tech.save()
+        
+        status_msg = "verified" if verify else "rejected"
+        return Response({"message": f"Technician {status_msg} successfully"}, status=status.HTTP_200_OK)

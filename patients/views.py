@@ -29,11 +29,8 @@ class PatientViewSet(viewsets.ModelViewSet):
             return [permissions.IsAdminUser()]
         if self.action in ['update', 'partial_update']:
             return [IsPatient()]
-        if self.action == 'me':
-            return [IsPatient()]
-        if self.action == 'retrieve':
-            # Allow Doctors to retrieve by ID (Scanning QR) or Patient to see own
-            return [permissions.IsAuthenticated()] 
+        if self.action in ['organ_donor_requests', 'verify_organ_donor']:
+            return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
     def retrieve(self, request, *args, **kwargs):
@@ -116,6 +113,33 @@ class PatientViewSet(viewsets.ModelViewSet):
             as_attachment=True, 
             filename=f"Medical_Report_{patient.health_id}.pdf"
         )
+
+    @decorators.action(detail=False, methods=['get'], url_path='organ-donor-requests')
+    def organ_donor_requests(self, request):
+        """List patients who are organ donors but not yet verified."""
+        patients = Patient.objects.filter(organ_donor=True, is_organ_donor_verified=False)
+        serializer = self.get_serializer(patients, many=True)
+        return Response(serializer.data)
+
+    @decorators.action(detail=True, methods=['post'], url_path='verify-organ-donor')
+    def verify_organ_donor(self, request, health_id=None):
+        """Approve or reject a patient's organ donor status."""
+        patient = self.get_object()
+        verify = request.data.get('verify')
+        reason = request.data.get('rejection_reason', '')
+
+        if verify is True:
+            patient.is_organ_donor_verified = True
+            patient.organ_donor_rejection_reason = ''
+            patient.save()
+            return Response({'status': 'verified'})
+        elif verify is False:
+            patient.is_organ_donor_verified = False
+            patient.organ_donor_rejection_reason = reason
+            patient.save()
+            return Response({'status': 'rejected'})
+        
+        return Response({'detail': 'Invalid verification status.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EmergencyContactViewSet(viewsets.ModelViewSet):

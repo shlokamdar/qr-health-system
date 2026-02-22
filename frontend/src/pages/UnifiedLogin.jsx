@@ -36,14 +36,25 @@ const UnifiedLogin = () => {
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
     // Registration State - Doctor
-    const [doctorStep, setDoctorStep] = useState(1);
     const [doctorData, setDoctorData] = useState({
         username: '', firstName: '', lastName: '', dob: '', gender: 'Male', phone: '', email: '',
         password: '', confirmPassword: '', specialization: 'General Medicine', otherSpecialization: '',
-        experience: 0, hospitalName: '', hospitalAddress: '', department: '',
+        experience: 0, hospital: '', department: '',
         licenseNumber: '', issuingCouncil: '', licenseExpiry: '',
         licenseDoc: null, degreeDoc: null, idDoc: null
     });
+    const [availableHospitals, setAvailableHospitals] = useState([]);
+
+    // Registration State - Doctor (step state)
+    const [doctorStep, setDoctorStep] = useState(1);
+
+    // Registration State - Lab Tech
+    const [labTechStep, setLabTechStep] = useState(1);
+    const [labTechData, setLabTechData] = useState({
+        username: '', firstName: '', lastName: '', dob: '', gender: 'Male', phone: '', email: '',
+        password: '', confirmPassword: '', lab: '', licenseNumber: ''
+    });
+    const [availableLabs, setAvailableLabs] = useState([]);
 
     const [showRegisterPassword, setShowRegisterPassword] = useState(false);
     const [suggestedUsernames, setSuggestedUsernames] = useState([]);
@@ -87,6 +98,26 @@ const UnifiedLogin = () => {
             ]);
         }
     }, [patientData.firstName, patientData.lastName, registerRole]);
+
+    // Fetch available labs when Lab Tech registration is selected
+    useEffect(() => {
+        if (registerRole === 'LAB_TECH') {
+            fetch('http://localhost:8000/api/labs/organizations/')
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(data => setAvailableLabs(data.results || data))
+                .catch(() => setAvailableLabs([]));
+        }
+        if (registerRole === 'DOCTOR') {
+            fetch('http://localhost:8000/api/doctors/hospitals/')
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(data => {
+                    const list = data.results || data;
+                    setAvailableHospitals(list.filter(h => h.is_verified));
+                })
+                .catch(() => setAvailableHospitals([]));
+        }
+    }, [registerRole]);
+
 
     // Check Username Availability
     useEffect(() => {
@@ -164,6 +195,22 @@ const UnifiedLogin = () => {
         const timeoutId = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timeoutId);
     }, [doctorData.username]);
+
+    // Fetch Labs for Lab Tech Registration
+    useEffect(() => {
+        const fetchLabs = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/api/labs/organizations/');
+                const data = await response.json();
+                setAvailableLabs(data.results || data);
+            } catch (err) {
+                console.error("Failed to fetch labs", err);
+            }
+        };
+        if (registerRole === 'LAB_TECH') {
+            fetchLabs();
+        }
+    }, [registerRole]);
 
 
     const handleLogin = async (e) => {
@@ -414,16 +461,7 @@ const UnifiedLogin = () => {
 
         try {
             const formData = new FormData();
-            formData.append('username', `${doctorData.firstName.toLowerCase()}${doctorData.lastName.toLowerCase()}${Math.floor(Math.random() * 1000)}`); // Auto-gen username for doc if not asking
-            // Wait, doctor registration form doesn't have username field in my code?
-            // "Doctor Step 1" in previous code had: firstName, lastName, email, password. No username.
-            // I should generate one or add field. Let's generate one or use email as base.
-            // Let's use email prefix as username for now or add a hidden one.
-            // Adding a timestamp to ensure uniqueness
-
-            const docUsername = doctorData.email.split('@')[0] + Math.floor(Math.random() * 1000);
-
-            formData.append('username', docUsername);
+            formData.append('username', doctorData.username);
             formData.append('password', doctorData.password);
             formData.append('email', doctorData.email);
             formData.append('first_name', doctorData.firstName);
@@ -437,36 +475,30 @@ const UnifiedLogin = () => {
             const profileData = {
                 specialization: doctorData.specialization,
                 experience: doctorData.experience,
-                hospitalName: doctorData.hospitalName,
-                hospitalAddress: doctorData.hospitalAddress,
+                hospital_id: doctorData.hospital || null,
                 department: doctorData.department,
                 licenseNumber: doctorData.licenseNumber,
                 issuingCouncil: doctorData.issuingCouncil,
                 licenseExpiry: doctorData.licenseExpiry,
+                dob: doctorData.dob,
+                phone: doctorData.phone,
+                addressLine1: doctorData.address,
             };
             formData.append('profile_data', JSON.stringify(profileData));
+
+            // Use the username from the form, not an auto-generated one
+            formData.set('username', doctorData.username);
 
             await register(formData);
 
             // Move to Step 5 (Under Review)
             setDoctorStep(5);
-            // We do NOT auto-login doctors as they are not verified yet (usually)
-            // But if we want to confirm credentials work, we could.
-            // Requirement says "redirect to dashboard" if registered? 
-            // "if doctor then doctor dashboard"
-            // But usually they need verification.
-            // However, for this MVP/Task, user said: "if registared as patient and if doctor then doctor dashboard"
-            // So I should try to login.
 
             try {
-                await login(docUsername, doctorData.password);
-                // If login successful, redirect (but Step 4 view might be better UI feedback?)
-                // User said: "after registarion i was redirected to the landing page. i should be redirected to the patient dashboard... same with login... doctor dashboard"
-                // So let's redirect to dashboard after a delay
+                await login(doctorData.username, doctorData.password);
                 setTimeout(() => navigate('/doctor/dashboard'), 2000);
             } catch (e) {
-                // If login fails (maybe because is_active=False?), stay on Step 4
-                // Step 4 "Under Review" is appropriate if they can't login yet.
+                // If login fails (unverified), stay on Step 5 "Under Review"
             }
 
         } catch (err) {
@@ -478,7 +510,66 @@ const UnifiedLogin = () => {
                 setError("Registration failed. Please try again.");
             }
             // If failed, don't go to step 4
+        } finally {
             setLoading(false); // Only set loading false if error, otherwise we are moving to step 4
+        }
+    };
+
+    const handleLabTechNext = () => {
+        if (labTechStep === 1) {
+            const { firstName, lastName, email, password, confirmPassword, username } = labTechData;
+            if (!firstName || !lastName || !email || !password || !username) {
+                setError("Please fill all required fields."); return;
+            }
+            if (password !== confirmPassword) {
+                setError("Passwords do not match."); return;
+            }
+        }
+        setError("");
+        setLabTechStep(prev => prev + 1);
+    };
+
+    const handleLabTechRegister = async () => {
+        if (!labTechData.licenseNumber) {
+            setError('Please enter your license number.');
+            return;
+        }
+        setLoading(true);
+        setError('');
+
+        try {
+            const data = {
+                username: labTechData.username,
+                password: labTechData.password,
+                email: labTechData.email,
+                first_name: labTechData.firstName,
+                last_name: labTechData.lastName,
+                role: 'LAB_TECH',
+                profile_data: {
+                    lab: labTechData.lab || null,
+                    license_number: labTechData.licenseNumber
+                }
+            };
+
+            await register(data);
+
+            try {
+                await login(labTechData.username, labTechData.password);
+                navigate('/lab/dashboard');
+            } catch (e) {
+                // If login fails (account might need activation), show pending step
+                setLabTechStep(3);
+            }
+        } catch (err) {
+            console.error(err);
+            if (err.response && err.response.data) {
+                const errorMsg = Object.values(err.response.data).flat().join(' ');
+                setError(errorMsg || "Registration failed.");
+            } else {
+                setError("Registration failed. Please try again.");
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -616,16 +707,16 @@ const UnifiedLogin = () => {
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                             {/* Registration Role Selector */}
                             <div className="flex bg-slate-50 p-1.5 rounded-xl mb-6 border border-slate-100">
-                                {['PATIENT', 'DOCTOR'].map(role => (
+                                {['PATIENT', 'DOCTOR', 'LAB_TECH'].map(role => (
                                     <button
                                         key={role}
-                                        onClick={() => { setRegisterRole(role); setPatientStep(1); setDoctorStep(1); setError(''); }}
-                                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all ${registerRole === role
+                                        onClick={() => { setRegisterRole(role); setPatientStep(1); setDoctorStep(1); setLabTechStep(1); setError(''); }}
+                                        className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${registerRole === role
                                             ? 'bg-white text-[#3B9EE2] shadow-sm ring-1 ring-slate-200 transform scale-105'
                                             : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                                             }`}
                                     >
-                                        {role.charAt(0) + role.slice(1).toLowerCase()}
+                                        {role === 'LAB_TECH' ? 'Lab Tech' : role.charAt(0) + role.slice(1).toLowerCase()}
                                     </button>
                                 ))}
                             </div>
@@ -1103,6 +1194,28 @@ const UnifiedLogin = () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div>
+                                                <label className={labelStyle}>Affiliated Hospital</label>
+                                                <div className="relative">
+                                                    <select
+                                                        className={`${inputStyle} appearance-none cursor-pointer`}
+                                                        value={doctorData.hospital}
+                                                        onChange={e => setDoctorData({ ...doctorData, hospital: e.target.value })}
+                                                    >
+                                                        <option value="">— No affiliation / Independent —</option>
+                                                        {availableHospitals.length === 0 && (
+                                                            <option disabled>Loading hospitals...</option>
+                                                        )}
+                                                        {availableHospitals.map(h => (
+                                                            <option key={h.id} value={h.id}>
+                                                                {h.name} — {h.address?.split(',')[0] || h.address}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="absolute right-4 top-4 pointer-events-none text-slate-400"><ArrowRight className="w-4 h-4 rotate-90" /></div>
+                                                </div>
+                                                <p className="text-xs text-slate-400 mt-1.5 ml-1">Only verified hospitals are shown. You can update this later.</p>
+                                            </div>
                                             <div className="flex gap-4">
                                                 <div className="flex-1">
                                                     <label className={labelStyle}>Experience (Yrs)</label>
@@ -1112,14 +1225,6 @@ const UnifiedLogin = () => {
                                                     <label className={labelStyle}>Department</label>
                                                     <input type="text" className={inputStyle} placeholder="e.g. Outpatient" value={doctorData.department} onChange={e => setDoctorData({ ...doctorData, department: e.target.value })} />
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <label className={labelStyle}>Hospital / Clinic Name</label>
-                                                <input type="text" className={inputStyle} placeholder="Full name of establishment" value={doctorData.hospitalName} onChange={e => setDoctorData({ ...doctorData, hospitalName: e.target.value })} />
-                                            </div>
-                                            <div>
-                                                <label className={labelStyle}>City</label>
-                                                <input type="text" className={inputStyle} placeholder="Practice location" value={doctorData.hospitalAddress} onChange={e => setDoctorData({ ...doctorData, hospitalAddress: e.target.value })} />
                                             </div>
                                             <div className="flex gap-4 pt-4">
                                                 <button onClick={() => setDoctorStep(2)} className={btnGhostStyle}>Back</button>
@@ -1193,6 +1298,115 @@ const UnifiedLogin = () => {
                                                 </div>
                                             </div>
 
+                                            <Link to="/" className={btnGhostStyle}>Return to Homepage</Link>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Lab Tech Registration */}
+                            {registerRole === 'LAB_TECH' && (
+                                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                    <ProgressBar step={labTechStep} total={3} />
+
+                                    {/* Lab Tech Step 1: Account */}
+                                    {labTechStep === 1 && (
+                                        <div className="space-y-5">
+                                            <div className="flex gap-4">
+                                                <div className="flex-1">
+                                                    <label className={labelStyle}>First Name</label>
+                                                    <input type="text" className={inputStyle} value={labTechData.firstName} onChange={e => setLabTechData({ ...labTechData, firstName: e.target.value })} placeholder="Jane" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className={labelStyle}>Last Name</label>
+                                                    <input type="text" className={inputStyle} value={labTechData.lastName} onChange={e => setLabTechData({ ...labTechData, lastName: e.target.value })} placeholder="Smith" />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className={labelStyle}>Choose a Username</label>
+                                                <input
+                                                    type="text"
+                                                    className={inputStyle}
+                                                    value={labTechData.username}
+                                                    onChange={e => setLabTechData({ ...labTechData, username: e.target.value.toLowerCase() })}
+                                                    placeholder="labtech_jane"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className={labelStyle}>Email Address</label>
+                                                <input type="email" className={inputStyle} value={labTechData.email} onChange={e => setLabTechData({ ...labTechData, email: e.target.value })} placeholder="jane@lab.com" />
+                                            </div>
+
+                                            <div className="flex gap-4">
+                                                <div className="flex-1">
+                                                    <label className={labelStyle}>Password</label>
+                                                    <input type="password" className={inputStyle} value={labTechData.password} onChange={e => setLabTechData({ ...labTechData, password: e.target.value })} placeholder="••••••••" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className={labelStyle}>Confirm</label>
+                                                    <input type="password" className={inputStyle} value={labTechData.confirmPassword} onChange={e => setLabTechData({ ...labTechData, confirmPassword: e.target.value })} placeholder="••••••••" />
+                                                </div>
+                                            </div>
+
+                                            <button onClick={handleLabTechNext} className={`${btnPrimaryStyle} mt-4`}>Continue <ArrowRight className="w-5 h-5 ml-2" /></button>
+                                        </div>
+                                    )}
+
+                                    {/* Lab Tech Step 2: Professional */}
+                                    {labTechStep === 2 && (
+                                        <div className="space-y-6">
+                                            <div>
+                                                <label className={labelStyle}>Affiliated Laboratory</label>
+                                                <div className="relative">
+                                                    <select
+                                                        className={`${inputStyle} appearance-none cursor-pointer`}
+                                                        value={labTechData.lab}
+                                                        onChange={e => setLabTechData({ ...labTechData, lab: e.target.value })}
+                                                    >
+                                                        <option value="">Select a Lab (optional)</option>
+                                                        {availableLabs.map(lab => (
+                                                            <option key={lab.id} value={lab.id}>{lab.name} — {lab.address?.split(',')[0]}</option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="absolute right-4 top-4 pointer-events-none text-slate-400">
+                                                        <ArrowRight className="w-4 h-4 rotate-90" />
+                                                    </div>
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 mt-2 font-medium italic">If your lab isn't listed, you can proceed without selecting one and add it later.</p>
+                                            </div>
+
+                                            <div>
+                                                <label className={labelStyle}>License Number</label>
+                                                <input
+                                                    type="text"
+                                                    className={inputStyle}
+                                                    placeholder="e.g. LAB-123456"
+                                                    value={labTechData.licenseNumber}
+                                                    onChange={e => setLabTechData({ ...labTechData, licenseNumber: e.target.value })}
+                                                />
+                                            </div>
+
+                                            <div className="flex gap-4 pt-4">
+                                                <button onClick={() => setLabTechStep(1)} className={btnGhostStyle}>Back</button>
+                                                <button onClick={handleLabTechRegister} className={btnPrimaryStyle}>
+                                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Register as Lab Tech'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Lab Tech Step 3: Pending */}
+                                    {labTechStep === 3 && (
+                                        <div className="text-center py-12 animate-in zoom-in duration-500">
+                                            <div className="w-24 h-24 bg-[#F5F3FF] rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-white">
+                                                <Clock className="w-12 h-12 text-purple-600 animate-pulse" />
+                                            </div>
+                                            <h2 className="text-3xl font-bold text-[#0D1B2A] mb-4 tracking-tight">Under Review</h2>
+                                            <p className="text-slate-500 text-base mb-10 px-4 leading-relaxed max-w-sm mx-auto font-medium">
+                                                Your technician profile is being verified by the lab administrator and PulseID system. You'll be notified once approved.
+                                            </p>
                                             <Link to="/" className={btnGhostStyle}>Return to Homepage</Link>
                                         </div>
                                     )}

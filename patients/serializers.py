@@ -7,14 +7,30 @@ from .models import (
 from accounts.serializers import UserSerializer
 
 
+class EmergencyContactSerializer(serializers.ModelSerializer):
+    """Serializer for EmergencyContact."""
+    
+    class Meta:
+        model = EmergencyContact
+        fields = [
+            'id', 'name', 'relationship', 'phone', 
+            'can_grant_access', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+
 class PatientSerializer(serializers.ModelSerializer):
     """Full patient serializer with user details."""
     user = UserSerializer(read_only=True)
+    emergency_contacts = EmergencyContactSerializer(many=True, read_only=True)
     
     class Meta:
         model = Patient
         fields = '__all__'
-        read_only_fields = ('health_id', 'qr_code', 'user', 'created_at', 'updated_at')
+        read_only_fields = (
+            'health_id', 'qr_code', 'user', 'created_at', 'updated_at',
+            'is_organ_donor_verified', 'organ_donor_rejection_reason'
+        )
 
 
 class PatientBasicSerializer(serializers.ModelSerializer):
@@ -28,18 +44,6 @@ class PatientBasicSerializer(serializers.ModelSerializer):
             'date_of_birth', 'contact_number', 'address'
         ]
         read_only_fields = fields
-
-
-class EmergencyContactSerializer(serializers.ModelSerializer):
-    """Serializer for EmergencyContact."""
-    
-    class Meta:
-        model = EmergencyContact
-        fields = [
-            'id', 'name', 'relationship', 'phone', 
-            'can_grant_access', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at']
 
 
 class PatientDocumentSerializer(serializers.ModelSerializer):

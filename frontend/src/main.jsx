@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { Toaster } from 'react-hot-toast';
+import { registerSW } from 'virtual:pwa-register'
+
+// Register PWA service worker for offline support
+registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

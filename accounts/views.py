@@ -1,5 +1,5 @@
 from rest_framework import generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -12,6 +12,20 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
+
+class AdminUserCreateView(generics.CreateAPIView):
+    """View for admins to manually create users."""
+    queryset = User.objects.all()
+    permission_classes = (IsAdminUser,)
+    serializer_class = RegisterSerializer
+
+
+class UserListView(generics.ListAPIView):
+    """View for admins to list all users."""
+    queryset = User.objects.all().order_by('-date_joined')
+    permission_classes = (IsAdminUser,)
+    serializer_class = UserSerializer
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

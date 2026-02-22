@@ -33,6 +33,8 @@ class Patient(models.Model):
     # New enhanced fields
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUPS, blank=True)
     organ_donor = models.BooleanField(default=False, help_text=_("Willing to donate organs"))
+    is_organ_donor_verified = models.BooleanField(default=False, help_text=_("Admin verification status"))
+    organ_donor_rejection_reason = models.TextField(blank=True, help_text=_("Reason if verification failed"))
     allergies = models.TextField(blank=True, help_text=_("Known allergies"))
     chronic_conditions = models.TextField(blank=True, help_text=_("Ongoing health conditions"))
     
@@ -50,6 +52,12 @@ class Patient(models.Model):
         return f"{self.user.username} - {self.health_id}"
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = Patient.objects.get(pk=self.pk)
+            if old_instance.organ_donor != self.organ_donor:
+                self.is_organ_donor_verified = False
+                self.organ_donor_rejection_reason = ""
+        
         if not self.health_id:
             # Generate a unique Health ID (Simple version: UUID prefix)
             self.health_id = f"HID-{uuid.uuid4().hex[:8].upper()}"

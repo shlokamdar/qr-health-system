@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Building2, Users, Beaker, BarChart3, Settings,
-    LogOut, ChevronRight, CheckCircle2, AlertCircle,
-    UserPlus, Mail, Phone, MapPin, Search, Filter
+    UserPlus, Mail, Phone, MapPin, Search, Filter,
+    LayoutGrid, ClipboardList, Trash2, Plus
 } from 'lucide-react';
 import HospitalService from '../services/hospital.service';
 import Header from '../components/Header';
@@ -13,21 +12,48 @@ const HospitalDashboard = () => {
     const [hospitalInfo, setHospitalInfo] = useState(null);
     const [doctors, setDoctors] = useState([]);
     const [labs, setLabs] = useState([]);
+    const [technicians, setTechnicians] = useState([]);
+    const [departments, setDepartments] = useState([]);
+    const [visitLogs, setVisitLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showCreateTechModal, setShowCreateTechModal] = useState(false);
+    const [showCreateDeptModal, setShowCreateDeptModal] = useState(false);
+    const [showAssignDeptModal, setShowAssignDeptModal] = useState(false);
+    const [selectedDoctor, setSelectedDoctor] = useState(null);
+    const [techForm, setTechForm] = useState({
+        username: '',
+        email: '',
+        password: '',
+        first_name: '',
+        last_name: '',
+        license_number: '',
+        lab: ''
+    });
+    const [deptForm, setDeptForm] = useState({
+        name: '',
+        description: ''
+    });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [s, h, d, l] = await Promise.all([
+                const [s, h, d, l, t, de, v] = await Promise.all([
                     HospitalService.getStats(),
                     HospitalService.getProfile(),
                     HospitalService.getDoctors(),
-                    HospitalService.getLabs()
+                    HospitalService.getLabs(),
+                    HospitalService.getTechnicians(),
+                    HospitalService.getDepartments(),
+                    HospitalService.getVisitLogs()
                 ]);
                 setStats(s);
                 setHospitalInfo(h);
                 setDoctors(d);
                 setLabs(l);
+                setTechnicians(t);
+                setDepartments(de);
+                setVisitLogs(v);
+                if (l.length > 0) setTechForm(prev => ({ ...prev, lab: l[0].id }));
             } catch (err) {
                 console.error("Failed to fetch dashboard data", err);
             } finally {
@@ -36,6 +62,30 @@ const HospitalDashboard = () => {
         };
         fetchData();
     }, []);
+
+    const handleCreateDept = async (e) => {
+        e.preventDefault();
+        try {
+            await HospitalService.createDepartment(deptForm);
+            setShowCreateDeptModal(false);
+            setDeptForm({ name: '', description: '' });
+            const updated = await HospitalService.getDepartments();
+            setDepartments(updated);
+        } catch (err) {
+            alert("Failed to create department");
+        }
+    };
+
+    const handleDeleteDept = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this department?")) return;
+        try {
+            await HospitalService.deleteDepartment(id);
+            const updated = await HospitalService.getDepartments();
+            setDepartments(updated);
+        } catch (err) {
+            alert("Failed to delete department");
+        }
+    };
 
     const handleLogout = () => {
         localStorage.clear();
@@ -110,16 +160,19 @@ const HospitalDashboard = () => {
                     <div className="flex flex-wrap border-b border-slate-100 p-2 bg-slate-50/50">
                         {[
                             { id: 'overview', label: 'Overview', icon: BarChart3 },
+                            { id: 'departments', label: 'Departments', icon: LayoutGrid },
                             { id: 'doctors', label: 'Doctor Roster', icon: Users },
                             { id: 'labs', label: 'Lab Network', icon: Beaker },
+                            { id: 'staff', label: 'Staff Management', icon: UserPlus },
+                            { id: 'logs', label: 'Visit Logs', icon: ClipboardList },
                             { id: 'profile', label: 'Facility Profile', icon: Building2 }
                         ].map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex-1 min-w-[150px] flex items-center justify-center gap-3 py-5 px-6 rounded-2xl font-bold transition-all duration-500 relative group ${activeTab === tab.id
-                                        ? 'bg-white shadow-lg text-slate-900'
-                                        : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'
+                                    ? 'bg-white shadow-lg text-slate-900'
+                                    : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'
                                     }`}
                             >
                                 <tab.icon size={20} className={activeTab === tab.id ? 'text-[#3B9EE2]' : 'opacity-50'} />
@@ -172,6 +225,50 @@ const HospitalDashboard = () => {
                             </div>
                         )}
 
+                        {activeTab === 'departments' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-800">Departments</h3>
+                                        <p className="text-slate-500 text-sm">Organize your medical staff into specialized units.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreateDeptModal(true)}
+                                        className="px-6 py-3 bg-[#3B9EE2] text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-[#2E8BCC] transition-all"
+                                    >
+                                        <Plus size={18} /> Add Department
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {departments.length > 0 ? departments.map(dept => (
+                                        <div key={dept.id} className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#3B9EE2]">
+                                                    <LayoutGrid size={24} />
+                                                </div>
+                                                <button onClick={() => handleDeleteDept(dept.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                            <h4 className="font-bold text-slate-800 text-lg">{dept.name}</h4>
+                                            <p className="text-sm text-slate-500 mb-6 min-h-[40px]">{dept.description || 'No description provided.'}</p>
+
+                                            <div className="pt-4 border-t border-slate-50 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                <span>Medical Staff</span>
+                                                <span className="text-[#3B9EE2] bg-blue-50 px-2 py-0.5 rounded-full">{dept.doctor_count} Doctors</span>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                                            <LayoutGrid size={48} className="mb-4 opacity-20" />
+                                            <p className="font-bold uppercase tracking-widest text-xs">No departments configured</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {activeTab === 'doctors' && (
                             <div className="space-y-6 animate-in fade-in duration-500">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -196,15 +293,22 @@ const HospitalDashboard = () => {
                                                 <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#3B9EE2] font-black text-xl">
                                                     {doctor.user.first_name[0]}{doctor.user.last_name[0]}
                                                 </div>
-                                                {doctor.is_verified ? (
-                                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-full">
-                                                        <CheckCircle2 size={12} /> Verified
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-full">
-                                                        <AlertCircle size={12} /> Pending
-                                                    </span>
-                                                )}
+                                                <div className="flex flex-col items-end gap-2">
+                                                    {doctor.is_verified ? (
+                                                        <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-full">
+                                                            <CheckCircle2 size={12} /> Verified
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-full">
+                                                            <AlertCircle size={12} /> Pending
+                                                        </span>
+                                                    )}
+                                                    {doctor.department_details && (
+                                                        <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase">
+                                                            {doctor.department_details.name}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <h4 className="text-lg font-bold text-slate-800">Dr. {doctor.user.first_name} {doctor.user.last_name}</h4>
                                             <p className="text-sm text-[#3B9EE2] font-bold mb-4">{doctor.specialization}</p>
@@ -220,8 +324,14 @@ const HospitalDashboard = () => {
                                                 </div>
                                             </div>
 
-                                            <button className="w-full mt-6 py-3 bg-slate-50 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all uppercase tracking-widest">
-                                                View Professional Profile
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedDoctor(doctor);
+                                                    setShowAssignDeptModal(true);
+                                                }}
+                                                className="w-full mt-6 py-3 bg-slate-50 text-[#3B9EE2] rounded-xl text-xs font-bold hover:bg-blue-50 transition-all uppercase tracking-widest"
+                                            >
+                                                {doctor.department ? 'Change Department' : 'Assign Department'}
                                             </button>
                                         </div>
                                     )) : (
@@ -234,59 +344,189 @@ const HospitalDashboard = () => {
                             </div>
                         )}
 
-                        {activeTab === 'labs' && (
+                        {activeTab === 'logs' && (
                             <div className="space-y-6 animate-in fade-in duration-500">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <h3 className="text-2xl font-black text-slate-800">Diagnostic Network</h3>
-                                        <p className="text-slate-500 text-sm">Partner laboratories and internal diagnostic facilities.</p>
-                                    </div>
-                                    <button className="px-6 py-3 bg-[#2EC4A9] text-white rounded-2xl font-bold text-sm shadow-lg shadow-emerald-200">
-                                        Link New Lab
-                                    </button>
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-800">Visitation Logs</h3>
+                                    <p className="text-slate-500 text-sm">Detailed audit of all consultations performed within your hospital network.</p>
                                 </div>
 
-                                <div className="overflow-hidden border border-slate-100 rounded-[2rem] bg-slate-50/30">
+                                <div className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden shadow-sm">
                                     <table className="w-full text-left border-collapse">
                                         <thead>
-                                            <tr className="bg-slate-100/50">
-                                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Laboratory Name</th>
-                                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Accreditation</th>
-                                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contact</th>
-                                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                                                <th className="px-8 py-5 text-right"></th>
+                                            <tr className="bg-slate-50 border-b border-slate-100">
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Practitioner</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Department</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient ID</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Primary Complaint</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white">
-                                            {labs.length > 0 ? labs.map(lab => (
-                                                <tr key={lab.id} className="border-t border-slate-100 hover:bg-slate-50/50 transition-colors">
-                                                    <td className="px-8 py-6">
-                                                        <div className="font-bold text-slate-800">{lab.name}</div>
-                                                        <div className="text-[10px] text-slate-400 font-medium max-w-[200px] truncate">{lab.address}</div>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {visitLogs.length > 0 ? visitLogs.map(log => (
+                                                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm font-bold text-slate-700">{new Date(log.consultation_date).toLocaleDateString()}</div>
+                                                        <div className="text-[10px] text-slate-400">{new Date(log.consultation_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                                     </td>
-                                                    <td className="px-8 py-6 font-mono text-sm text-slate-500">{lab.accreditation_number}</td>
-                                                    <td className="px-8 py-6">
-                                                        <div className="text-xs font-bold text-slate-700">{lab.phone}</div>
-                                                        <div className="text-[10px] text-slate-400">{lab.email}</div>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm font-bold text-slate-800">Dr. {log.doctor_details?.user.first_name} {log.doctor_details?.user.last_name}</div>
+                                                        <div className="text-[10px] text-[#3B9EE2] font-bold uppercase">{log.doctor_details?.specialization}</div>
                                                     </td>
-                                                    <td className="px-8 py-6 text-sm">
-                                                        {lab.is_verified ? (
-                                                            <span className="text-emerald-500 font-bold flex items-center gap-1.5"><CheckCircle2 size={14} /> ACTIVE</span>
-                                                        ) : (
-                                                            <span className="text-amber-500 font-bold flex items-center gap-1.5"><AlertCircle size={14} /> PENDING</span>
-                                                        )}
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase">
+                                                            {log.doctor_details?.department_details?.name || 'General'}
+                                                        </span>
                                                     </td>
-                                                    <td className="px-8 py-6 text-right">
-                                                        <button className="text-slate-300 hover:text-slate-600"><ChevronRight /></button>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm font-mono font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded-lg inline-block border border-slate-100">
+                                                            {log.patient_health_id}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
+                                                        <div className="text-sm text-slate-600 font-medium truncate">{log.chief_complaint}</div>
                                                     </td>
                                                 </tr>
                                             )) : (
                                                 <tr>
-                                                    <td colSpan="5" className="px-8 py-10 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No labs connected yet</td>
+                                                    <td colSpan="5" className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                                                        No visitation logs record yet
+                                                    </td>
                                                 </tr>
                                             )}
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Assign Department Modal */}
+                        {showAssignDeptModal && (
+                            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowAssignDeptModal(false)} />
+                                <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                    <div className="p-8 border-b border-slate-100">
+                                        <h3 className="text-xl font-black text-slate-800">Assign Department</h3>
+                                        <p className="text-slate-500 text-sm">Select a department for Dr. {selectedDoctor?.user.first_name} {selectedDoctor?.user.last_name}.</p>
+                                    </div>
+                                    <div className="p-8 space-y-4">
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <button
+                                                onClick={async () => {
+                                                    await HospitalService.assignDoctorDepartment(selectedDoctor.id, null);
+                                                    setShowAssignDeptModal(false);
+                                                    const updated = await HospitalService.getDoctors();
+                                                    setDoctors(updated);
+                                                }}
+                                                className="w-full p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 text-left transition-all group"
+                                            >
+                                                <div className="text-sm font-bold text-slate-400 group-hover:text-slate-600 uppercase tracking-widest">General / None</div>
+                                            </button>
+                                            {departments.map(dept => (
+                                                <button
+                                                    key={dept.id}
+                                                    onClick={async () => {
+                                                        await HospitalService.assignDoctorDepartment(selectedDoctor.id, dept.id);
+                                                        setShowAssignDeptModal(false);
+                                                        const updated = await HospitalService.getDoctors();
+                                                        setDoctors(updated);
+                                                    }}
+                                                    className={`w-full p-4 rounded-2xl border transition-all text-left ${selectedDoctor?.department === dept.id
+                                                        ? 'border-[#3B9EE2] bg-blue-50/50'
+                                                        : 'border-slate-100 hover:bg-slate-50'}`}
+                                                >
+                                                    <div className="text-sm font-bold text-slate-800">{dept.name}</div>
+                                                    <div className="text-[10px] text-slate-400 uppercase font-black">{dept.doctor_count} Current Members</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => setShowAssignDeptModal(false)}
+                                            className="w-full py-4 mt-4 text-slate-400 font-bold text-sm"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Create Department Modal */}
+                        {showCreateDeptModal && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCreateDeptModal(false)} />
+                                <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                    <div className="p-8 border-b border-slate-100">
+                                        <h3 className="text-2xl font-black text-slate-800">Add Department</h3>
+                                        <p className="text-slate-500 text-sm">Create a new organizational unit for medical staff.</p>
+                                    </div>
+                                    <form onSubmit={handleCreateDept} className="p-8 space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Department Name</label>
+                                            <input required type="text" value={deptForm.name} onChange={e => setDeptForm({ ...deptForm, name: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-bold" placeholder="e.g., Cardiology" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description (Optional)</label>
+                                            <textarea rows={3} value={deptForm.description} onChange={e => setDeptForm({ ...deptForm, description: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-medium resize-none" placeholder="Describe the focus of this department..." />
+                                        </div>
+                                        <div className="pt-4 flex gap-4">
+                                            <button type="button" onClick={() => setShowCreateDeptModal(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Cancel</button>
+                                            <button type="submit" className="flex-1 py-4 bg-[#3B9EE2] text-white rounded-2xl font-bold hover:bg-[#2E8BCC] transition-all shadow-xl shadow-blue-200">Save Department</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Create Technician Modal */}
+                        {showCreateTechModal && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCreateTechModal(false)} />
+                                <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                    <div className="p-8 border-b border-slate-100">
+                                        <h3 className="text-2xl font-black text-slate-800">Onboard Technician</h3>
+                                        <p className="text-slate-500 text-sm">Create a new secure account for laboratory staff.</p>
+                                    </div>
+                                    <form onSubmit={handleCreateTech} className="p-8 space-y-6">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">First Name</label>
+                                                <input required type="text" value={techForm.first_name} onChange={e => setTechForm({ ...techForm, first_name: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-bold" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
+                                                <input required type="text" value={techForm.last_name} onChange={e => setTechForm({ ...techForm, last_name: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-bold" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username</label>
+                                            <input required type="text" value={techForm.username} onChange={e => setTechForm({ ...techForm, username: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-bold" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
+                                            <input required type="email" value={techForm.email} onChange={e => setTechForm({ ...techForm, email: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-bold" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">License #</label>
+                                                <input required type="text" value={techForm.license_number} onChange={e => setTechForm({ ...techForm, license_number: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-mono" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assign to Lab</label>
+                                                <select required value={techForm.lab} onChange={e => setTechForm({ ...techForm, lab: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-bold">
+                                                    {labs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                                            <input required type="password" value={techForm.password} onChange={e => setTechForm({ ...techForm, password: e.target.value })} className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-bold" />
+                                        </div>
+                                        <div className="pt-4 flex gap-4">
+                                            <button type="button" onClick={() => setShowCreateTechModal(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">Cancel</button>
+                                            <button type="submit" className="flex-1 py-4 bg-[#3B9EE2] text-white rounded-2xl font-bold hover:bg-[#2E8BCC] transition-all shadow-xl shadow-blue-200">Create Staff Account</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         )}

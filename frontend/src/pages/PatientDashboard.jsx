@@ -46,6 +46,7 @@ const ICONS = {
   Bell: ['M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9', 'M13.73 21a2 2 0 01-3.46 0'],
   LogOut: ['M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4', 'M16 17l5-5-5-5', 'M21 12H9'],
   Settings: ['M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.09a2 2 0 01-1-1.74v-.51a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'],
+  LifeBuoy: ['M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0', 'M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0', 'M4.93 4.93l2.83 2.83', 'M16.24 16.24l2.83 2.83', 'M4.93 19.07l2.83 -2.83', 'M16.24 7.76l2.83 -2.83'],
 };
 
 const RevokeModal = ({ onConfirm, onCancel }) => (
@@ -80,6 +81,7 @@ const PatientDashboard = () => {
   const [accessHistory, setAccessHistory] = useState([]);
   const [sharingPermissions, setSharingPermissions] = useState([]);
   const [emergencyContacts, setEmergencyContacts] = useState([]);
+  const [tickets, setTickets] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,13 +97,15 @@ const PatientDashboard = () => {
   const [newContact, setNewContact] = useState({ name: '', relationship: '', phone: '', can_grant_access: false });
   const [editContactId, setEditContactId] = useState(null);
   const [editContactForm, setEditContactForm] = useState({});
+  const [ticketForm, setTicketForm] = useState({ subject: '', description: '', priority: 'MEDIUM' });
+  const [showTicketModal, setShowTicketModal] = useState(false);
 
   // ── DATA FETCHING ────────────────────────────────────────────────────────
   const fetchAllData = async () => {
     try {
       setLoading(true);
       const safe = (promise) => promise.catch(e => { console.warn('API call failed:', e); return []; });
-      const [pData, rData, aData, dData, lData, hData, sData, eData, odData, docData] = await Promise.all([
+      const [pData, rData, aData, dData, lData, hData, sData, eData, odData, docData, tData] = await Promise.all([
         PatientService.getProfile().catch(e => { console.warn('Profile failed:', e); return null; }),
         safe(PatientService.getRecords()),
         safe(PatientService.getMyAppointments()),
@@ -111,7 +115,8 @@ const PatientDashboard = () => {
         safe(PatientService.getSharingPermissions()),
         safe(PatientService.getEmergencyContacts()),
         safe(PatientService.getPrescriptions()),
-        safe(DoctorService.getVerifiedDoctors())
+        safe(DoctorService.getVerifiedDoctors()),
+        safe(api.get('support/tickets/').then(res => res.data.results || res.data))
       ]);
 
       if (pData) setPatient(pData);
@@ -124,6 +129,7 @@ const PatientDashboard = () => {
       setEmergencyContacts(Array.isArray(eData) ? eData : []);
       setPrescriptions(Array.isArray(odData) ? odData : []);
       setDoctorsList(Array.isArray(docData) ? docData : []);
+      setTickets(Array.isArray(tData) ? tData : []);
       if (pData) setEditForm(pData);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -326,6 +332,7 @@ const PatientDashboard = () => {
             { id: 'sharing', label: 'Sharing & Access', icon: 'Shield', dot: stats.pendingRequests > 0 ? '#F97316' : null },
             { id: 'history', label: 'Full History', icon: 'History' },
             { id: 'emergency_contacts', label: 'Emergency Contacts', icon: 'Users', dot: emergencyContacts.length === 0 ? '#3B9EE2' : null },
+            { id: 'support', label: 'Support & Help', icon: 'LifeBuoy' },
           ].map(item => (
             <button key={item.id} onClick={() => setActiveTab(item.id)} className={`pd-nav-btn ${activeTab === item.id ? 'active' : ''}`}>
               <Icon d={ICONS[item.icon]} size={18} />
@@ -354,8 +361,10 @@ const PatientDashboard = () => {
             handleRevokeAccess={handleRevokeAccess}
             handleDownloadQR={handleDownloadQR}
             handleDownloadCard={handleDownloadCard}
+            setActiveTab={setActiveTab}
           />
         )}
+
 
         {/* ── OTHER TABS (Simplified for brevity as they just wrap components) ── */}
         {activeTab === 'records' && (
@@ -462,9 +471,30 @@ const PatientDashboard = () => {
                 <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Chronic Conditions</label>
                 <textarea className="pd-input" rows={2} value={editForm.chronic_conditions ?? patient?.chronic_conditions ?? ''} onChange={e => setEditForm(f => ({ ...f, chronic_conditions: e.target.value }))} placeholder="e.g. Diabetes, Hypertension" style={{ width: '100%', resize: 'vertical' }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input type="checkbox" id="organ_donor" checked={editForm.organ_donor ?? patient?.organ_donor ?? false} onChange={e => setEditForm(f => ({ ...f, organ_donor: e.target.checked }))} style={{ width: 16, height: 16 }} />
-                <label htmlFor="organ_donor" style={{ fontSize: 14, fontWeight: 500, color: '#2D3748' }}>I am willing to donate organs</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input type="checkbox" id="organ_donor" checked={editForm.organ_donor ?? patient?.organ_donor ?? false} onChange={e => setEditForm(f => ({ ...f, organ_donor: e.target.checked }))} style={{ width: 16, height: 16 }} />
+                  <label htmlFor="organ_donor" style={{ fontSize: 14, fontWeight: 500, color: '#2D3748' }}>I am willing to donate organs</label>
+                  {patient?.organ_donor && (
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      background: patient.is_organ_donor_verified ? '#D1FAE5' : (patient.organ_donor_rejection_reason ? '#FEE2E2' : '#FEF3C7'),
+                      color: patient.is_organ_donor_verified ? '#065F46' : (patient.organ_donor_rejection_reason ? '#991B1B' : '#92400E'),
+                      marginLeft: 'auto'
+                    }}>
+                      {patient.is_organ_donor_verified ? 'VERIFIED' : (patient.organ_donor_rejection_reason ? 'REJECTED' : 'PENDING')}
+                    </span>
+                  )}
+                </div>
+                {patient?.organ_donor_rejection_reason && !patient.is_organ_donor_verified && (
+                  <div style={{ padding: '8px 12px', background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 8, fontSize: 12, color: '#C53030', display: 'flex', gap: 8 }}>
+                    <span style={{ fontWeight: 700 }}>Reason:</span>
+                    <span>{patient.organ_donor_rejection_reason}</span>
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="submit" className="pd-primary-btn" style={{ flex: 1 }}>Save Changes</button>
@@ -552,6 +582,60 @@ const PatientDashboard = () => {
             <MedicalRecordList records={recentRecords} />
           </div>
         )}
+
+        {/* ── SUPPORT TAB ── */}
+        {activeTab === 'support' && (
+          <div className="pd-support-area" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div className="pd-card" style={{ background: 'linear-gradient(135deg, #3B9EE2 0%, #1A365D 100%)', color: '#fff', border: 'none' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: 20 }}>Need Assistance?</h3>
+              <p style={{ margin: 0, opacity: 0.9, fontSize: 14 }}>Our support team is here to help you with any technical issues or questions.</p>
+              <button
+                onClick={() => setShowTicketModal(true)}
+                className="pd-primary-btn"
+                style={{ marginTop: 20, background: '#fff', color: '#1A365D', fontWeight: 700 }}
+              >
+                Create New Support Ticket
+              </button>
+            </div>
+
+            <div className="pd-card">
+              <div className="pd-section-heading"><Icon d={ICONS.LifeBuoy} /> My Support Tickets</div>
+              {tickets.length === 0 ? (
+                <div style={{ textAlign: 'center', py: 40, color: '#718096' }}>
+                  <p>You haven't created any support tickets yet.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {tickets.map(ticket => (
+                    <div key={ticket.id} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                        <h4 style={{ margin: 0, fontSize: 15 }}>{ticket.subject}</h4>
+                        <span style={{
+                          fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 10, textTransform: 'uppercase',
+                          background: ticket.status === 'OPEN' ? '#FEF3C7' : '#D1FAE5',
+                          color: ticket.status === 'OPEN' ? '#92400E' : '#065F46'
+                        }}>
+                          {ticket.status}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 13, color: '#4A5568', lineHeight: 1.5 }}>{ticket.description}</p>
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F7FAFC', fontSize: 11, color: '#A0AEC0', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
+                        {ticket.resolved_at && <span>Resolved: {new Date(ticket.resolved_at).toLocaleDateString()}</span>}
+                      </div>
+                      {ticket.admin_notes && (
+                        <div style={{ marginTop: 12, padding: 12, background: '#F0FFF4', borderRadius: 8, borderLeft: '3px solid #48BB78' }}>
+                          <p style={{ margin: '0 0 4px 0', fontSize: 11, fontWeight: 700, color: '#2F855A' }}>Response from Admin:</p>
+                          <p style={{ margin: 0, fontSize: 13, color: '#276749' }}>{ticket.admin_notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* ── MOBILE NAV ── */}
@@ -573,6 +657,59 @@ const PatientDashboard = () => {
         >
           <Icon d={['M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7', 'M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z']} size={24} />
         </button>
+      )}
+
+      {/* Support Ticket Modal */}
+      {showTicketModal && (
+        <div className="pd-modal-overlay">
+          <div className="pd-modal" style={{ maxWidth: 500 }}>
+            <div className="pd-modal-header">
+              <h3 style={{ margin: 0 }}>Create Support Ticket</h3>
+            </div>
+            <form onSubmit={handleCreateTicket}>
+              <div className="pd-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Subject</label>
+                  <input
+                    required
+                    className="pd-input"
+                    value={ticketForm.subject}
+                    onChange={e => setTicketForm({ ...ticketForm, subject: e.target.value })}
+                    placeholder="Brief summary of the issue"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Priority</label>
+                  <select
+                    className="pd-input"
+                    value={ticketForm.priority}
+                    onChange={e => setTicketForm({ ...ticketForm, priority: e.target.value })}
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="URGENT">Urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Description</label>
+                  <textarea
+                    required
+                    className="pd-input"
+                    rows={4}
+                    value={ticketForm.description}
+                    onChange={e => setTicketForm({ ...ticketForm, description: e.target.value })}
+                    placeholder="Describe your issue in detail..."
+                  />
+                </div>
+              </div>
+              <div className="pd-modal-footer">
+                <button type="button" onClick={() => setShowTicketModal(false)} className="btn-red-outline" style={{ color: '#4A5568', borderColor: '#E2E8F0' }}>Cancel</button>
+                <button type="submit" className="btn-mint">Submit Ticket</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

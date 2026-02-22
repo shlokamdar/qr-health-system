@@ -873,3 +873,199 @@
     display: none;
   }
 }
+
+/* ── Card Flip Animation ────────────────────────────────────────── */
+.pd-card-perspective {
+    perspective: 1000px;
+    width: 100%;
+    aspect-ratio: 1.7 / 1;
+}
+
+.pd-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: left;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.pd-card-perspective.flipped .pd-card-inner {
+    transform: rotateY(180deg);
+}
+
+.pd-card-front, .pd-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(13,27,42,0.4);
+}
+
+.pd-card-back {
+    transform: rotateY(180deg);
+    background: #0D1B2A;
+    color: white;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pd-card-back-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.pd-card-back-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.pd-card-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pd-card-info-label {
+    font-size: 8px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pd-card-info-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.2;
+}
+
+.pd-flip-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pd-flip-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Profile Completion Banner ───────────────────────────────────────── */
+.pd-completion-banner {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pd-completion-banner.collapsed {
+    padding: 12px 20px;
+    gap: 0;
+}
+
+.pd-completion-banner.collapsed .pd-progress-bg,
+.pd-completion-banner.collapsed .pd-completion-items {
+    display: none;
+}
+
+.pd-completion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pd-completion-banner .rotate-90 {
+    transition: transform 0.3s ease;
+}
+
+.pd-completion-banner.collapsed .rotate-90 {
+    transform: rotate(0deg);
+}
+
+.pd-completion-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pd-completion-pct {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--sky);
+}
+
+.pd-progress-bg {
+    height: 8px;
+    background: #EDF2F7;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.pd-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sky), var(--mint));
+    transition: width 0.5s ease-out;
+}
+
+.pd-completion-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pd-completion-chip {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #F7FAFC;
+    color: var(--body);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pd-completion-chip:hover {
+    border-color: var(--sky);
+    color: var(--sky);
+}
+
+.pd-completion-chip.done {
+    background: #F0FFF4;
+    color: #38A169;
+    border-color: #C6F6D5;
+}
