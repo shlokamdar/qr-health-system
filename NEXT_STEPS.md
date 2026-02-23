@@ -1,5 +1,5 @@
 # PulseID — Next Steps & Issue Tracker
-Last updated: 22nd Feb 2026 12:15PM
+Last updated: 23rd Feb 2026 11:15AM
 Legend: 🔴 Bug/Blocker | 🟡 In Progress | 🟢 Done | 🔵 New Feature | ⚠️ Decision Needed
 
 ---
@@ -118,6 +118,7 @@ Legend: 🔴 Bug/Blocker | 🟡 In Progress | 🟢 Done | 🔵 New Feature | ⚠
 - [x] 🟢 Upload report: type, date, file (PDF/image), notes — built (Upload tab)
 - [x] 🟢 View uploaded reports history — built (Upload History tab with search)
 - [x] 🟢 Link to parent hospital — shown in Profile tab via `lab_details.hospital_details`
+
 
 ---
 

@@ -2,6 +2,10 @@ from rest_framework import viewsets, generics, permissions, status, decorators
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
+from .models import (
+    Hospital, Department, Doctor, Consultation, Appointment, HospitalAdmin
+)
+from .serializers import (
     HospitalSerializer, HospitalDetailSerializer, HospitalRegisterSerializer,
     DoctorSerializer, DoctorRegisterSerializer,
     DepartmentSerializer,
@@ -13,6 +17,7 @@ from patients.models import Patient
 from accounts.serializers import UserSerializer
 from labs.models import DiagnosticLab, LabTechnician
 from labs.serializers import LabTechnicianSerializer, LabTechnicianRegisterSerializer
+from audit.models import AccessLog
 
 
 class HospitalViewSet(viewsets.ModelViewSet):
@@ -22,21 +27,21 @@ class HospitalViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         if self.action == 'create':
-            # Anyone can register a hospital (pending approval)
             return [permissions.AllowAny()]
         if self.action in ['update', 'partial_update', 'destroy']:
-            # Only superadmin can modify hospitals
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
     
     def get_serializer_class(self):
         if self.action == 'create':
             return HospitalRegisterSerializer
-        return HospitalSerializer
-    
         if self.action == 'retrieve':
             return HospitalDetailSerializer
-        # Non-admin users only see verified hospitals
+        return HospitalSerializer
+    
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Hospital.objects.all()
         return Hospital.objects.filter(is_verified=True)
 
 
@@ -74,10 +79,9 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
     permission_classes = [IsDoctor]
     
     def post(self, request, *args, **kwargs):
-        from accounts.serializers import RegisterSerializer
+        from django.contrib.auth import get_user_model
         from patients.serializers import PatientSerializer
         
-        # Create user first
         user_data = {
             'username': request.data.get('username'),
             'password': request.data.get('password'),
@@ -87,7 +91,6 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
             'role': 'PATIENT'
         }
         
-        from django.contrib.auth import get_user_model
         User = get_user_model()
         
         try:
@@ -95,7 +98,6 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Create patient profile
         patient_data = {
             'date_of_birth': request.data.get('date_of_birth'),
             'contact_number': request.data.get('contact_number', ''),
@@ -105,8 +107,6 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
         
         patient = Patient.objects.create(user=user, **patient_data)
         
-        # Log the action
-        from audit.models import AccessLog
         AccessLog.objects.create(
             actor=request.user,
             patient=patient,
@@ -119,21 +119,18 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
 
 
 class DoctorListView(generics.ListAPIView):
-    """View for admins to list all doctors (verified and unverified)."""
     permission_classes = [permissions.IsAdminUser]
     serializer_class = DoctorSerializer
     queryset = Doctor.objects.all().order_by('-user__date_joined')
 
 
 class VerifiedDoctorListView(generics.ListAPIView):
-    """View for patients to list verified doctors."""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = DoctorSerializer
     queryset = Doctor.objects.filter(is_verified=True).order_by('user__first_name')
 
 
 class DoctorVerificationView(generics.UpdateAPIView):
-    """View to verify/update doctor status."""
     permission_classes = [permissions.IsAdminUser]
     serializer_class = DoctorSerializer
     queryset = Doctor.objects.all()
@@ -146,16 +143,12 @@ class DoctorVerificationView(generics.UpdateAPIView):
             is_verified = request.data.get('verify', False)
             doctor.is_verified = bool(is_verified)
             if not doctor.is_verified:
-                # Save rejection reason when rejecting
                 doctor.rejection_reason = request.data.get('rejection_reason', '')
             else:
-                # Clear rejection reason on approval
                 doctor.rejection_reason = ''
             doctor.save()
             action = 'verified' if doctor.is_verified else 'rejected'
             return Response({'message': f'Doctor {action} successfully'})
-            
-            return Response({'error': 'Invalid authorization level'}, status=status.HTTP_400_BAD_REQUEST)
 
         if 'hospital' in request.data:
             hospital_id = request.data.get('hospital')
@@ -171,14 +164,12 @@ class DoctorVerificationView(generics.UpdateAPIView):
 
 
 class HospitalListView(generics.ListAPIView):
-    """View for admins to list all hospitals."""
     permission_classes = [permissions.IsAdminUser]
     serializer_class = HospitalSerializer
     queryset = Hospital.objects.all().order_by('name')
 
 
 class HospitalVerificationView(generics.UpdateAPIView):
-    """View to verify hospital status."""
     permission_classes = [permissions.IsAdminUser]
     serializer_class = HospitalSerializer
     queryset = Hospital.objects.all()
@@ -198,7 +189,6 @@ class HospitalVerificationView(generics.UpdateAPIView):
 from utils.notifications import send_record_uploaded_email
 
 class ConsultationViewSet(viewsets.ModelViewSet):
-    """ViewSet for Consultation CRUD operations."""
     permission_classes = [IsDoctor]
     
     def get_serializer_class(self):
@@ -210,7 +200,6 @@ class ConsultationViewSet(viewsets.ModelViewSet):
         doctor = get_object_or_404(Doctor, user=self.request.user)
         queryset = Consultation.objects.filter(doctor=doctor)
         
-        # Filter by patient if provided
         patient_id = self.request.query_params.get('patient')
         if patient_id:
             queryset = queryset.filter(patient__health_id=patient_id)
@@ -220,7 +209,6 @@ class ConsultationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         consultation = serializer.save()
         
-        # Log the action
         AccessLog.objects.create(
             actor=self.request.user,
             patient=consultation.patient,
@@ -228,13 +216,11 @@ class ConsultationViewSet(viewsets.ModelViewSet):
             details=f"Created consultation: {consultation.chief_complaint[:50]}"
         )
 
-        # Send Email Notification
         doctor_name = self.request.user.get_full_name() or self.request.user.username
         send_record_uploaded_email(consultation.patient, "Consultation Record", doctor_name)
 
 
 class PatientHistoryView(generics.ListAPIView):
-    """View for getting consultation history for a specific patient."""
     permission_classes = [IsDoctor]
     serializer_class = ConsultationSerializer
     
@@ -242,7 +228,6 @@ class PatientHistoryView(generics.ListAPIView):
         health_id = self.kwargs.get('health_id')
         patient = get_object_or_404(Patient, health_id=health_id)
         
-        # Log access
         AccessLog.objects.create(
             actor=self.request.user,
             patient=patient,
@@ -254,7 +239,6 @@ class PatientHistoryView(generics.ListAPIView):
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):
-    """ViewSet for Appointment booking and management."""
     serializer_class = AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -267,20 +251,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         return Appointment.objects.none()
 
     def perform_create(self, serializer):
-        # Patient booking an appointment
         if hasattr(self.request.user, 'patient_profile'):
             serializer.save(patient=self.request.user.patient_profile)
         else:
-            # Doctors/Admins usually don't book for themselves in this flow, but fallback
             serializer.save()
 
     def update(self, request, *args, **kwargs):
-        # Allow partial updates for status change
         kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
 
+
 class HospitalMeView(generics.RetrieveUpdateAPIView):
-    """View for current hospital admin's hospital profile."""
     permission_classes = [IsHospitalAdmin]
     serializer_class = HospitalSerializer
 
@@ -290,7 +271,6 @@ class HospitalMeView(generics.RetrieveUpdateAPIView):
 
 
 class HospitalDoctorListView(generics.ListAPIView):
-    """List all doctors affiliated with the current hospital."""
     permission_classes = [IsHospitalAdmin]
     serializer_class = DoctorSerializer
 
@@ -300,7 +280,6 @@ class HospitalDoctorListView(generics.ListAPIView):
 
 
 class HospitalLabListView(generics.ListAPIView):
-    """List all labs affiliated with the current hospital."""
     permission_classes = [IsHospitalAdmin]
 
     def get_serializer_class(self):
@@ -314,7 +293,6 @@ class HospitalLabListView(generics.ListAPIView):
 
 
 class HospitalTechnicianListView(generics.ListAPIView):
-    """List all lab technicians affiliated with labs in the current hospital."""
     permission_classes = [IsHospitalAdmin]
     serializer_class = LabTechnicianSerializer
 
@@ -324,27 +302,28 @@ class HospitalTechnicianListView(generics.ListAPIView):
 
 
 class HospitalTechnicianCreateView(generics.CreateAPIView):
-    """Allow hospital admins to create lab technicians for their hospital's labs."""
     permission_classes = [IsHospitalAdmin]
     serializer_class = LabTechnicianRegisterSerializer
 
     def perform_create(self, serializer):
         admin_profile = get_object_or_404(HospitalAdmin, user=self.request.user)
         lab_id = self.request.data.get('lab')
-        
-        # Verify the lab belongs to this hospital
         lab = get_object_or_404(DiagnosticLab, id=lab_id, hospital=admin_profile.hospital)
-        
-        # Save with verified status automatically if created by hospital admin? 
-        # Or keep as pending? Let's keep as is_verified=False but allow admin to see.
-        # Actually, if a hospital admin creates them, they should probably be verified or easy to verify.
-        # Let's just create them for now.
         serializer.save(lab=lab)
 
 
 class HospitalStatsView(APIView):
     permission_classes = [IsHospitalAdmin]
 
+    def get(self, request, *args, **kwargs):
+        admin_profile = get_object_or_404(HospitalAdmin, user=self.request.user)
+        hospital = admin_profile.hospital
+        
+        doctors_count = Doctor.objects.filter(hospital=hospital).count()
+        pending_doctors = Doctor.objects.filter(hospital=hospital, is_verified=False).count()
+        labs_count = DiagnosticLab.objects.filter(hospital=hospital).count()
+        consultations_count = Consultation.objects.filter(doctor__hospital=hospital).count()
+        
         return Response({
             'total_doctors': doctors_count,
             'pending_doctors': pending_doctors,
@@ -354,7 +333,6 @@ class HospitalStatsView(APIView):
 
 
 class HospitalVisitationLogsView(generics.ListAPIView):
-    """List all consultations affiliated with doctors in the current hospital."""
     permission_classes = [IsHospitalAdmin]
     serializer_class = ConsultationSerializer
 

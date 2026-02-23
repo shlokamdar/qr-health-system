@@ -1,5 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
+from .views import (
+    HospitalViewSet, ConsultationViewSet, AppointmentViewSet,
+    DoctorRegisterView, DoctorProfileView, VerifiedDoctorListView,
+    DoctorRegisterPatientView, PatientHistoryView,
     HospitalMeView, HospitalDoctorListView, HospitalLabListView, HospitalStatsView,
     HospitalTechnicianListView, HospitalTechnicianCreateView,
     DepartmentViewSet, HospitalVisitationLogsView
