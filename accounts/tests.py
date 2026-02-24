@@ -67,3 +67,27 @@ class UserLoginTest(TestCase):
         }
         response = self.client.post('/api/auth/login/', data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_superuser_role_assignment(self):
+        # Create a superuser and check if the role is automatically set to ADMIN
+        admin_user = User.objects.create_superuser(username='newadmin', password='password123', email='admin@test.com')
+        self.assertEqual(admin_user.role, User.Role.ADMIN)
+        
+        # Verify it works even if role is explicitly set to something else during creation
+        admin_user_2 = User.objects.create_superuser(
+            username='newadmin2', 
+            password='password123', 
+            email='admin2@test.com',
+            role='PATIENT'
+        )
+        self.assertEqual(admin_user_2.role, User.Role.ADMIN)
+
+    def test_existing_superuser_gets_updated_role_on_save(self):
+        # Manually create a superuser with PATIENT role (bypassing save override via update)
+        User.objects.filter(username='testuser').update(is_superuser=True, role='PATIENT')
+        user = User.objects.get(username='testuser')
+        self.assertEqual(user.role, 'PATIENT')
+        
+        # Now save it and check if it gets updated
+        user.save()
+        self.assertEqual(user.role, User.Role.ADMIN)

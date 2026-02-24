@@ -16,7 +16,11 @@ const PatientLogin = () => {
         setError('');
         const result = await login(username, password);
         if (result) {
-            navigate('/patient/dashboard');
+            if (result.role === 'PATIENT') {
+                navigate('/patient/dashboard');
+            } else {
+                setError(`Access denied. This account is registered as a ${result.role}. Please use the correct login portal.`);
+            }
         } else {
             setError('Invalid credentials. Please try again.');
         }

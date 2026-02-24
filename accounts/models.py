@@ -24,5 +24,11 @@ class User(AbstractUser):
         blank=False,
     )
 
+    def save(self, *args, **kwargs):
+        # Ensure superusers always have the ADMIN role
+        if self.is_superuser and self.role != self.Role.ADMIN:
+            self.role = self.Role.ADMIN
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.username} ({self.role})"

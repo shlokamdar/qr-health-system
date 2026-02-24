@@ -16,7 +16,11 @@ const LabLogin = () => {
         setError('');
         const result = await login(username, password);
         if (result) {
-            navigate('/lab/dashboard');
+            if (result.role === 'LAB_TECH') {
+                navigate('/lab/dashboard');
+            } else {
+                setError(`Access denied. This account is registered as a ${result.role}. Please use the correct login portal.`);
+            }
         } else {
             setError('Invalid credentials. Please try again.');
         }

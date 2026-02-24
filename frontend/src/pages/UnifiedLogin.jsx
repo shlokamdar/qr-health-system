@@ -222,6 +222,13 @@ const UnifiedLogin = () => {
             const result = await login(username, password);
             if (result) {
                 const role = result.role;
+                
+                // Validate that the account role matches the selected portal role
+                if (loginRole && role !== loginRole) {
+                    setError(`Access denied. This account is registered as a ${role}. Please use the correct portal tab or login page.`);
+                    return; // Prevent redirect
+                }
+
                 if (role === 'PATIENT') navigate('/patient/dashboard');
                 else if (role === 'DOCTOR') navigate('/doctor/dashboard');
                 else if (role === 'LAB_TECH') navigate('/lab/dashboard');

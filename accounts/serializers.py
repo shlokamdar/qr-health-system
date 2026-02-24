@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import AuthenticationFailed
 
 User = get_user_model()
 
@@ -154,9 +155,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             )
             # Fallback: maybe the credential is still an email without '@' — skip,
             # as that's very unlikely.
-
         if not user:
-            raise serializers.ValidationError(
+            raise AuthenticationFailed(
                 _("No active account found with the given credentials."),
                 code="no_active_account",
             )
