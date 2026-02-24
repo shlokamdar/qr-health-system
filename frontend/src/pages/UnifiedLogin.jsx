@@ -29,7 +29,7 @@ const UnifiedLogin = () => {
     const [patientStep, setPatientStep] = useState(1);
     const [patientData, setPatientData] = useState({
         username: '', firstName: '', lastName: '', dob: '', gender: 'Male', phone: '', email: '',
-        password: '', confirmPassword: '', bloodGroup: 'O+', organDonor: false,
+        password: '', confirmPassword: '', bloodGroup: 'O+',
         allergies: '', conditions: '', addressLine1: '', addressLine2: '', city: '', state: '', pin: '',
         wantPhysicalCard: false,
         registrationOption: 'full', // 'full' or 'skip'
@@ -436,7 +436,6 @@ const UnifiedLogin = () => {
                     phone: patientData.phone,
                     gender: patientData.gender,
                     bloodGroup: patientData.registrationOption === 'full' ? patientData.bloodGroup : null,
-                    organDonor: patientData.registrationOption === 'full' ? patientData.organDonor : false,
                     allergies: patientData.registrationOption === 'full' ? patientData.allergies : '',
                     conditions: patientData.registrationOption === 'full' ? patientData.conditions : '',
                     addressLine1: patientData.registrationOption === 'full' ? patientData.addressLine1 : '',
@@ -970,23 +969,11 @@ const UnifiedLogin = () => {
                                             {/* Step 4: Medical Details (Only if Full) */}
                                             {patientStep === 4 && (
                                                 <div className="space-y-6">
-                                                    <div className="flex gap-4">
-                                                        <div className="flex-1">
-                                                            <label className={labelStyle}>Blood Group</label>
-                                                            <select className={inputStyle} value={patientData.bloodGroup} onChange={e => setPatientData({ ...patientData, bloodGroup: e.target.value })}>
-                                                                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => <option key={bg} value={bg}>{bg}</option>)}
-                                                            </select>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <label className={labelStyle}>Organ Donor</label>
-                                                            <button
-                                                                onClick={() => setPatientData({ ...patientData, organDonor: !patientData.organDonor })}
-                                                                className={`w-full py-[13px] px-4 rounded-xl border-2 flex items-center justify-between transition-all group ${patientData.organDonor ? 'bg-[#2EC4A9]/5 border-[#2EC4A9] text-[#2EC4A9]' : 'bg-white border-slate-200 text-slate-500'}`}
-                                                            >
-                                                                <span className="text-sm font-bold">{patientData.organDonor ? 'Donor' : 'Not a Donor'}</span>
-                                                                {patientData.organDonor ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
-                                                            </button>
-                                                        </div>
+                                                    <div>
+                                                        <label className={labelStyle}>Blood Group</label>
+                                                        <select className={inputStyle} value={patientData.bloodGroup} onChange={e => setPatientData({ ...patientData, bloodGroup: e.target.value })}>
+                                                            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                                                        </select>
                                                     </div>
                                                     <div>
                                                         <label className={labelStyle}>Allergies (Optional)</label>
@@ -1092,7 +1079,6 @@ const UnifiedLogin = () => {
                                                                         blood_group: patientData.bloodGroup,
                                                                         dob: patientData.dob,
                                                                         gender: patientData.gender,
-                                                                        organ_donor: patientData.organDonor,
                                                                         qr_code: null // Mockup during registration
                                                                     }}
                                                                     emergencyContacts={patientData.emergencyContacts}

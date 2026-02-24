@@ -62,7 +62,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             patient.date_of_birth = profile_data.get('dob')
             patient.gender = profile_data.get('gender', 'Male')
             patient.blood_group = profile_data.get('bloodGroup', '')
-            patient.organ_donor = profile_data.get('organDonor', False)
             patient.allergies = profile_data.get('allergies', '')
             patient.chronic_conditions = profile_data.get('conditions', '')
             

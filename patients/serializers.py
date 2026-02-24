@@ -32,9 +32,7 @@ class PatientSerializer(serializers.ModelSerializer):
         model = Patient
         fields = '__all__'
         read_only_fields = (
-            'health_id', 'qr_code', 'user', 'created_at', 'updated_at',
-            'is_organ_donor_verified', 'organ_donor_rejection_reason',
-            'organ_donor_verified_at'
+            'health_id', 'qr_code', 'user', 'created_at', 'updated_at'
         )
 
     def update(self, instance, validated_data):

@@ -34,7 +34,6 @@ const ProfileCompletionBanner = ({ patient, setActiveTab }) => {
     { label: 'Blood Group', key: 'blood_group', done: !!patient?.blood_group, tab: 'profile' },
     { label: 'Date of Birth', key: 'date_of_birth', done: !!patient?.date_of_birth, tab: 'profile' },
     { label: 'Gender', key: 'gender', done: !!patient?.gender, tab: 'profile' },
-    { label: 'Organ Donor Status', key: 'organ_donor', done: patient?.organ_donor !== undefined && patient?.organ_donor !== null, tab: 'profile' },
     { label: 'Primary Address', key: 'address', done: !!patient?.address, tab: 'profile' },
     { label: 'Emergency Contact', key: 'emergency_contact', done: !!patient?.emergency_contacts?.[0], tab: 'emergency_contacts' },
   ];
@@ -167,7 +166,7 @@ const OverviewTab = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
               <div style={{ fontSize: 11, color: '#fff', fontWeight: 600 }}>{patient?.user?.first_name} {patient?.user?.last_name}</div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{patient?.blood_group} • {patient?.organ_donor ? (patient?.is_organ_donor_verified ? 'Donor' : 'Donor (Pending)') : 'Non-Donor'}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{patient?.blood_group} • Active Profile</div>
             </div>
             {patient?.qr_code && (
               <img src={patient.qr_code} alt="QR" style={{ width: 44, height: 44, borderRadius: 4, background: '#fff', padding: 2 }} />

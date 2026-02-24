@@ -25,6 +25,8 @@ import UploadDocumentForm from '../components/patient/UploadDocumentForm';
 import UploadPrescriptionForm from '../components/patient/UploadPrescriptionForm';
 import AddEmergencyContactForm from '../components/patient/AddEmergencyContactForm';
 import ProfileEditModal from '../components/patient/ProfileEditModal';
+import ProfileTab from '../components/patient/ProfileTab';
+import toast from 'react-hot-toast';
 
 const Icon = ({ d, size = 20, className = '' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -147,6 +149,17 @@ const PatientDashboard = () => {
   // ── HANDLERS ─────────────────────────────────────────────────────────────
   const handleLogout = () => { logout(); navigate('/login'); };
 
+  const handleUpdateProfile = async (formData) => {
+    try {
+      await PatientService.updateProfile(patient.health_id, formData);
+      toast.success('Profile updated successfully!');
+      fetchAllData();
+    } catch (err) {
+      console.error("Profile update error:", err);
+      toast.error('Update failed. Please check your network.');
+    }
+  };
+
   const handleBookAppointment = async (e) => {
     e.preventDefault();
     try {
@@ -191,25 +204,6 @@ const PatientDashboard = () => {
     } catch (err) { alert('Failed to add contact.'); }
   };
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      await PatientService.updateProfile(patient.health_id, editForm);
-      setIsEditingProfile(false);
-      alert('Profile updated successfully!');
-      fetchAllData();
-    } catch (err) {
-      console.error("Profile update error:", err);
-      if (err.response && err.response.data) {
-        const errorMsg = Object.entries(err.response.data)
-          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-          .join('\n');
-        alert(`Update failed:\n${errorMsg}`);
-      } else {
-        alert('Update failed. Please check your network or try again later.');
-      }
-    }
-  };
 
   const handleCreateTicket = async (e) => {
     e.preventDefault();
@@ -457,86 +451,13 @@ const PatientDashboard = () => {
 
         {/* ── PROFILE TAB ── */}
         {activeTab === 'profile' && (
-          <div className="pd-card" style={{ maxWidth: 600 }}>
-            <div className="pd-section-heading" style={{ marginBottom: 20 }}>
-              <Icon d={ICONS.Settings} /> My Profile
-            </div>
-            <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>First Name</label>
-                  <input className="pd-input" value={editForm.first_name ?? patient?.user?.first_name ?? ''} onChange={e => setEditForm(f => ({ ...f, first_name: e.target.value }))} placeholder="First name" style={{ width: '100%' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Last Name</label>
-                  <input className="pd-input" value={editForm.last_name ?? patient?.user?.last_name ?? ''} onChange={e => setEditForm(f => ({ ...f, last_name: e.target.value }))} placeholder="Last name" style={{ width: '100%' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Contact Number</label>
-                  <input className="pd-input" value={editForm.contact_number ?? patient?.contact_number ?? ''} onChange={e => setEditForm(f => ({ ...f, contact_number: e.target.value }))} placeholder="Phone number" style={{ width: '100%' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Date of Birth</label>
-                  <input className="pd-input" type="date" value={editForm.date_of_birth ?? patient?.date_of_birth ?? ''} onChange={e => setEditForm(f => ({ ...f, date_of_birth: e.target.value }))} style={{ width: '100%' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Blood Group</label>
-                  <select className="pd-input" value={editForm.blood_group ?? patient?.blood_group ?? ''} onChange={e => setEditForm(f => ({ ...f, blood_group: e.target.value }))} style={{ width: '100%' }}>
-                    <option value="">Select</option>
-                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Gender</label>
-                  <select className="pd-input" value={editForm.gender ?? patient?.gender ?? 'Male'} onChange={e => setEditForm(f => ({ ...f, gender: e.target.value }))} style={{ width: '100%' }}>
-                    {['Male', 'Female', 'Other'].map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Address</label>
-                <textarea className="pd-input" rows={2} value={editForm.address ?? patient?.address ?? ''} onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))} placeholder="Home address" style={{ width: '100%', resize: 'vertical' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Known Allergies</label>
-                <textarea className="pd-input" rows={2} value={editForm.allergies ?? patient?.allergies ?? ''} onChange={e => setEditForm(f => ({ ...f, allergies: e.target.value }))} placeholder="e.g. Penicillin, dust" style={{ width: '100%', resize: 'vertical' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#718096', display: 'block', marginBottom: 4 }}>Chronic Conditions</label>
-                <textarea className="pd-input" rows={2} value={editForm.chronic_conditions ?? patient?.chronic_conditions ?? ''} onChange={e => setEditForm(f => ({ ...f, chronic_conditions: e.target.value }))} placeholder="e.g. Diabetes, Hypertension" style={{ width: '100%', resize: 'vertical' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <input type="checkbox" id="organ_donor" checked={editForm.organ_donor ?? patient?.organ_donor ?? false} onChange={e => setEditForm(f => ({ ...f, organ_donor: e.target.checked }))} style={{ width: 16, height: 16 }} />
-                  <label htmlFor="organ_donor" style={{ fontSize: 14, fontWeight: 500, color: '#2D3748' }}>I am willing to donate organs</label>
-                  {patient?.organ_donor && (
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: 12,
-                      background: patient.is_organ_donor_verified ? '#D1FAE5' : (patient.organ_donor_rejection_reason ? '#FEE2E2' : '#FEF3C7'),
-                      color: patient.is_organ_donor_verified ? '#065F46' : (patient.organ_donor_rejection_reason ? '#991B1B' : '#92400E'),
-                      marginLeft: 'auto'
-                    }}>
-                      {patient.is_organ_donor_verified ? 'VERIFIED' : (patient.organ_donor_rejection_reason ? 'REJECTED' : 'PENDING')}
-                    </span>
-                  )}
-                </div>
-                {patient?.organ_donor_rejection_reason && !patient.is_organ_donor_verified && (
-                  <div style={{ padding: '8px 12px', background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 8, fontSize: 12, color: '#C53030', display: 'flex', gap: 8 }}>
-                    <span style={{ fontWeight: 700 }}>Reason:</span>
-                    <span>{patient.organ_donor_rejection_reason}</span>
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button type="submit" className="pd-primary-btn" style={{ flex: 1 }}>Save Changes</button>
-                <button type="button" onClick={() => setEditForm({})} className="pd-secondary-btn" style={{ flex: 1 }}>Reset</button>
-              </div>
-            </form>
-          </div>
+          <ProfileTab 
+            patient={patient} 
+            emergencyContacts={emergencyContacts} 
+            onUpdate={handleUpdateProfile} 
+          />
         )}
+
 
         {activeTab === 'emergency_contacts' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

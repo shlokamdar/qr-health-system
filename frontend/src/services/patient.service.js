@@ -83,7 +83,10 @@ const PatientService = {
     },
 
     updateProfile: async (healthId, data) => {
-        const res = await api.patch(`patients/${healthId}/`, data);
+        const isFormData = data instanceof FormData;
+        const res = await api.patch(`patients/${healthId}/`, data, {
+            headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
+        });
         return res.data;
     },
 

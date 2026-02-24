@@ -103,38 +103,6 @@ const ProfileEditModal = ({ isEditing, setIsEditing, editForm, setEditForm, hand
                 onChange={e => setEditForm({ ...editForm, chronic_conditions: e.target.value })} />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input type="checkbox" id="modal_organ_donor"
-                  checked={editForm.organ_donor ?? false}
-                  onChange={e => setEditForm({ ...editForm, organ_donor: e.target.checked })}
-                  style={{ width: 16, height: 16 }}
-                />
-                <label htmlFor="modal_organ_donor" style={{ fontSize: 13, fontWeight: 600, color: '#2D3748', cursor: 'pointer' }}>
-                  I am willing to donate organs
-                </label>
-
-                {editForm.organ_donor && (
-                  <span style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: 10,
-                    background: editForm.is_organ_donor_verified ? '#D1FAE5' : (editForm.organ_donor_rejection_reason ? '#FEE2E2' : '#FEF3C7'),
-                    color: editForm.is_organ_donor_verified ? '#065F46' : (editForm.organ_donor_rejection_reason ? '#991B1B' : '#92400E'),
-                    marginLeft: 'auto'
-                  }}>
-                    {editForm.is_organ_donor_verified ? 'VERIFIED' : (editForm.organ_donor_rejection_reason ? 'REJECTED' : 'PENDING')}
-                  </span>
-                )}
-              </div>
-
-              {editForm.organ_donor_rejection_reason && !editForm.is_organ_donor_verified && (
-                <div style={{ padding: '8px 12px', background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 8, fontSize: 11, color: '#C53030' }}>
-                  <strong>Rejection Reason:</strong> {editForm.organ_donor_rejection_reason}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Footer */}

@@ -53,14 +53,12 @@ class Command(BaseCommand):
                 'address': '42 Elm Street, Mumbai, MH 400001',
                 'allergies': 'Penicillin, Pollen',
                 'chronic_conditions': 'Hypertension',
-                'organ_donor': True,
                 'gender': 'Male',
             }
         )
         # Update fields even if patient already existed
         patient.blood_group = 'A+'
         patient.contact_number = '+91 98765 43210'
-        patient.organ_donor = True
         patient.allergies = 'Penicillin, Pollen'
         patient.chronic_conditions = 'Hypertension'
         patient.save()
