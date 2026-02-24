@@ -24,13 +24,29 @@ class PatientSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     emergency_contacts = EmergencyContactSerializer(many=True, read_only=True)
     
+    # Writeable fields for name updates
+    first_name = serializers.CharField(source='user.first_name', required=False)
+    last_name = serializers.CharField(source='user.last_name', required=False)
+    
     class Meta:
         model = Patient
         fields = '__all__'
         read_only_fields = (
             'health_id', 'qr_code', 'user', 'created_at', 'updated_at',
-            'is_organ_donor_verified', 'organ_donor_rejection_reason'
+            'is_organ_donor_verified', 'organ_donor_rejection_reason',
+            'organ_donor_verified_at'
         )
+
+    def update(self, instance, validated_data):
+        # Handle nested user data if provided (first_name, last_name)
+        user_data = validated_data.pop('user', {})
+        if user_data:
+            user = instance.user
+            for attr, value in user_data.items():
+                setattr(user, attr, value)
+            user.save()
+            
+        return super().update(instance, validated_data)
 
 
 class PatientBasicSerializer(serializers.ModelSerializer):

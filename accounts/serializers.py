@@ -53,7 +53,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # Create specific profile based on role
         if role == User.Role.PATIENT:
-            from patients.models import Patient
+            from patients.models import Patient, EmergencyContact
             # Profile might already exist due to signals
             patient, created = Patient.objects.get_or_create(user=user)
             
@@ -65,8 +65,27 @@ class RegisterSerializer(serializers.ModelSerializer):
             patient.organ_donor = profile_data.get('organDonor', False)
             patient.allergies = profile_data.get('allergies', '')
             patient.chronic_conditions = profile_data.get('conditions', '')
-            patient.address = f"{profile_data.get('addressLine1', '')}, {profile_data.get('city', '')}, {profile_data.get('state', '')} - {profile_data.get('pin', '')}"
+            
+            # Construct address
+            addr_parts = [
+                profile_data.get('addressLine1', ''),
+                profile_data.get('city', ''),
+                profile_data.get('state', ''),
+                profile_data.get('pin', '')
+            ]
+            patient.address = ", ".join([p for p in addr_parts if p])
             patient.save()
+
+            # Handle emergency contacts
+            emergency_contacts = profile_data.get('emergency_contacts', [])
+            for ec_data in emergency_contacts:
+                if ec_data.get('name') and ec_data.get('phone'):  # Basic validation
+                    EmergencyContact.objects.create(
+                        patient=patient,
+                        name=ec_data['name'],
+                        relationship=ec_data.get('relationship', ''),
+                        phone=ec_data['phone']
+                    )
             
         elif role == User.Role.DOCTOR:
             from doctors.models import Doctor, Hospital

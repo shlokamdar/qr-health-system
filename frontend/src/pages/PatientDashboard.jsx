@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import PatientService from '../services/patient.service';
 import DoctorService from '../services/doctor.service';
+import api from '../utils/api';
 import useIsMobile from '../utils/useIsMobile';
 import './patient-dashboard.css';
 
@@ -195,8 +196,32 @@ const PatientDashboard = () => {
     try {
       await PatientService.updateProfile(patient.health_id, editForm);
       setIsEditingProfile(false);
+      alert('Profile updated successfully!');
       fetchAllData();
-    } catch (err) { alert('Update failed.'); }
+    } catch (err) {
+      console.error("Profile update error:", err);
+      if (err.response && err.response.data) {
+        const errorMsg = Object.entries(err.response.data)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+          .join('\n');
+        alert(`Update failed:\n${errorMsg}`);
+      } else {
+        alert('Update failed. Please check your network or try again later.');
+      }
+    }
+  };
+
+  const handleCreateTicket = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('support/tickets/', ticketForm);
+      alert('Support ticket created successfully!');
+      setShowTicketModal(false);
+      setTicketForm({ subject: '', description: '', priority: 'MEDIUM' });
+      fetchAllData();
+    } catch (err) {
+      alert('Failed to create ticket.');
+    }
   };
 
   const handleDeleteContact = async (id) => {
@@ -226,48 +251,53 @@ const PatientDashboard = () => {
 
   const handleDownloadQR = () => { if (patient?.qr_code) { const link = document.createElement('a'); link.href = patient.qr_code; link.download = 'HealthID_QR.png'; link.click(); } };
   const handleDownloadCard = async () => {
-    // Try PDF Download first
-    try {
-      const response = await PatientService.downloadPdf();
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `PulseID_${patient?.health_id || 'Health_Card'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-      return;
-    } catch (err) {
-      console.warn("PDF download failed, falling back to PNG capture", err);
-    }
-
-    // Fallback: Capture card as Image
     const cardElement = document.getElementById('patient-health-card');
     if (!cardElement) {
       alert("Could not locate card element for download.");
       return;
     }
 
+    // Capture original styles
+    const originalWidth = cardElement.style.width;
+    const originalHeight = cardElement.style.height;
+    const originalMaxW = cardElement.style.maxWidth;
+
     try {
       const html2canvas = (await import('html2canvas')).default;
+      
+      // Force 1200x750 for high-fidelity capture
+      cardElement.style.width = '1200px';
+      cardElement.style.height = '750px';
+      cardElement.style.maxWidth = 'none';
+
       const canvas = await html2canvas(cardElement, {
-        scale: 3,
+        scale: 1, 
         useCORS: true,
         backgroundColor: '#0D1B2A',
-        logging: false
+        logging: false,
+        width: 1200,
+        height: 750
       });
+
+      // Restore original styles
+      cardElement.style.width = originalWidth;
+      cardElement.style.height = originalHeight;
+      cardElement.style.maxWidth = originalMaxW;
 
       const link = document.createElement('a');
       link.download = `PulseID_${patient?.health_id || 'Health_Card'}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
     } catch (err) {
       console.error("PNG capture failed", err);
-      alert("Download failed. Please try again later.");
+      // Restore styles even on failure
+      cardElement.style.width = originalWidth;
+      cardElement.style.height = originalHeight;
+      cardElement.style.maxWidth = originalMaxW;
+      alert("Download failed. Please try again.");
     }
   };
+
 
   // ── CALCULATED STATS ─────────────────────────────────────────────────────
   const stats = {
@@ -281,6 +311,7 @@ const PatientDashboard = () => {
 
   return (
     <div className="pd-app">
+      <button className="pd-download-action-btn hidden" onClick={handleDownloadCard} style={{ display: 'none' }} />
       {/* ── DESKTOP NAVBAR ── */}
       <header className="pd-navbar">
         <div className="pd-logo">
@@ -288,8 +319,9 @@ const PatientDashboard = () => {
           <div className="pd-logo-text">PulseID</div>
         </div>
         <div className="pd-nav-right">
-          <div className="pd-role-badge">PATIENT</div>
-          <div className="pd-avatar">{(patient?.user?.first_name || user?.first_name || user?.username || 'P').charAt(0).toUpperCase()}</div>
+          <div className="pd-avatar" style={{ width: 36, height: 36, background: '#EFF6FF', color: '#3B9EE2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700 }}>
+            {(patient?.user?.first_name || user?.first_name || user?.username || 'P').charAt(0).toUpperCase()}
+          </div>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A' }}>
             {patient?.user?.first_name ? `${patient.user.first_name} ${patient.user.last_name || ''}`.trim() : (user?.first_name || user?.username || 'Patient')}
           </span>
@@ -306,7 +338,9 @@ const PatientDashboard = () => {
           <div className="pd-logo-text" style={{ fontSize: 16 }}>PulseID</div>
         </div>
         <div className="pd-nav-right" style={{ gap: 10 }}>
-          <div className="pd-avatar" style={{ width: 28, height: 28, fontSize: 11 }}>{(user?.first_name || 'P').charAt(0)}</div>
+          <div className="pd-avatar" style={{ width: 28, height: 28, background: '#EFF6FF', color: '#3B9EE2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+            {(user?.first_name || 'P').charAt(0).toUpperCase()}
+          </div>
           <div style={{ position: 'relative' }}>
             <Icon d={ICONS.Bell} size={20} style={{ color: '#4A5568' }} />
             {stats.pendingRequests > 0 && <div style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1px solid #fff' }} />}

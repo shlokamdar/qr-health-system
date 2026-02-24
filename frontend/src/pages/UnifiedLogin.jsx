@@ -9,6 +9,7 @@ import {
 import { BuildingOffice2Icon, BeakerIcon } from '@heroicons/react/24/outline';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import HealthIdCard from '../components/patient/HealthIdCard';
 
 const UnifiedLogin = () => {
     const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
@@ -30,7 +31,11 @@ const UnifiedLogin = () => {
         username: '', firstName: '', lastName: '', dob: '', gender: 'Male', phone: '', email: '',
         password: '', confirmPassword: '', bloodGroup: 'O+', organDonor: false,
         allergies: '', conditions: '', addressLine1: '', addressLine2: '', city: '', state: '', pin: '',
-        wantPhysicalCard: false
+        wantPhysicalCard: false,
+        registrationOption: 'full', // 'full' or 'skip'
+        emergencyContacts: [
+            { name: '', relationship: '', phone: '' }
+        ]
     });
     const [usernameAvailable, setUsernameAvailable] = useState(null); // null, true, false
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
@@ -278,8 +283,8 @@ const UnifiedLogin = () => {
 
     const handlePatientNext = () => {
         if (patientStep === 1) {
-            const { firstName, lastName, email, password, confirmPassword, username } = patientData;
-            if (!firstName || !lastName || !email || !password || !username) {
+            const { firstName, lastName, email, password, confirmPassword, username, dob, gender, phone } = patientData;
+            if (!firstName || !lastName || !email || !password || !username || !dob || !gender || !phone) {
                 setError("Please fill all required fields."); return;
             }
             if (!/^[a-zA-Z0-9_]+$/.test(username)) {
@@ -297,23 +302,56 @@ const UnifiedLogin = () => {
             if (password !== confirmPassword) {
                 setError("Passwords do not match."); return;
             }
+            setPatientStep(2);
+            setError("");
+            return;
         }
 
         if (patientStep === 2) {
-            const { dob, gender, phone, addressLine1, city, state, pin } = patientData;
-            if (!dob || !gender || !phone || !addressLine1 || !city || !state || !pin) {
-                setError("Please complete all personal details."); return;
+            if (patientData.registrationOption === 'skip') {
+                setIsGeneratingID(true);
+                setTimeout(() => {
+                    setGeneratedID(`HID-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`);
+                    setIsGeneratingID(false);
+                    setPatientStep(6);
+                }, 1500);
+            } else {
+                setPatientStep(3);
             }
+            setError("");
+            return;
         }
 
         if (patientStep === 3) {
+            const { addressLine1, city, state, pin } = patientData;
+            if (!addressLine1 || !city || !state || !pin) {
+                setError("Please complete all address details."); return;
+            }
+            setPatientStep(4);
             setError("");
+            return;
+        }
+
+        if (patientStep === 4) {
+            setPatientStep(5);
+            setError("");
+            return;
+        }
+
+        if (patientStep === 5) {
+            // Validate first emergency contact if "full" registration
+            const ec = patientData.emergencyContacts[0];
+            if (!ec.name || !ec.phone || !ec.relationship) {
+                setError("Please provide at least one emergency contact."); return;
+            }
+            
             setIsGeneratingID(true);
             setTimeout(() => {
                 setGeneratedID(`HID-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`);
                 setIsGeneratingID(false);
-                setPatientStep(4);
+                setPatientStep(6);
             }, 1500);
+            setError("");
             return;
         }
 
@@ -396,16 +434,16 @@ const UnifiedLogin = () => {
                 profile_data: {
                     dob: patientData.dob,
                     phone: patientData.phone,
-                    bloodGroup: patientData.bloodGroup,
-                    organDonor: patientData.organDonor,
-                    allergies: patientData.allergies,
-                    conditions: patientData.conditions,
-                    addressLine1: patientData.addressLine1,
-                    addressLine2: patientData.addressLine2,
-                    city: patientData.city,
-                    state: patientData.state,
-                    pin: patientData.pin,
-                    wantPhysicalCard: patientData.wantPhysicalCard
+                    gender: patientData.gender,
+                    bloodGroup: patientData.registrationOption === 'full' ? patientData.bloodGroup : null,
+                    organDonor: patientData.registrationOption === 'full' ? patientData.organDonor : false,
+                    allergies: patientData.registrationOption === 'full' ? patientData.allergies : '',
+                    conditions: patientData.registrationOption === 'full' ? patientData.conditions : '',
+                    addressLine1: patientData.registrationOption === 'full' ? patientData.addressLine1 : '',
+                    city: patientData.registrationOption === 'full' ? patientData.city : '',
+                    state: patientData.registrationOption === 'full' ? patientData.state : '',
+                    pin: patientData.registrationOption === 'full' ? patientData.pin : '',
+                    emergency_contacts: patientData.registrationOption === 'full' ? patientData.emergencyContacts : []
                 }
             };
 
@@ -751,309 +789,348 @@ const UnifiedLogin = () => {
                                 </div>
                             )}
 
-                            {/* Patient Registration */}
-                            {registerRole === 'PATIENT' && (
-                                <div>
-                                    <ProgressBar step={patientStep} total={5} />
+                                    {/* Patient Registration */}
+                                    {registerRole === 'PATIENT' && (
+                                        <div>
+                                            <ProgressBar step={patientStep} total={6} />
 
-                                    {/* Step 1: Personal Info */}
-                                    {patientStep === 1 && (
-                                        <div className="space-y-5">
-                                            <div className="flex gap-4">
-                                                <div className="flex-1">
-                                                    <label className={labelStyle}>First Name</label>
-                                                    <input type="text" className={inputStyle} value={patientData.firstName} onChange={e => setPatientData({ ...patientData, firstName: e.target.value })} placeholder="John" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <label className={labelStyle}>Last Name</label>
-                                                    <input type="text" className={inputStyle} value={patientData.lastName} onChange={e => setPatientData({ ...patientData, lastName: e.target.value })} placeholder="Doe" />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className={labelStyle}>Choose a Username</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        autoComplete="off"
-                                                        className={`${inputStyle} pr-10 ${patientData.username && !/^[a-zA-Z0-9_]+$/.test(patientData.username) ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' :
-                                                            usernameAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
-                                                                usernameAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
-                                                            }`}
-                                                        value={patientData.username}
-                                                        onChange={e => setPatientData({ ...patientData, username: e.target.value.toLowerCase() })}
-                                                        placeholder="johndoe123"
-                                                    />
-                                                    <div className="absolute right-3 top-3.5">
-                                                        {isCheckingUsername ? (
-                                                            <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
-                                                        ) : patientData.username.length >= 3 ? (
-                                                            (usernameAvailable === true && /^[a-zA-Z0-9_]+$/.test(patientData.username)) ? (
-                                                                <Check className="w-5 h-5 text-green-500" />
-                                                            ) : (usernameAvailable === false || !/^[a-zA-Z0-9_]+$/.test(patientData.username)) ? (
-                                                                <X className="w-5 h-5 text-red-500" />
-                                                            ) : null
-                                                        ) : null}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col mt-1.5 px-1 gap-1">
-                                                    <p className="text-[12px] text-[#9CA3AF] font-medium">Used for quick login. Letters, numbers, and underscores only.</p>
-                                                    {patientData.username && !/^[a-zA-Z0-9_]+$/.test(patientData.username) && (
-                                                        <p className="text-[12px] text-red-500 font-medium">Only letters, numbers, and underscores allowed</p>
-                                                    )}
-                                                    {usernameAvailable === false && /^[a-zA-Z0-9_]+$/.test(patientData.username) && (
-                                                        <p className="text-[12px] text-red-500 font-medium">Username is already taken.</p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className={labelStyle}>Email Address</label>
-                                                <input type="email" className={inputStyle} value={patientData.email} onChange={e => setPatientData({ ...patientData, email: e.target.value })} placeholder="name@domain.com" />
-                                            </div>
-
-                                            <div>
-                                                <label className={labelStyle}>Password</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type={showRegisterPassword ? "text" : "password"}
-                                                        className={`${inputStyle} pr-12`}
-                                                        value={patientData.password}
-                                                        onChange={e => setPatientData({ ...patientData, password: e.target.value })}
-                                                        placeholder="Create a strong password"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                                                        className="absolute right-4 top-3.5 text-slate-400 hover:text-[#3B9EE2] transition-colors focus:outline-none"
-                                                    >
-                                                        {showRegisterPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                                    </button>
-                                                </div>
-                                                <PasswordStrength password={patientData.password} />
-                                            </div>
-
-                                            <div>
-                                                <label className={labelStyle}>Confirm Password</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type={showRegisterPassword ? "text" : "password"}
-                                                        className={inputStyle}
-                                                        value={patientData.confirmPassword}
-                                                        onChange={e => setPatientData({ ...patientData, confirmPassword: e.target.value })}
-                                                        placeholder="Re-enter password"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <button onClick={handlePatientNext} className={`${btnPrimaryStyle} mt-4`}>Continue <ArrowRight className="w-5 h-5 ml-2" /></button>
-                                        </div>
-                                    )}
-
-                                    {/* Step 2: Personal Details */}
-                                    {patientStep === 2 && (
-                                        <div className="space-y-5">
-                                            <div className="flex gap-4">
-                                                <div className="flex-1">
-                                                    <label className={labelStyle}>Date of Birth</label>
-                                                    <input type="date" className={inputStyle} value={patientData.dob} onChange={e => setPatientData({ ...patientData, dob: e.target.value })} />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <label className={labelStyle}>Gender</label>
-                                                    <div className="relative">
-                                                        <select className={`${inputStyle} appearance-none cursor-pointer`} value={patientData.gender} onChange={e => setPatientData({ ...patientData, gender: e.target.value })}>
-                                                            {['Male', 'Female', 'Other'].map(g => <option key={g} value={g}>{g}</option>)}
-                                                        </select>
-                                                        <div className="absolute right-4 top-4 pointer-events-none text-slate-400"><ArrowRight className="w-4 h-4 rotate-90" /></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className={labelStyle}>Phone Number</label>
-                                                <input type="tel" className={inputStyle} value={patientData.phone} onChange={e => setPatientData({ ...patientData, phone: e.target.value })} placeholder="+91 98765 43210" />
-                                            </div>
-
-                                            <div>
-                                                <label className={labelStyle}>Address</label>
-                                                <input type="text" className={`${inputStyle} mb-3`} placeholder="Street Address / Flat No." value={patientData.addressLine1} onChange={e => setPatientData({ ...patientData, addressLine1: e.target.value })} />
-                                                <div className="flex flex-col gap-3">
-                                                    <div className="flex gap-3">
-                                                        <input type="text" placeholder="City" className="flex-1 px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={patientData.city} onChange={e => setPatientData({ ...patientData, city: e.target.value })} />
-                                                        <input type="text" placeholder="State" className="flex-1 px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={patientData.state} onChange={e => setPatientData({ ...patientData, state: e.target.value })} />
-                                                    </div>
-                                                    <input type="text" placeholder="PIN Code" className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={patientData.pin} onChange={e => setPatientData({ ...patientData, pin: e.target.value })} />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex gap-4 pt-4">
-                                                <button onClick={() => setPatientStep(1)} className={btnGhostStyle}>Back</button>
-                                                <button onClick={handlePatientNext} className={btnPrimaryStyle}>Continue <ArrowRight className="w-5 h-5 ml-2" /></button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Step 3: Medical Details */}
-                                    {patientStep === 3 && (
-                                        <div className="space-y-6">
-                                            <div className="flex gap-4">
-                                                <div className="flex-1">
-                                                    <label className={labelStyle}>Blood Group</label>
-                                                    <div className="relative">
-                                                        <select className={`${inputStyle} appearance-none cursor-pointer`} value={patientData.bloodGroup} onChange={e => setPatientData({ ...patientData, bloodGroup: e.target.value })}>
-                                                            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => <option key={bg} value={bg}>{bg}</option>)}
-                                                        </select>
-                                                        <div className="absolute right-4 top-4 pointer-events-none text-slate-400">
-                                                            <ArrowRight className="w-4 h-4 rotate-90" />
+                                            {/* Step 1: Account & Basic Info */}
+                                            {patientStep === 1 && (
+                                                <div className="space-y-5">
+                                                    <div className="flex gap-4">
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>First Name</label>
+                                                            <input type="text" className={inputStyle} value={patientData.firstName} onChange={e => setPatientData({ ...patientData, firstName: e.target.value })} placeholder="John" />
                                                         </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <label className={labelStyle}>Organ Donor</label>
-                                                    <button
-                                                        onClick={() => setPatientData({ ...patientData, organDonor: !patientData.organDonor })}
-                                                        className={`w-full py-[13px] px-4 rounded-xl border-2 flex items-center justify-between transition-all group ${patientData.organDonor
-                                                            ? 'bg-[#2EC4A9]/5 border-[#2EC4A9] text-[#2EC4A9]'
-                                                            : 'bg-white border-slate-200 text-slate-500 hover:border-[#3B9EE2] hover:text-[#3B9EE2]'
-                                                            }`}
-                                                    >
-                                                        <span className="text-sm font-bold">{patientData.organDonor ? 'Yes, I am a Donor' : 'Not a Donor'}</span>
-                                                        {patientData.organDonor ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className={labelStyle}>Known Allergies (Optional)</label>
-                                                <textarea className={`${inputStyle} h-32 resize-none`} placeholder="e.g. Penicillin, Peanuts, Dust Mites..." value={patientData.allergies} onChange={e => setPatientData({ ...patientData, allergies: e.target.value })} />
-                                            </div>
-                                            <div className="flex gap-4 pt-4">
-                                                <button onClick={() => setPatientStep(2)} className={btnGhostStyle}>Back</button>
-                                                <button onClick={handlePatientNext} className={btnPrimaryStyle}>Continue</button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Step 4: ID Reveal */}
-                                    {patientStep === 4 && (
-                                        <div className="text-center">
-                                            {isGeneratingID ? (
-                                                <div className="py-16 flex flex-col items-center">
-                                                    <div className="relative">
-                                                        <div className="w-20 h-20 border-4 border-[#3B9EE2]/20 border-t-[#3B9EE2] rounded-full animate-spin mb-8"></div>
-                                                        <Activity className="w-8 h-8 text-[#3B9EE2] absolute top-6 left-6 animate-pulse" />
-                                                    </div>
-                                                    <p className="text-[#0D1B2A] font-bold text-xl mb-2">Generating Identity</p>
-                                                    <p className="text-slate-500 font-medium">Encrypting health records...</p>
-                                                </div>
-                                            ) : (
-                                                <div className="animate-in zoom-in duration-500">
-                                                    {/* Health ID Card */}
-                                                    <div id="health-id-card" className="relative mx-auto w-full max-w-[380px] aspect-[85/54] bg-[#0D1B2A] rounded-2xl shadow-2xl overflow-hidden text-left p-6 text-white mb-8 group hover:scale-[1.02] transition-all duration-500 ring-4 ring-slate-100/50">
-                                                        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '4px 4px' }}></div>
-                                                        <div className="relative z-10 flex flex-col justify-between h-full">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex items-center gap-3"><div className="bg-white/10 p-1.5 rounded-lg backdrop-blur-sm"><Activity className="w-5 h-5 text-[#3B9EE2]" /></div><span className="font-bold tracking-tight text-xl">PulseID</span></div>
-                                                                <div className="bg-[#0d2e2a] text-[#2EC4A9] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-[#2EC4A9]/20 backdrop-blur-sm">Patient</div>
-                                                            </div>
-                                                            <div className="flex justify-between items-center mt-2 pl-1">
-                                                                <div>
-                                                                    <div className="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Health ID</div>
-                                                                    <div className="text-2xl font-mono font-bold tracking-widest text-white drop-shadow-lg">{generatedID}</div>
-                                                                    <div className="text-base mt-1.5 font-bold tracking-wide capitalize">{patientData.firstName} {patientData.lastName}</div>
-                                                                </div>
-                                                                <div className="bg-white p-2 rounded-xl shadow-lg border-2 border-slate-100">
-                                                                    <svg width="64" height="64" viewBox="0 0 72 72" className="text-[#0D1B2A]">
-                                                                        <rect x="0" y="0" width="20" height="20" fill="currentColor" />
-                                                                        <rect x="4" y="4" width="12" height="12" fill="white" />
-                                                                        <rect x="6" y="6" width="8" height="8" fill="currentColor" />
-                                                                        <rect x="52" y="0" width="20" height="20" fill="currentColor" />
-                                                                        <rect x="56" y="4" width="12" height="12" fill="white" />
-                                                                        <rect x="58" y="6" width="8" height="8" fill="currentColor" />
-                                                                        <rect x="0" y="52" width="20" height="20" fill="currentColor" />
-                                                                        <rect x="4" y="56" width="12" height="12" fill="white" />
-                                                                        <rect x="6" y="58" width="8" height="8" fill="currentColor" />
-                                                                        <rect x="25" y="5" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="35" y="15" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="45" y="25" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="5" y="35" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="15" y="45" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="55" y="45" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="25" y="55" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="35" y="65" width="5" height="5" fill="currentColor" />
-                                                                        <rect x="25" y="30" width="10" height="10" fill="currentColor" opacity="0.5" />
-                                                                        <rect x="40" y="40" width="10" height="10" fill="currentColor" opacity="0.3" />
-                                                                    </svg>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex justify-between items-end text-[10px] border-t border-white/10 pt-4 mt-2">
-                                                                <div className="flex gap-6">
-                                                                    <div><span className="text-slate-400 block mb-0.5 uppercase tracking-wider">Blood Type</span><span className="font-bold text-base">{patientData.bloodGroup}</span></div>
-                                                                    <div><span className="text-slate-400 block mb-0.5 uppercase tracking-wider">Organ Donor</span><span className="font-bold text-[#2EC4A9] text-base">{patientData.organDonor ? 'Yes' : 'No'}</span></div>
-                                                                </div>
-                                                                <div className="text-slate-500 font-medium tracking-wide">Valid across all providers</div>
-                                                            </div>
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>Last Name</label>
+                                                            <input type="text" className={inputStyle} value={patientData.lastName} onChange={e => setPatientData({ ...patientData, lastName: e.target.value })} placeholder="Doe" />
                                                         </div>
                                                     </div>
 
-                                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 transition-all hover:border-[#3B9EE2]/30">
-                                                        <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                                                            Your Health ID has been successfully generated. You can download your official Health Card and QR code anytime from your dashboard after completing the final step.
-                                                        </p>
+                                                    <div>
+                                                        <label className={labelStyle}>Choose a Username</label>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="text"
+                                                                autoComplete="off"
+                                                                className={`${inputStyle} pr-10 ${patientData.username && !/^[a-zA-Z0-9_]+$/.test(patientData.username) ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' :
+                                                                    usernameAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                                        usernameAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                                    }`}
+                                                                value={patientData.username}
+                                                                onChange={e => setPatientData({ ...patientData, username: e.target.value.toLowerCase() })}
+                                                                placeholder="johndoe123"
+                                                            />
+                                                            <div className="absolute right-3 top-3.5">
+                                                                {isCheckingUsername ? (
+                                                                    <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                                ) : patientData.username.length >= 3 ? (
+                                                                    (usernameAvailable === true && /^[a-zA-Z0-9_]+$/.test(patientData.username)) ? (
+                                                                        <Check className="w-5 h-5 text-green-500" />
+                                                                    ) : (usernameAvailable === false || !/^[a-zA-Z0-9_]+$/.test(patientData.username)) ? (
+                                                                        <X className="w-5 h-5 text-red-500" />
+                                                                    ) : null
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col mt-1.5 px-1 gap-1">
+                                                            <p className="text-[12px] text-[#9CA3AF] font-medium">Used for quick login. Letters, numbers, and underscores only.</p>
+                                                        </div>
                                                     </div>
 
                                                     <div className="flex gap-4">
-                                                        <button onClick={() => setPatientStep(3)} className={btnGhostStyle}>Back</button>
-                                                        <button onClick={() => setPatientStep(5)} className={btnPrimaryStyle}>Continue →</button>
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>Date of Birth</label>
+                                                            <input type="date" className={inputStyle} value={patientData.dob} onChange={e => setPatientData({ ...patientData, dob: e.target.value })} />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>Gender</label>
+                                                            <select className={inputStyle} value={patientData.gender} onChange={e => setPatientData({ ...patientData, gender: e.target.value })}>
+                                                                {['Male', 'Female', 'Other'].map(g => <option key={g} value={g}>{g}</option>)}
+                                                            </select>
+                                                        </div>
                                                     </div>
+
+                                                    <div className="flex gap-4">
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>Phone Number</label>
+                                                            <input type="tel" className={inputStyle} value={patientData.phone} onChange={e => setPatientData({ ...patientData, phone: e.target.value })} placeholder="+91 98765 43210" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>Email</label>
+                                                            <input type="email" className={inputStyle} value={patientData.email} onChange={e => setPatientData({ ...patientData, email: e.target.value })} placeholder="name@domain.com" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className={labelStyle}>Password</label>
+                                                        <div className="relative">
+                                                            <input
+                                                                type={showRegisterPassword ? "text" : "password"}
+                                                                className={`${inputStyle} pr-12`}
+                                                                value={patientData.password}
+                                                                onChange={e => setPatientData({ ...patientData, password: e.target.value })}
+                                                                placeholder="••••••••"
+                                                            />
+                                                            <button type="button" onClick={() => setShowRegisterPassword(!showRegisterPassword)} className="absolute right-4 top-3.5 text-slate-400 hover:text-[#3B9EE2]">
+                                                                {showRegisterPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                            </button>
+                                                        </div>
+                                                        <PasswordStrength password={patientData.password} />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className={labelStyle}>Confirm Password</label>
+                                                        <input
+                                                            type={showRegisterPassword ? "text" : "password"}
+                                                            className={inputStyle}
+                                                            value={patientData.confirmPassword}
+                                                            onChange={e => setPatientData({ ...patientData, confirmPassword: e.target.value })}
+                                                            placeholder="••••••••"
+                                                        />
+                                                    </div>
+
+                                                    <button onClick={handlePatientNext} className={`${btnPrimaryStyle} mt-4`}>Continue <ArrowRight className="w-5 h-5 ml-2" /></button>
+                                                </div>
+                                            )}
+
+                                            {/* Step 2: Choose Path */}
+                                            {patientStep === 2 && (
+                                                <div className="space-y-6">
+                                                    <div className="text-center mb-8">
+                                                        <h3 className="text-xl font-bold text-[#0D1B2A] mb-2">Registration Mode</h3>
+                                                        <p className="text-slate-500 text-sm">How would you like to proceed with your health profile?</p>
+                                                    </div>
+
+                                                    <div className="grid gap-4">
+                                                        <button 
+                                                            onClick={() => setPatientData({ ...patientData, registrationOption: 'full' })}
+                                                            className={`p-6 rounded-2xl border-2 text-left transition-all ${patientData.registrationOption === 'full' ? 'border-[#3B9EE2] bg-[#3B9EE2]/5' : 'border-slate-100 hover:border-slate-200'}`}
+                                                        >
+                                                            <div className="flex items-center gap-4 mb-3">
+                                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${patientData.registrationOption === 'full' ? 'bg-[#3B9EE2] text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                                    <ShieldCheck className="w-6 h-6" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="font-bold text-[#0D1B2A]">Full Registration</div>
+                                                                    <div className="text-xs text-[#3B9EE2] font-bold">Recommended</div>
+                                                                </div>
+                                                                {patientData.registrationOption === 'full' && <Check className="w-5 h-5 text-[#3B9EE2]" />}
+                                                            </div>
+                                                            <p className="text-sm text-slate-500 leading-relaxed font-medium">Complete all details now: Address, Blood Group, Allergies, and Emergency Contacts. Your Health ID card will be <span className="text-[#2EC4A9] font-bold">Instantly Unlocked</span>.</p>
+                                                        </button>
+
+                                                        <button 
+                                                            onClick={() => setPatientData({ ...patientData, registrationOption: 'skip' })}
+                                                            className={`p-6 rounded-2xl border-2 text-left transition-all ${patientData.registrationOption === 'skip' ? 'border-[#3B9EE2] bg-[#3B9EE2]/5' : 'border-slate-100 hover:border-slate-200'}`}
+                                                        >
+                                                            <div className="flex items-center gap-4 mb-3">
+                                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${patientData.registrationOption === 'skip' ? 'bg-[#3B9EE2] text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                                    <RefreshCw className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="font-bold text-[#0D1B2A]">Skip for Now</div>
+                                                                </div>
+                                                                {patientData.registrationOption === 'skip' && <Check className="w-5 h-5 text-[#3B9EE2]" />}
+                                                            </div>
+                                                            <p className="text-sm text-slate-500 leading-relaxed font-medium font-bold">Create account quickly. You can fill other details later from your dashboard. <span className="text-amber-500">Note: Your Health ID card will remain locked until profile is complete.</span></p>
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="flex gap-4 mt-8">
+                                                        <button onClick={() => setPatientStep(1)} className={btnGhostStyle}>Back</button>
+                                                        <button onClick={handlePatientNext} className={btnPrimaryStyle}>Next Step <ArrowRight className="w-5 h-5 ml-2" /></button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Step 3: Address (Only if Full) */}
+                                            {patientStep === 3 && (
+                                                <div className="space-y-5">
+                                                    <div>
+                                                        <label className={labelStyle}>Address</label>
+                                                        <input type="text" className={`${inputStyle} mb-3`} placeholder="Street Address / Flat No." value={patientData.addressLine1} onChange={e => setPatientData({ ...patientData, addressLine1: e.target.value })} />
+                                                        <div className="flex flex-col gap-3">
+                                                            <div className="flex gap-3">
+                                                                <input type="text" placeholder="City" className="flex-1 px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={patientData.city} onChange={e => setPatientData({ ...patientData, city: e.target.value })} />
+                                                                <input type="text" placeholder="State" className="flex-1 px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={patientData.state} onChange={e => setPatientData({ ...patientData, state: e.target.value })} />
+                                                            </div>
+                                                            <input type="text" placeholder="PIN Code" className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" value={patientData.pin} onChange={e => setPatientData({ ...patientData, pin: e.target.value })} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-4 mt-8">
+                                                        <button onClick={() => setPatientStep(2)} className={btnGhostStyle}>Back</button>
+                                                        <button onClick={handlePatientNext} className={btnPrimaryStyle}>Continue <ArrowRight className="w-5 h-5 ml-2" /></button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Step 4: Medical Details (Only if Full) */}
+                                            {patientStep === 4 && (
+                                                <div className="space-y-6">
+                                                    <div className="flex gap-4">
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>Blood Group</label>
+                                                            <select className={inputStyle} value={patientData.bloodGroup} onChange={e => setPatientData({ ...patientData, bloodGroup: e.target.value })}>
+                                                                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className={labelStyle}>Organ Donor</label>
+                                                            <button
+                                                                onClick={() => setPatientData({ ...patientData, organDonor: !patientData.organDonor })}
+                                                                className={`w-full py-[13px] px-4 rounded-xl border-2 flex items-center justify-between transition-all group ${patientData.organDonor ? 'bg-[#2EC4A9]/5 border-[#2EC4A9] text-[#2EC4A9]' : 'bg-white border-slate-200 text-slate-500'}`}
+                                                            >
+                                                                <span className="text-sm font-bold">{patientData.organDonor ? 'Donor' : 'Not a Donor'}</span>
+                                                                {patientData.organDonor ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelStyle}>Allergies (Optional)</label>
+                                                        <textarea className={`${inputStyle} h-24 resize-none`} placeholder="e.g. Penicillin, Peanuts..." value={patientData.allergies} onChange={e => setPatientData({ ...patientData, allergies: e.target.value })} />
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelStyle}>Chronic Conditions (Optional)</label>
+                                                        <textarea className={`${inputStyle} h-24 resize-none`} placeholder="e.g. Diabetes, Hypertension..." value={patientData.conditions} onChange={e => setPatientData({ ...patientData, conditions: e.target.value })} />
+                                                    </div>
+                                                    <div className="flex gap-4">
+                                                        <button onClick={() => setPatientStep(3)} className={btnGhostStyle}>Back</button>
+                                                        <button onClick={handlePatientNext} className={btnPrimaryStyle}>Continue</button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Step 5: Emergency Contacts (Optional/Required if Full) */}
+                                            {patientStep === 5 && (
+                                                <div className="space-y-6">
+                                                    <div className="text-center mb-4">
+                                                        <h3 className="text-lg font-bold text-[#0D1B2A]">Emergency Contact</h3>
+                                                        <p className="text-slate-500 text-sm">Who should we contact in case of an emergency?</p>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        {patientData.emergencyContacts.map((contact, index) => (
+                                                            <div key={index} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                                                                <div>
+                                                                    <label className={labelStyle}>Full Name</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        className={inputStyle} 
+                                                                        value={contact.name} 
+                                                                        onChange={e => {
+                                                                            const updated = [...patientData.emergencyContacts];
+                                                                            updated[index].name = e.target.value;
+                                                                            setPatientData({ ...patientData, emergencyContacts: updated });
+                                                                        }} 
+                                                                        placeholder="Full Name"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex gap-3">
+                                                                    <div className="flex-1">
+                                                                        <label className={labelStyle}>Relationship</label>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            className={inputStyle} 
+                                                                            value={contact.relationship} 
+                                                                            onChange={e => {
+                                                                                const updated = [...patientData.emergencyContacts];
+                                                                                updated[index].relationship = e.target.value;
+                                                                                setPatientData({ ...patientData, emergencyContacts: updated });
+                                                                            }} 
+                                                                            placeholder="e.g. Spouse" 
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <label className={labelStyle}>Phone</label>
+                                                                        <input 
+                                                                            type="tel" 
+                                                                            className={inputStyle} 
+                                                                            value={contact.phone} 
+                                                                            onChange={e => {
+                                                                                const updated = [...patientData.emergencyContacts];
+                                                                                updated[index].phone = e.target.value;
+                                                                                setPatientData({ ...patientData, emergencyContacts: updated });
+                                                                            }} 
+                                                                            placeholder="+91..." 
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="flex gap-4 mt-8">
+                                                        <button onClick={() => setPatientStep(4)} className={btnGhostStyle}>Back</button>
+                                                        <button onClick={handlePatientNext} className={btnPrimaryStyle}>Review ID <ArrowRight className="w-5 h-5 ml-2" /></button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Step 6: ID Reveal */}
+                                            {patientStep === 6 && (
+                                                <div className="text-center">
+                                                    {isGeneratingID ? (
+                                                        <div className="py-16 flex flex-col items-center">
+                                                            <div className="relative">
+                                                                <div className="w-20 h-20 border-4 border-[#3B9EE2]/20 border-t-[#3B9EE2] rounded-full animate-spin mb-8"></div>
+                                                                <Activity className="w-8 h-8 text-[#3B9EE2] absolute top-6 left-6 animate-pulse" />
+                                                            </div>
+                                                            <p className="text-[#0D1B2A] font-bold text-xl mb-2">Generating Identity</p>
+                                                            <p className="text-slate-500 font-medium">Encrypting health records...</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="animate-in zoom-in duration-500">
+                                                            {/* Unified Health ID Card Component */}
+                                                            <div className="relative mx-auto w-full max-w-[400px] mb-8 group hover:scale-[1.02] transition-all duration-500">
+                                                                <HealthIdCard 
+                                                                    patient={{
+                                                                        health_id: generatedID,
+                                                                        user: { first_name: patientData.firstName, last_name: patientData.lastName },
+                                                                        blood_group: patientData.bloodGroup,
+                                                                        dob: patientData.dob,
+                                                                        gender: patientData.gender,
+                                                                        organ_donor: patientData.organDonor,
+                                                                        qr_code: null // Mockup during registration
+                                                                    }}
+                                                                    emergencyContacts={patientData.emergencyContacts}
+                                                                />
+                                                                
+                                                                {/* LOCKED OVERLAY (Blurred) */}
+                                                                {patientData.registrationOption === 'skip' && (
+                                                                    <div className="absolute inset-0 z-20 backdrop-blur-[6px] bg-[#0D1B2A]/60 flex flex-col items-center justify-center p-6 text-center rounded-2xl animate-in fade-in duration-700 pointer-events-none">
+                                                                        <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3">
+                                                                            <Lock className="w-6 h-6 text-[#3B9EE2]" />
+                                                                        </div>
+                                                                        <div className="text-sm font-bold text-white mb-1 uppercase tracking-widest">Profile Incomplete</div>
+                                                                        <p className="text-[11px] text-slate-300 font-medium">Complete other details from your dashboard to unlock your health card.</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8">
+                                                                <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                                                                    {patientData.registrationOption === 'full' 
+                                                                        ? "Your Health ID has been successfully generated. You can now access your dashboard and download your official card."
+                                                                        : "Your account has been created. However, your Health ID card is currently locked. Please complete your profile to enable all features."
+                                                                    }
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="flex gap-4">
+                                                                <button onClick={() => setPatientStep(patientData.registrationOption === 'full' ? 5 : 2)} className={btnGhostStyle}>Back</button>
+                                                                <button onClick={handlePatientRegister} className={btnPrimaryStyle}>
+                                                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Complete Registration'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
                                     )}
-
-                                    {/* Step 5: Physical Card */}
-                                    {patientStep === 5 && (
-                                        <div>
-                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 transition-all hover:border-[#3B9EE2]/30">
-                                                <div className="flex justify-between items-center mb-5">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors shadow-sm ${patientData.wantPhysicalCard ? 'bg-[#2EC4A9] text-white shadow-[#2EC4A9]/20' : 'bg-white border border-slate-200 text-slate-400'}`}>
-                                                            <ShieldCheck className="w-6 h-6" />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-base font-bold text-[#0D1B2A]">Order Physical ID Card</h3>
-                                                            <p className="text-xs text-slate-500 font-medium mt-0.5">Premium PVC card shipped to your door</p>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => setPatientData({ ...patientData, wantPhysicalCard: !patientData.wantPhysicalCard })}
-                                                        className={`w-14 h-8 rounded-full transition-colors relative focus:outline-none focus:ring-4 focus:ring-[#3B9EE2]/20 ${patientData.wantPhysicalCard ? 'bg-[#2EC4A9]' : 'bg-slate-300'}`}
-                                                    >
-                                                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-sm transition-all transform duration-300 ${patientData.wantPhysicalCard ? 'left-7' : 'left-1'}`} />
-                                                    </button>
-                                                </div>
-
-                                                {patientData.wantPhysicalCard && (
-                                                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-300 pt-5 border-t border-slate-200/60">
-                                                        <input type="text" placeholder="Street Address" className={inputStyle} />
-                                                        <input type="text" placeholder="Apartment, Suite, etc. (Optional)" className={inputStyle} />
-                                                        <div className="flex gap-3">
-                                                            <input type="text" placeholder="City" className="flex-[2] w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" />
-                                                            <input type="text" placeholder="PIN Code" className="flex-1 w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 text-sm focus:border-[#3B9EE2] outline-none transition-all placeholder:text-slate-400 font-medium" />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex gap-4">
-                                                <button onClick={() => setPatientStep(4)} className={btnGhostStyle}>Back</button>
-                                                <button onClick={handlePatientRegister} className={btnPrimaryStyle}>
-                                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Complete Registration'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
 
                             {/* Doctor Registration */}
                             {registerRole === 'DOCTOR' && (

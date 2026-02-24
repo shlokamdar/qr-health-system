@@ -32,9 +32,26 @@ class Patient(models.Model):
     
     # New enhanced fields
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUPS, blank=True)
+    # Organ Donor State Machine
+    class OrganDonorStatus(models.TextChoices):
+        OFF = 'OFF', _('Not Registered')
+        PENDING_UPLOAD = 'PENDING_UPLOAD', _('Pending Upload')
+        PENDING_VERIFICATION = 'PENDING_VERIFICATION', _('Pending Verification')
+        VERIFIED = 'VERIFIED', _('Verified')
+        REJECTED = 'REJECTED', _('Rejected')
+
     organ_donor = models.BooleanField(default=False, help_text=_("Willing to donate organs"))
+    organ_donor_status = models.CharField(
+        max_length=20, 
+        choices=OrganDonorStatus.choices, 
+        default=OrganDonorStatus.OFF
+    )
+    organ_donor_document = models.FileField(upload_to='organ_donor_declarations/', blank=True, null=True)
     is_organ_donor_verified = models.BooleanField(default=False, help_text=_("Admin verification status"))
     organ_donor_rejection_reason = models.TextField(blank=True, help_text=_("Reason if verification failed"))
+    organ_donor_submitted_at = models.DateTimeField(null=True, blank=True)
+    organ_donor_verified_at = models.DateTimeField(null=True, blank=True)
+
     allergies = models.TextField(blank=True, help_text=_("Known allergies"))
     chronic_conditions = models.TextField(blank=True, help_text=_("Ongoing health conditions"))
     

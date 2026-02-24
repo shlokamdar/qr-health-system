@@ -36,8 +36,7 @@ const ProfileCompletionBanner = ({ patient, setActiveTab }) => {
     { label: 'Gender', key: 'gender', done: !!patient?.gender, tab: 'profile' },
     { label: 'Organ Donor Status', key: 'organ_donor', done: patient?.organ_donor !== undefined && patient?.organ_donor !== null, tab: 'profile' },
     { label: 'Primary Address', key: 'address', done: !!patient?.address, tab: 'profile' },
-    { label: 'Emergency Contact 1', key: 'emergency_contact_1', done: !!patient?.emergency_contacts?.[0], tab: 'emergency_contacts' },
-    { label: 'Emergency Contact 2', key: 'emergency_contact_2', done: !!patient?.emergency_contacts?.[1], tab: 'emergency_contacts' },
+    { label: 'Emergency Contact', key: 'emergency_contact', done: !!patient?.emergency_contacts?.[0], tab: 'emergency_contacts' },
   ];
 
   const completed = checklist.filter(i => i.done).length;
@@ -151,11 +150,13 @@ const OverviewTab = ({
       <div className="pd-identity-row">
         {/* Left: Mini Health ID Card */}
         <div className="pd-hid-mini">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div className="pd-logo-mark" style={{ width: 24, height: 24 }}>
-              <span style={{ color: '#fff', fontSize: 14, fontWeight: 800 }}>P</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.9 }}>
+              <div style={{ width: 14, height: 14, background: '#fff', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#0D1B2A', fontSize: 10, fontWeight: 800 }}>P</span>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '-0.3px' }}>PulseID</span>
             </div>
-            <span style={{ background: '#2EC4A9', color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 10 }}>PATIENT</span>
           </div>
           <div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.5px' }}>HEALTH ID</div>
