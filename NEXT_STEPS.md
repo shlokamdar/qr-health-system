@@ -7,7 +7,10 @@ Legend: 🔴 Bug/Blocker | 🟡 In Progress | 🟢 Done | 🔵 New Feature | ⚠
 ## 1. SYSTEM ADMIN 
 
 **Test credentials:** `sysadmin / Admin@1234` at `/system/login` password: [admin1234@1234]
-1. Verify doctors - add a way to see the documents uploaded by the doctor and approve or reject them. allow doctors to reupload as per rejection message 
+1. Add Hospital and Lab Onboarding and approval - Create their own login and password
+2. Currently, admin can only see the list of doctors, hospitals and labs, add a way to see the details of each and approve or reject them. allow doctors to reupload as per rejection message 
+3. remove donar feature 
+4. overview dashboard is static, change it to dynamic 
 
 ## 2. PATIENT FLOW 
 **Test credentials:** - shloka / shloka921@gmail.com  password: [1234@shL0]
@@ -20,7 +23,11 @@ Legend: 🔴 Bug/Blocker | 🟡 In Progress | 🟢 Done | 🔵 New Feature | ⚠
 ## 3. DOCTOR FLOW
 
 
-## 4. HOSPITAL & LAB ONBOARDING
+## 4. HOSPITAL & LAB Registration 
+1. Check if system admin gets to approve 
+2. the current UI is old one for registartion of lab and hospital, change it to new one 
+3. registartion of hospital fails 
+
 
 
 ## 7. HOSPITAL DASHBOARD
@@ -29,5 +36,6 @@ Legend: 🔴 Bug/Blocker | 🟡 In Progress | 🟢 Done | 🔵 New Feature | ⚠
 ## 8. LAB DASHBOARD
 
 
-
-## BUILD PRIORITY ORDER (updated)
+## 9. Miscellaneous
+1. Landing page - add pages like about, privacy and terms of service 
+2. Login Signup - 
