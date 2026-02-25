@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import api from '../utils/api';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     Activity, User, Stethoscope, Microscope, ShieldCheck,
@@ -78,7 +79,6 @@ const UnifiedLogin = () => {
         { id: 'DOCTOR', label: 'Doctor', icon: Stethoscope },
         { id: 'LAB_TECH', label: 'Lab Tech', icon: Microscope },
         { id: 'HOSPITAL_ADMIN', label: 'Hospital', icon: BuildingOffice2Icon },
-        { id: 'ADMIN', label: 'Admin', icon: ShieldCheck }
     ];
 
     // --- Validation Helpers ---
@@ -107,16 +107,14 @@ const UnifiedLogin = () => {
     // Fetch available labs when Lab Tech registration is selected
     useEffect(() => {
         if (registerRole === 'LAB_TECH') {
-            fetch('http://localhost:8000/api/labs/organizations/')
-                .then(res => res.ok ? res.json() : Promise.reject())
-                .then(data => setAvailableLabs(data.results || data))
+            api.get('labs/organizations/')
+                .then(res => setAvailableLabs(res.data.results || res.data))
                 .catch(() => setAvailableLabs([]));
         }
         if (registerRole === 'DOCTOR') {
-            fetch('http://localhost:8000/api/doctors/hospitals/')
-                .then(res => res.ok ? res.json() : Promise.reject())
-                .then(data => {
-                    const list = data.results || data;
+            api.get('doctors/hospitals/')
+                .then(res => {
+                    const list = res.data.results || res.data;
                     setAvailableHospitals(list.filter(h => h.is_verified));
                 })
                 .catch(() => setAvailableHospitals([]));
@@ -134,23 +132,8 @@ const UnifiedLogin = () => {
 
             setIsCheckingUsername(true);
             try {
-                // Import AuthService directly here or use a service helper if available
-                // Assuming AuthService is imported or available via context if we added it there.
-                // Since I added checkUsername to AuthService but didn't expose it in Context yet,
-                // I will use direct import if I can, or update Context. 
-                // Let's assume simpler: import AuthService at top. 
-                // Actually I can't easily add import at top with replace_file_content mid-file.
-                // But I can use the existing `api` util if I had it, or better:
-                // I'll assume AuthService is imported (it wasn't in the view_file).
-                // Wait, I need to check if AuthService is imported. 
-                // Ah, UnifiedLogin imports AuthContext, but not AuthService.
-                // I should add AuthService import or expose it in Context.
-                // Let's expose it in Context or just fetch locally?
-                // Fetching locally is easier for now to avoid Context refactor loops.
-                // Actually, I can just use fetch for this simple check.
-                const response = await fetch(`http://localhost:8000/api/auth/check-username/?username=${patientData.username}`);
-                const data = await response.json();
-                setUsernameAvailable(data.available);
+                const response = await api.get(`auth/check-username/?username=${patientData.username}`);
+                setUsernameAvailable(response.data.available);
             } catch (err) {
                 console.error("Failed to check username", err);
                 setUsernameAvailable(null); // Fallback
@@ -186,9 +169,8 @@ const UnifiedLogin = () => {
 
             setIsCheckingUsername(true);
             try {
-                const response = await fetch(`http://localhost:8000/api/auth/check-username/?username=${doctorData.username}`);
-                const data = await response.json();
-                setUsernameAvailable(data.available);
+                const response = await api.get(`auth/check-username/?username=${doctorData.username}`);
+                setUsernameAvailable(response.data.available);
             } catch (err) {
                 console.error("Failed to check username", err);
                 setUsernameAvailable(null);
@@ -205,9 +187,8 @@ const UnifiedLogin = () => {
     useEffect(() => {
         const fetchLabs = async () => {
             try {
-                const response = await fetch('http://localhost:8000/api/labs/organizations/');
-                const data = await response.json();
-                setAvailableLabs(data.results || data);
+                const response = await api.get('labs/organizations/');
+                setAvailableLabs(response.data.results || response.data);
             } catch (err) {
                 console.error("Failed to fetch labs", err);
             }
@@ -657,32 +638,28 @@ const UnifiedLogin = () => {
                     {activeTab === 'login' && (
                         <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                             {/* Role Selector */}
-                            {/* Role Selector */}
-                            <div className="grid grid-cols-2 gap-2 mb-8">
-                                {loginRoles.map((role) => (
-                                    <button
-                                        key={role.id}
-                                        onClick={() => setLoginRole(role.id)}
-                                        className={`py-3 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${loginRole === role.id
-                                            ? 'bg-[#3B9EE2] text-white shadow-md shadow-blue-500/20 scale-[1.02]'
-                                            : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        {role.id === 'ADMIN' && <Lock className="w-3 h-3 opacity-70" />}
-                                        {role.label}
-                                    </button>
-                                ))}
+                            {/* Role Selection Grid */}
+                            <div className="grid grid-cols-2 gap-3 mb-8">
+                                {loginRoles.map((role) => {
+                                    const Icon = role.icon;
+                                    return (
+                                        <button
+                                            key={role.id}
+                                            type="button"
+                                            onClick={() => setLoginRole(role.id)}
+                                            className={`flex flex-col items-center justify-center p-5 rounded-2xl transition-all duration-300 ${loginRole === role.id
+                                                ? 'bg-[#3B9EE2] text-white shadow-xl shadow-blue-500/30 ring-4 ring-blue-50/50 scale-[1.02] z-10'
+                                                : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-white hover:border-[#3B9EE2]/30 hover:text-slate-600 hover:shadow-md'
+                                                }`}
+                                        >
+                                            <Icon className={`w-8 h-8 mb-3 transition-transform duration-300 ${loginRole === role.id ? 'scale-110 text-white' : 'group-hover:scale-110'}`} />
+                                            <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${loginRole === role.id ? 'text-white' : 'text-slate-500'}`}>
+                                                {role.label}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </div>
-
-                            {loginRole === 'ADMIN' && (
-                                <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 flex items-start gap-3 leading-relaxed">
-                                    <Lock className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                                    <div>
-                                        <span className="block font-bold text-slate-700 mb-1">Restricted Access</span>
-                                        System administrators use credentials issued by PulseID.
-                                    </div>
-                                </div>
-                            )}
 
                             {error && (
                                 <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium flex items-center gap-3 animate-in shake">

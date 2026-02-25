@@ -175,6 +175,168 @@ const DoctorProfileDrawer = ({ doctor, onClose }) => {
     );
 };
 
+
+// ─── Hospital Profile Drawer ──────────────────────────────────────────────────
+const HospitalProfileDrawer = ({ hospital, onClose }) => {
+    if (!hospital) return null;
+
+    const InfoRow = ({ icon: Icon, label, value }) => (
+        <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                <Icon className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+                <p className="text-xs text-gray-400 font-medium">{label}</p>
+                <p className="text-sm text-gray-800 font-medium mt-0.5">{value || <span className="text-gray-400 italic">Not provided</span>}</p>
+            </div>
+        </div>
+    );
+
+    return (
+        <>
+            <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
+            <div className="fixed top-0 right-0 h-full z-50 w-full max-w-md bg-white shadow-2xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
+                <div className="bg-[#0D1B2A] text-white px-6 py-5 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                            <Building2 className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-base">{hospital.name}</p>
+                            <p className="text-xs text-white/60">Hospital Organization</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="flex-1 px-6 py-5 space-y-6">
+                    <div className="flex items-center gap-2">
+                        {hospital.is_verified
+                            ? <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold"><CheckCircle className="w-3.5 h-3.5" /> Verified</span>
+                            : hospital.rejection_reason
+                                ? <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><XCircle className="w-3.5 h-3.5" /> Rejected</span>
+                                : <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold"><Clock className="w-3.5 h-3.5 animate-pulse" /> Pending Review</span>
+                        }
+                    </div>
+
+                    {hospital.rejection_reason && !hospital.is_verified && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                            <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">Rejection Reason</p>
+                            <p className="text-sm text-red-800">{hospital.rejection_reason}</p>
+                        </div>
+                    )}
+
+                    <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Organization Details</p>
+                        <div className="space-y-3">
+                            <InfoRow icon={Building2} label="Hospital Name" value={hospital.name} />
+                            <InfoRow icon={FileText} label="Registration Number" value={hospital.registration_number} />
+                            <InfoRow icon={Phone} label="Contact Phone" value={hospital.phone} />
+                            <InfoRow icon={Mail} label="Official Email" value={hospital.email} />
+                            <InfoRow icon={MapPin} label="Address" value={hospital.address} />
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                        <div className="flex gap-3">
+                            <Shield className="w-5 h-5 text-indigo-500 shrink-0 mt-1" />
+                            <div>
+                                <p className="text-sm font-bold text-indigo-900">Verification Access</p>
+                                <p className="text-xs text-indigo-700 mt-1 leading-relaxed">
+                                    Approved hospitals can manage departments and verify doctors affiliated with their institute.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
+
+// ─── Lab Profile Drawer ───────────────────────────────────────────────────────
+const LabProfileDrawer = ({ lab, onClose }) => {
+    if (!lab) return null;
+
+    const InfoRow = ({ icon: Icon, label, value }) => (
+        <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                <Icon className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+                <p className="text-xs text-gray-400 font-medium">{label}</p>
+                <p className="text-sm text-gray-800 font-medium mt-0.5">{value || <span className="text-gray-400 italic">Not provided</span>}</p>
+            </div>
+        </div>
+    );
+
+    return (
+        <>
+            <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
+            <div className="fixed top-0 right-0 h-full z-50 w-full max-w-md bg-white shadow-2xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
+                <div className="bg-[#0D1B2A] text-white px-6 py-5 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                            <FlaskConical className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-base">{lab.name}</p>
+                            <p className="text-xs text-white/60">Diagnostic Laboratory</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="flex-1 px-6 py-5 space-y-6">
+                    <div className="flex items-center gap-2">
+                        {lab.is_verified
+                            ? <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold"><CheckCircle className="w-3.5 h-3.5" /> Verified</span>
+                            : lab.rejection_reason
+                                ? <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><XCircle className="w-3.5 h-3.5" /> Rejected</span>
+                                : <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold"><Clock className="w-3.5 h-3.5 animate-pulse" /> Pending Review</span>
+                        }
+                    </div>
+
+                    {lab.rejection_reason && !lab.is_verified && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                            <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">Rejection Reason</p>
+                            <p className="text-sm text-red-800">{lab.rejection_reason}</p>
+                        </div>
+                    )}
+
+                    <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Facility Details</p>
+                        <div className="space-y-3">
+                            <InfoRow icon={Building2} label="Laboratory Name" value={lab.name} />
+                            <InfoRow icon={FileText} label="Accreditation Number" value={lab.accreditation_number} />
+                            <InfoRow icon={Phone} label="Contact Phone" value={lab.phone} />
+                            <InfoRow icon={Mail} label="Official Email" value={lab.email} />
+                            <InfoRow icon={MapPin} label="Address" value={lab.address} />
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                        <div className="flex gap-3">
+                            <FlaskConical className="w-5 h-5 text-indigo-500 shrink-0 mt-1" />
+                            <div>
+                                <p className="text-sm font-bold text-indigo-900">Lab Capabilities</p>
+                                <p className="text-xs text-indigo-700 mt-1 leading-relaxed">
+                                    Approved laboratories can perform diagnostic tests, upload reports, and manage lab technicians.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
+
+
 // ─── Support Ticket Resolution Modal ──────────────────────────────────────────
 const SupportTicketResolutionModal = ({ isOpen, onClose, ticket, onConfirm }) => {
     const [notes, setNotes] = useState('');
@@ -498,7 +660,6 @@ const AdminDashboard = () => {
     const [hospitals, setHospitals] = useState([]);
     const [labs, setLabs] = useState([]);
     const [techs, setTechs] = useState([]);
-    const [donors, setDonors] = useState([]);
     const [logs, setLogs] = useState([]);
     const [tickets, setTickets] = useState([]);
     const [users, setUsers] = useState([]);
@@ -508,7 +669,7 @@ const AdminDashboard = () => {
     const [showMobileSearch, setShowMobileSearch] = useState(false);
 
     // Entity Modal States
-    const [rejectTarget, setRejectTarget] = useState(null); // { type: 'doctor'|'lab'|'tech'|'donor', data: object }
+    const [rejectTarget, setRejectTarget] = useState(null); // { type: 'doctor'|'hospital'|'lab'|'tech', data: object }
     const [viewTarget, setViewTarget] = useState(null);
     const [assignTarget, setAssignTarget] = useState(null); // { type: 'doctor'|'tech', data: object }
     const [ticketTarget, setTicketTarget] = useState(null);
@@ -520,7 +681,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         Promise.all([
             fetchStats(), fetchDoctors(), fetchHospitals(),
-            fetchLabs(), fetchLogs(), fetchDonors(), fetchTechs(), fetchTickets(), fetchUsers()
+            fetchLabs(), fetchLogs(), fetchTechs(), fetchTickets(), fetchUsers()
         ]).finally(() => setLoading(false));
     }, []);
 
@@ -538,9 +699,6 @@ const AdminDashboard = () => {
     };
     const fetchLogs = async () => {
         try { const r = await api.get('audit/logs/'); setLogs(r.data.results || r.data); } catch { }
-    };
-    const fetchDonors = async () => {
-        try { const r = await api.get('patients/organ-donor-requests/'); setDonors(r.data); } catch { }
     };
     const fetchTechs = async () => {
         try { const r = await api.get('labs/admin/technicians/'); setTechs(r.data.results || r.data); } catch { }
@@ -572,6 +730,14 @@ const AdminDashboard = () => {
             await api.patch(`admin/hospitals/${id}/manage/`, { verify: true });
             fetchHospitals(); fetchStats();
         } catch { alert('Failed to verify hospital'); }
+    };
+
+    const handleRejectHospital = async (id, reason) => {
+        try {
+            await api.patch(`admin/hospitals/${id}/manage/`, { verify: false, rejection_reason: reason });
+            setRejectTarget(null);
+            fetchHospitals(); fetchStats();
+        } catch { alert('Failed to reject hospital'); }
     };
 
     const handleVerifyLab = async (id) => {
@@ -611,20 +777,6 @@ const AdminDashboard = () => {
         } catch { alert('Failed to update authorization'); }
     };
 
-    const handleVerifyDonor = async (healthId) => {
-        try {
-            await api.post(`patients/${healthId}/verify-organ-donor/`, { verify: true });
-            fetchDonors();
-        } catch { alert('Failed to verify donor'); }
-    };
-
-    const handleRejectDonor = async (healthId, reason) => {
-        try {
-            await api.post(`patients/${healthId}/verify-organ-donor/`, { verify: false, rejection_reason: reason });
-            setRejectTarget(null);
-            fetchDonors();
-        } catch { alert('Failed to reject donor'); }
-    };
 
     const handleAssignInstitution = async (id, instId) => {
         try {
@@ -651,7 +803,6 @@ const AdminDashboard = () => {
     const tabs = [
         { id: 'overview', label: 'Overview', icon: BarChart3 },
         { id: 'doctors', label: 'Doctors', icon: Users, badge: stats?.pending_doctors },
-        { id: 'donors', label: 'Donors', icon: Heart, badge: donors.length },
         { id: 'hospitals', label: 'Hospitals', icon: Building2 },
         { id: 'labs', label: 'Labs', icon: FlaskConical, badge: stats?.pending_labs },
         { id: 'techs', label: 'Technicians', icon: Users, badge: techs.filter(t => !t.is_verified && !t.rejection_reason).length },
@@ -683,11 +834,11 @@ const AdminDashboard = () => {
                     onClose={() => setRejectTarget(null)}
                 />
             )}
-            {rejectTarget?.type === 'donor' && (
+            {rejectTarget?.type === 'hospital' && (
                 <GenericRejectModal
-                    title="Reject Donor status"
-                    entityName={`${rejectTarget.data.user?.first_name} ${rejectTarget.data.user?.last_name}`}
-                    onConfirm={(reason) => handleRejectDonor(rejectTarget.data.health_id, reason)}
+                    title="Reject Hospital Registration"
+                    entityName={rejectTarget.data.name}
+                    onConfirm={(reason) => handleRejectHospital(rejectTarget.data.id, reason)}
                     onClose={() => setRejectTarget(null)}
                 />
             )}
@@ -724,13 +875,25 @@ const AdminDashboard = () => {
                     onClose={() => setShowCreateModal(false)}
                     hospitals={hospitals}
                     labs={labs}
-                    onSuccess={() => { fetchStats(); fetchDoctors(); fetchTechs(); fetchDonors(); }}
+                    onSuccess={() => { fetchStats(); fetchDoctors(); fetchTechs(); }}
                 />
             )}
 
-            {viewTarget && (
+            {viewTarget && viewTarget.type === 'doctor' && (
                 <DoctorProfileDrawer
-                    doctor={viewTarget}
+                    doctor={viewTarget.data}
+                    onClose={() => setViewTarget(null)}
+                />
+            )}
+            {viewTarget && viewTarget.type === 'hospital' && (
+                <HospitalProfileDrawer
+                    hospital={viewTarget.data}
+                    onClose={() => setViewTarget(null)}
+                />
+            )}
+            {viewTarget && viewTarget.type === 'lab' && (
+                <LabProfileDrawer
+                    lab={viewTarget.data}
                     onClose={() => setViewTarget(null)}
                 />
             )}
@@ -870,15 +1033,7 @@ const AdminDashboard = () => {
                                         </div>
                                         <div className="h-[240px] w-full">
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={[
-                                                    { name: 'Mon', value: 4 },
-                                                    { name: 'Tue', value: 3 },
-                                                    { name: 'Wed', value: 12 },
-                                                    { name: 'Thu', value: 7 },
-                                                    { name: 'Fri', value: 15 },
-                                                    { name: 'Sat', value: 10 },
-                                                    { name: 'Sun', value: 18 },
-                                                ]}>
+                                                <LineChart data={stats?.registration_trends || []}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
@@ -1065,7 +1220,7 @@ const AdminDashboard = () => {
                                                     <td className="py-3 text-right">
                                                         <div className="flex items-center justify-end gap-2">
                                                             <button
-                                                                onClick={() => setViewTarget(doc)}
+                                                                onClick={() => setViewTarget({ type: 'doctor', data: doc })}
                                                                 className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"
                                                             >
                                                                 <Eye className="w-3.5 h-3.5" /> View
@@ -1135,20 +1290,42 @@ const AdminDashboard = () => {
                                                     <div className="text-xs text-gray-600">{h.phone}</div>
                                                     <div className="text-xs text-gray-400">{h.email}</div>
                                                 </td>
-                                                <td className="py-3 pr-4">
-                                                    <StatusBadge verified={h.is_verified} />
-                                                </td>
-                                                <td className="py-3">
-                                                    {!h.is_verified && (
-                                                        <button
-                                                            onClick={() => handleVerifyHospital(h.id)}
-                                                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white text-xs font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
-                                                        >
-                                                            <CheckCircle className="w-3.5 h-3.5" /> Verify
-                                                        </button>
-                                                    )}
-                                                    {h.is_verified && <CheckCircle className="w-4 h-4 text-emerald-500" />}
-                                                </td>
+                                                    <td className="py-3 pr-4">
+                                                        <StatusBadge verified={h.is_verified} rejected={h.rejection_reason && !h.is_verified} />
+                                                        {h.rejection_reason && !h.is_verified && (
+                                                            <div className="flex items-start gap-1 mt-1.5 text-xs text-red-500 max-w-[160px]">
+                                                                <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
+                                                                <span className="leading-tight">{h.rejection_reason}</span>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => setViewTarget({ type: 'hospital', data: h })}
+                                                                className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                                                            >
+                                                                <Eye className="w-3.5 h-3.5" /> View
+                                                            </button>
+                                                            {!h.is_verified && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleVerifyHospital(h.id)}
+                                                                        className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white text-xs font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+                                                                    >
+                                                                        <CheckCircle className="w-3.5 h-3.5" /> Approve
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setRejectTarget({ type: 'hospital', data: hText })}
+                                                                        className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
+                                                                    >
+                                                                        <XCircle className="w-3.5 h-3.5" /> Reject
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {h.is_verified && <CheckCircle className="w-4 h-4 text-emerald-500" />}
+                                                        </div>
+                                                    </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1183,32 +1360,40 @@ const AdminDashboard = () => {
                                                     <div className="text-xs text-gray-400">{lab.email}</div>
                                                 </td>
                                                 <td className="py-3 pr-4">
-                                                    <StatusBadge verified={lab.is_verified} />
+                                                    <StatusBadge verified={lab.is_verified} rejected={lab.rejection_reason && !lab.is_verified} />
+                                                    {lab.rejection_reason && !lab.is_verified && (
+                                                        <div className="flex items-start gap-1 mt-1.5 text-xs text-red-500 max-w-[160px]">
+                                                            <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
+                                                            <span className="leading-tight">{lab.rejection_reason}</span>
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="py-3">
-                                                    {!lab.is_verified && (
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={() => handleVerifyLab(lab.id)}
-                                                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white text-xs font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
-                                                            >
-                                                                <CheckCircle className="w-3.5 h-3.5" /> Verify
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setRejectTarget({ type: 'lab', data: lab })}
-                                                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
-                                                            >
-                                                                <XCircle className="w-3.5 h-3.5" /> Reject
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                    {lab.is_verified && <CheckCircle className="w-4 h-4 text-emerald-500" />}
-                                                    {lab.rejection_reason && !lab.is_verified && (
-                                                        <div className="flex items-start gap-1 mt-1.5 text-xs text-red-500">
-                                                            <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
-                                                            <span>{lab.rejection_reason}</span>
-                                                        </div>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => setViewTarget({ type: 'lab', data: lab })}
+                                                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" /> View
+                                                        </button>
+                                                        {!lab.is_verified && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleVerifyLab(lab.id)}
+                                                                    className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white text-xs font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+                                                                >
+                                                                    <CheckCircle className="w-3.5 h-3.5" /> Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setRejectTarget({ type: 'lab', data: lab })}
+                                                                    className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
+                                                                >
+                                                                    <XCircle className="w-3.5 h-3.5" /> Reject
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {lab.is_verified && <CheckCircle className="w-4 h-4 text-emerald-500" />}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -1308,7 +1493,7 @@ const AdminDashboard = () => {
                             </div>
                         )}
 
-                        {/* DONORS TAB */}
+                        {/* DONORS TAB REMOVED */}
                         {activeTab === 'donors' && (
                             <div>
                                 <h3 className="font-semibold text-gray-800 mb-4">Pending Organ Donor Verifications</h3>

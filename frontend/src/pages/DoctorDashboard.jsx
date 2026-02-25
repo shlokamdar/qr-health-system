@@ -60,6 +60,14 @@ const DoctorDashboard = () => {
     const [tickets, setTickets] = useState([]);
     const [showTicketModal, setShowTicketModal] = useState(false);
     const [ticketForm, setTicketForm] = useState({ subject: '', description: '', priority: 'MEDIUM' });
+    const [isReuploading, setIsReuploading] = useState(false);
+    const [reuploadData, setReuploadData] = useState({
+        license_document: null,
+        degree_certificate: null,
+        identity_proof: null,
+        specialization: '',
+        license_number: ''
+    });
 
     // Upload Form State
     const [newRecord, setNewRecord] = useState({
@@ -191,6 +199,30 @@ const DoctorDashboard = () => {
         } catch (err) {
             console.error(err);
             toast.error('Invalid OTP or Expired');
+        }
+    };
+
+    const handleReuploadSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        const formData = new FormData();
+        if (reuploadData.license_document) formData.append('license_document', reuploadData.license_document);
+        if (reuploadData.degree_certificate) formData.append('degree_certificate', reuploadData.degree_certificate);
+        if (reuploadData.identity_proof) formData.append('identity_proof', reuploadData.identity_proof);
+        if (reuploadData.specialization) formData.append('specialization', reuploadData.specialization);
+        if (reuploadData.license_number) formData.append('license_number', reuploadData.license_number);
+
+        try {
+            await api.patch('doctors/profile/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success('Credentials updated! Superadmin will re-review your profile.');
+            setIsReuploading(false);
+            fetchDoctorProfile();
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to update credentials');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -423,39 +455,106 @@ const DoctorDashboard = () => {
                                 </div>
                             </div>
                             <div className="px-8 py-6 space-y-5">
-                                <div>
-                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reason from Admin</p>
-                                    <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
-                                        <p className="text-sm text-red-800 leading-relaxed">{doctorProfile.rejection_reason}</p>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-50 rounded-2xl px-5 py-4 space-y-2">
-                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Your Submission</p>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">Name</span>
-                                        <span className="font-medium text-gray-800">Dr. {doctorProfile.user?.first_name} {doctorProfile.user?.last_name}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">License No.</span>
-                                        <span className="font-mono font-medium text-gray-800">{doctorProfile.license_number}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">Specialization</span>
-                                        <span className="font-medium text-gray-800">{doctorProfile.specialization}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
-                                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-amber-800 leading-relaxed">
-                                        Please contact support at <span className="font-semibold">support@pulseid.health</span> or re-register with corrected information.
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full flex items-center justify-center gap-2 py-3 border border-gray-200 text-gray-600 font-medium text-sm rounded-2xl hover:bg-gray-50 transition-colors"
-                                >
-                                    <LogOut className="w-4 h-4" /> Sign Out
-                                </button>
+                                {!isReuploading ? (
+                                    <>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Reason from Admin</p>
+                                            <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+                                                <p className="text-sm text-red-800 leading-relaxed font-medium">{doctorProfile.rejection_reason}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-2xl px-5 py-4 space-y-2">
+                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Your Submission</p>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500">License No.</span>
+                                                <span className="font-mono font-medium text-gray-800">{doctorProfile.license_number}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500">Specialization</span>
+                                                <span className="font-medium text-gray-800">{doctorProfile.specialization}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-3">
+                                            <button
+                                                onClick={() => {
+                                                    setReuploadData({
+                                                        specialization: doctorProfile.specialization,
+                                                        license_number: doctorProfile.license_number
+                                                    });
+                                                    setIsReuploading(true);
+                                                }}
+                                                className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#0D1B2A] text-white font-bold text-sm rounded-2xl hover:bg-[#1a2e41] transition-all shadow-lg shadow-gray-200"
+                                            >
+                                                <Upload className="w-4 h-4" /> Update Credentials & Re-submit
+                                            </button>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center justify-center gap-2 py-3.5 border border-gray-200 text-gray-600 font-bold text-sm rounded-2xl hover:bg-gray-50 transition-colors"
+                                            >
+                                                <LogOut className="w-4 h-4" /> Sign Out
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <form onSubmit={handleReuploadSubmit} className="space-y-4">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">Specialization</label>
+                                                <input
+                                                    type="text"
+                                                    value={reuploadData.specialization}
+                                                    onChange={e => setReuploadData({ ...reuploadData, specialization: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-[#3B9EE2]/20 outline-none"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">License Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={reuploadData.license_number}
+                                                    onChange={e => setReuploadData({ ...reuploadData, license_number: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-[#3B9EE2]/20 outline-none"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">Medical License (PDF/Image)</label>
+                                                    <input
+                                                        type="file"
+                                                        onChange={e => setReuploadData({ ...reuploadData, license_document: e.target.files[0] })}
+                                                        className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#3B9EE2]/10 file:text-[#3B9EE2] hover:file:bg-[#3B9EE2]/20 cursor-pointer"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">Degree Certificate</label>
+                                                    <input
+                                                        type="file"
+                                                        onChange={e => setReuploadData({ ...reuploadData, degree_certificate: e.target.files[0] })}
+                                                        className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#3B9EE2]/10 file:text-[#3B9EE2] hover:file:bg-[#3B9EE2]/20 cursor-pointer"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3 pt-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsReuploading(false)}
+                                                className="flex-1 py-3 text-gray-600 font-bold text-sm bg-gray-100 rounded-2xl hover:bg-gray-200 transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="flex-[2] py-3 bg-[#3B9EE2] text-white font-bold text-sm rounded-2xl hover:bg-[#2A8BD0] transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                                            >
+                                                {loading ? 'Submitting...' : 'Re-submit Application'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
                             </div>
                         </div>
                     ) : (

@@ -12,6 +12,8 @@ Legend: 🔴 Bug/Blocker | 🟡 In Progress | 🟢 Done | 🔵 New Feature | ⚠
 3. remove donar feature 
 4. overview dashboard is static, change it to dynamic 
 
+5. Add a button to revoke access 
+
 ## 2. PATIENT FLOW 
 **Test credentials:** - shloka / shloka921@gmail.com  password: [1234@shL0]
 1. FIX - My profile layout 
@@ -38,4 +40,5 @@ Legend: 🔴 Bug/Blocker | 🟡 In Progress | 🟢 Done | 🔵 New Feature | ⚠
 
 ## 9. Miscellaneous
 1. Landing page - add pages like about, privacy and terms of service 
-2. Login Signup - 
+2. Login Signup - remove admin completely from the tab. 
+    in login, add a choosing option for patient, doctor, hospital and lab. 

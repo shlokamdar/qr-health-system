@@ -25,6 +25,8 @@ from rest_framework.response import Response
 from doctors.models import Doctor, Hospital, Appointment
 from patients.models import Patient
 from labs.models import DiagnosticLab
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class AdminDashboardStatsView(APIView):
     """
@@ -33,6 +35,30 @@ class AdminDashboardStatsView(APIView):
     permission_classes = [IsSuperUser]
 
     def get(self, request):
+        from django.utils import timezone
+        from datetime import timedelta
+        from django.db.models import Count
+        from django.db.models.functions import TruncDate
+        
+        last_7_days = timezone.now() - timedelta(days=7)
+        
+        # Calculate trends for Doctors (could be combined for all users if preferred)
+        trends_data = User.objects.filter(date_joined__gte=last_7_days) \
+            .annotate(date=TruncDate('date_joined')) \
+            .values('date') \
+            .annotate(count=Count('id')) \
+            .order_by('date')
+            
+        # Format trends for frontend (Chart.js/Recharts)
+        trends = []
+        for i in range(7):
+            date = (timezone.now() - timedelta(days=6-i)).date()
+            match = next((t for t in trends_data if t['date'] == date), None)
+            trends.append({
+                'name': date.strftime('%a'),
+                'value': match['count'] if match else 0
+            })
+
         stats = {
             'total_doctors': Doctor.objects.count(),
             'verified_doctors': Doctor.objects.filter(is_verified=True).count(),
@@ -42,5 +68,6 @@ class AdminDashboardStatsView(APIView):
             'pending_labs': DiagnosticLab.objects.filter(is_verified=False).count(),
             'total_patients': Patient.objects.count(),
             'total_appointments': Appointment.objects.count(),
+            'registration_trends': trends
         }
         return Response(stats)

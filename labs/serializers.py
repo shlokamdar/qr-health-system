@@ -26,11 +26,43 @@ class DiagnosticLabSerializer(serializers.ModelSerializer):
 
 
 class DiagnosticLabRegisterSerializer(serializers.ModelSerializer):
-    """Serializer for lab self-registration."""
+    """Serializer for lab self-registration with admin creation."""
+    admin_username = serializers.CharField(write_only=True)
+    admin_password = serializers.CharField(write_only=True)
     
     class Meta:
         model = DiagnosticLab
-        fields = ['name', 'address', 'accreditation_number', 'phone', 'email', 'hospital']
+        fields = [
+            'name', 'address', 'accreditation_number', 'phone', 'email',
+            'admin_username', 'admin_password'
+        ]
+
+    def create(self, validated_data):
+        admin_username = validated_data.pop('admin_username')
+        admin_password = validated_data.pop('admin_password')
+        
+        lab = DiagnosticLab.objects.create(**validated_data)
+        
+        # Create Lab Admin user (Technician with special flag or just a user with role LAB_TECH)
+        # In this system, LAB_TECH seems to be the role for lab admins/workers.
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.create_user(
+            username=admin_username,
+            password=admin_password,
+            email=validated_data.get('email'),
+            role='LAB_TECH'
+        )
+        
+        # Create LabTechnician profile as the "admin" of this lab
+        from .models import LabTechnician
+        LabTechnician.objects.create(
+            user=user, 
+            lab=lab,
+            is_verified=False # Needs admin approval
+        )
+        
+        return lab
 
 
 class LabTechnicianSerializer(serializers.ModelSerializer):

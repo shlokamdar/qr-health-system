@@ -124,6 +124,7 @@ class DoctorSerializer(serializers.ModelSerializer):
             'license_number', 'issuing_medical_council', 'license_expiry_date',
             'specialization', 'years_of_experience',
             'date_of_birth', 'contact_number', 'address',
+            'license_document', 'degree_certificate', 'identity_proof',
             'authorization_level',
             'is_verified', 'rejection_reason',
             'license_document_url', 'degree_certificate_url', 'identity_proof_url',
