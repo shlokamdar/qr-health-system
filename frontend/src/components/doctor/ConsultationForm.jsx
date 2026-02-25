@@ -1,92 +1,100 @@
 import React from 'react';
-import { PlusCircle, Save, Calendar, FileText, ClipboardList, PenTool } from 'lucide-react';
+import { PlusCircle, Save, Calendar, FileText, ClipboardList, PenTool, FilePlus } from 'lucide-react';
 
 const ConsultationForm = ({ newConsultation, setNewConsultation, handleSubmit }) => {
-    const inputStyle = "w-full border-2 border-slate-100 bg-white/50 p-3 rounded-2xl text-sm focus:border-[#2EC4A9] focus:bg-white focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-slate-400";
-    const labelStyle = "text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block";
+    const inputStyle = "w-full border border-[#E2E8F0] bg-white p-3 rounded-[6px] text-[14px] focus:border-[#3B9EE2] focus:ring-4 focus:ring-[#3B9EE2]/10 focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-[#9CA3AF]";
+    const labelStyle = "text-[14px] font-bold text-[#0D1B2A] mb-1.5 block";
 
     return (
-        <div className="bg-white/50 backdrop-blur-md p-8 rounded-[2rem] border border-white/60 shadow-xl shadow-emerald-900/5">
-            <h3 className="text-2xl font-black mb-8 text-[#0D1B2A] flex items-center gap-3">
-                <div className="p-2 bg-[#2EC4A9]/10 rounded-xl text-[#2EC4A9]">
-                    <PlusCircle className="w-6 h-6" />
-                </div>
+        <div className="bg-white rounded-[10px] border border-[#E2E8F0] p-6 shadow-sm">
+            <h3 className="text-[16px] font-bold mb-6 text-[#0D1B2A] flex items-center gap-2">
+                <FilePlus className="w-5 h-5 text-[#3B9EE2]" />
                 <span>New Consultation</span>
             </h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label className={labelStyle}>Date & Time</label>
-                        <div className="relative group">
-                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#2EC4A9] transition-colors" />
-                            <input
-                                type="datetime-local"
-                                className={`${inputStyle} pl-12`}
-                                value={newConsultation.consultation_date}
-                                onChange={e => setNewConsultation({ ...newConsultation, consultation_date: e.target.value })}
-                            />
-                        </div>
+                        <label className={labelStyle}>Date</label>
+                        <input
+                            type="datetime-local"
+                            className={inputStyle}
+                            value={newConsultation.consultation_date}
+                            onChange={e => setNewConsultation({ ...newConsultation, consultation_date: e.target.value })}
+                        />
                     </div>
                     <div>
                         <label className={labelStyle}>Follow-up Date</label>
-                        <div className="relative group">
-                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#2EC4A9] transition-colors" />
-                            <input
-                                type="date"
-                                className={`${inputStyle} pl-12`}
-                                value={newConsultation.follow_up_date}
-                                onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
-                            />
-                        </div>
+                        <input
+                            type="date"
+                            className={inputStyle}
+                            value={newConsultation.follow_up_date}
+                            onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
+                        />
                     </div>
                 </div>
 
                 <div>
-                    <label className={labelStyle}>Chief Complaint *</label>
-                    <div className="relative group">
-                        <ClipboardList className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-[#2EC4A9] transition-colors" />
-                        <textarea
-                            placeholder="Reason for visit..."
-                            className={`${inputStyle} pl-12 min-h-[80px]`}
-                            required
-                            value={newConsultation.chief_complaint}
-                            onChange={e => setNewConsultation({ ...newConsultation, chief_complaint: e.target.value })}
-                        />
-                    </div>
+                    <label className={labelStyle}>Chief Complaint</label>
+                    <input
+                        type="text"
+                        placeholder="Reason for visit..."
+                        className={inputStyle}
+                        required
+                        value={newConsultation.chief_complaint}
+                        onChange={e => setNewConsultation({ ...newConsultation, chief_complaint: e.target.value })}
+                    />
                 </div>
 
                 <div>
                     <label className={labelStyle}>Diagnosis</label>
-                    <div className="relative group">
-                        <FileText className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-[#2EC4A9] transition-colors" />
-                        <textarea
-                            placeholder="Clinical diagnosis..."
-                            className={`${inputStyle} pl-12 min-h-[80px]`}
-                            value={newConsultation.diagnosis}
-                            onChange={e => setNewConsultation({ ...newConsultation, diagnosis: e.target.value })}
-                        />
-                    </div>
+                    <textarea
+                        placeholder="Clinical diagnosis..."
+                        className={`${inputStyle} min-h-[80px]`}
+                        rows={3}
+                        value={newConsultation.diagnosis}
+                        onChange={e => setNewConsultation({ ...newConsultation, diagnosis: e.target.value })}
+                    />
                 </div>
 
                 <div>
-                    <label className={labelStyle}>Prescription</label>
-                    <div className="relative group">
-                        <PenTool className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-[#2EC4A9] transition-colors" />
-                        <textarea
-                            placeholder="Medicines and dosage..."
-                            className={`${inputStyle} pl-12 min-h-[100px]`}
-                            value={newConsultation.prescription}
-                            onChange={e => setNewConsultation({ ...newConsultation, prescription: e.target.value })}
-                        />
-                    </div>
+                    <label className={labelStyle}>Treatment Plan</label>
+                    <textarea
+                        placeholder="Clinical plan..."
+                        className={`${inputStyle} min-h-[80px]`}
+                        rows={3}
+                        value={newConsultation.notes}
+                        onChange={e => setNewConsultation({ ...newConsultation, notes: e.target.value })}
+                    />
+                </div>
+
+                <div>
+                    <label className={labelStyle}>Medicines / Prescription</label>
+                    <textarea
+                        placeholder="e.g. Paracetamol 500mg twice daily"
+                        className={`${inputStyle} min-h-[80px]`}
+                        rows={3}
+                        value={newConsultation.prescription}
+                        onChange={e => setNewConsultation({ ...newConsultation, prescription: e.target.value })}
+                    />
+                </div>
+
+                <div>
+                    <label className={labelStyle}>Additional Notes</label>
+                    <textarea
+                        placeholder="Any extra observations..."
+                        className={`${inputStyle} min-h-[60px]`}
+                        rows={2}
+                        value={newConsultation.notes}
+                        onChange={e => setNewConsultation({ ...newConsultation, notes: e.target.value })}
+                    />
                 </div>
 
                 <button
                     type="submit"
-                    className="w-full bg-[#2EC4A9] text-white py-4 rounded-2xl hover:bg-[#25ab93] font-black shadow-xl shadow-[#2EC4A9]/20 transition-all flex items-center justify-center gap-3 group active:scale-[0.98]"
+                    className="w-full bg-[#3B9EE2] text-white py-3.5 rounded-[8px] hover:bg-[#2e8dd1] font-bold shadow-sm transition-all flex items-center justify-center gap-2"
                 >
-                    <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    <span>Save Record</span>
+                    <Save className="w-5 h-5" />
+                    <span>Save Consultation</span>
                 </button>
             </form>
         </div>

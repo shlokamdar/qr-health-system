@@ -1,45 +1,51 @@
 import React, { useState } from 'react';
-import { Calendar, User, ClipboardList, Stethoscope, ChevronRight, X, Clock, Pill, FileText, AlertCircle } from 'lucide-react';
+import { Calendar, User, ClipboardList, Stethoscope, ChevronRight, X, Clock, Pill, FileText, AlertCircle, FileX } from 'lucide-react';
 
 const ConsultationHistory = ({ consultations }) => {
     const [selectedConsultation, setSelectedConsultation] = useState(null);
 
     return (
-        <div className="space-y-4">
-            <div className="bg-slate-50/50 rounded-2xl border border-slate-100/50 overflow-hidden">
+        <div className="bg-white rounded-[10px] border border-[#E2E8F0] p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-[16px] font-bold text-[#0D1B2A] flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-[#3B9EE2]" />
+                    <span>Clinical History</span>
+                </h3>
+                <span className="text-[#9CA3AF] text-[13px]">{consultations.length} visits traceable</span>
+            </div>
+
+            <div className="space-y-6">
                 {consultations.length === 0 ? (
-                    <div className="p-8 text-center bg-white/50 backdrop-blur-sm rounded-2xl border border-dashed border-slate-200">
-                        <ClipboardList className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                        <p className="text-slate-400 font-medium">No consultations found</p>
+                    <div className="py-12 text-center">
+                        <FileX className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
+                        <p className="text-[#9CA3AF] text-[14px]">No consultations found.</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-slate-100">
+                    <div className="relative pl-6 space-y-8 before:content-[''] before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[#F1F5F9]">
                         {consultations.map(con => (
-                            <div
-                                key={con.id}
-                                onClick={() => setSelectedConsultation(con)}
-                                className="p-5 hover:bg-white cursor-pointer transition-all duration-300 group flex items-center justify-between"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#3B9EE2]/10 group-hover:text-[#3B9EE2] transition-colors">
-                                        <Stethoscope className="w-6 h-6" />
-                                    </div>
+                            <div key={con.id} className="relative group">
+                                <div className="absolute -left-[23px] top-1.5 w-[10px] h-[10px] rounded-full bg-[#2EC4A9] border-2 border-white shadow-sm" />
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                                     <div>
-                                        <p className="font-bold text-[#0D1B2A] group-hover:text-[#3B9EE2] transition-colors">{con.chief_complaint}</p>
-                                        <div className="flex items-center gap-3 mt-1.5">
-                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                <Calendar className="w-3 h-3" />
-                                                <span>{new Date(con.consultation_date).toLocaleDateString()}</span>
-                                            </div>
-                                            <span className="w-1 h-1 bg-slate-200 rounded-full" />
-                                            <div className="text-[10px] font-black uppercase tracking-widest text-[#2EC4A9]">
-                                                {con.diagnosis || 'Diagnosis Pending'}
-                                            </div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[#9CA3AF] text-[13px]">
+                                                {new Date(con.consultation_date).toLocaleDateString()}
+                                            </span>
+                                            <span className="text-[#9CA3AF] text-[13px]">•</span>
+                                            <span className="text-[#4A5568] text-[13px]">
+                                                Dr. {con.doctor_details?.user?.first_name} {con.doctor_details?.user?.last_name}
+                                            </span>
                                         </div>
+                                        <h4 className="text-[#0D1B2A] font-bold text-[15px]">{con.diagnosis || 'General checkup'}</h4>
+                                        <p className="text-[#4A5568] text-[13px] mt-1 italic">"{con.chief_complaint}"</p>
                                     </div>
-                                </div>
-                                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-[#0D1B2A] group-hover:text-white transition-all">
-                                    <ChevronRight className="w-4 h-4" />
+                                    <button 
+                                        onClick={() => setSelectedConsultation(con)}
+                                        className="text-[#3B9EE2] font-bold text-[13px] hover:underline flex items-center gap-1"
+                                    >
+                                        View Details
+                                        <ChevronRight size={14} />
+                                    </button>
                                 </div>
                             </div>
                         ))}

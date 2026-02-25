@@ -1,51 +1,49 @@
 import React, { useState } from 'react';
-import { FileText, ChevronRight, X, Calendar, User, ExternalLink, Download, FileCheck, Info } from 'lucide-react';
+import { FileText, ChevronRight, X, Calendar, User, ExternalLink, Download, FileCheck, Info, FileX } from 'lucide-react';
 
 const MedicalRecordList = ({ records }) => {
     const [selectedRecord, setSelectedRecord] = useState(null);
 
     return (
-        <div className="space-y-4">
-            <div className="bg-slate-50/50 rounded-2xl border border-slate-100/50 overflow-hidden">
-                {records.length === 0 ? (
-                    <div className="p-8 text-center bg-white/50 backdrop-blur-sm rounded-2xl border border-dashed border-slate-200">
-                        <FileText className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                        <p className="text-slate-400 font-medium">No records found</p>
-                    </div>
-                ) : (
-                    <div className="divide-y divide-slate-100">
-                        {records.map(rec => (
-                            <div
-                                key={rec.id}
-                                onClick={() => setSelectedRecord(rec)}
-                                className="p-5 hover:bg-white cursor-pointer transition-all duration-300 group flex items-center justify-between"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#3B9EE2]/10 group-hover:text-[#3B9EE2] transition-colors">
-                                        <FileText className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-[#0D1B2A] group-hover:text-[#3B9EE2] transition-colors">{rec.title}</p>
-                                        <div className="flex items-center gap-3 mt-1.5">
-                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#3B9EE2] bg-[#3B9EE2]/5 px-2 py-0.5 rounded-full">
-                                                {rec.record_type}
-                                            </div>
-                                            <span className="w-1 h-1 bg-slate-200 rounded-full" />
-                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                <Calendar className="w-3 h-3" />
-                                                <span>{new Date(rec.created_at).toLocaleDateString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-[#0D1B2A] group-hover:text-white transition-all">
-                                    <ChevronRight className="w-4 h-4" />
+        <div className="bg-white rounded-[10px] border border-[#E2E8F0] p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-[16px] font-bold text-[#0D1B2A] flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-[#3B9EE2]" />
+                    <span>Digital Records</span>
+                </h3>
+                <span className="text-[#9CA3AF] text-[13px]">{records.length} files available</span>
+            </div>
+
+            {records.length === 0 ? (
+                <div className="py-12 text-center">
+                    <FileX className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
+                    <p className="text-[#9CA3AF] text-[14px]">No digital records found.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {records.map(rec => (
+                        <div
+                            key={rec.id}
+                            onClick={() => setSelectedRecord(rec)}
+                            className="flex items-center gap-4 p-4 border border-[#E2E8F0] rounded-[8px] hover:border-[#3B9EE2] hover:bg-[#3B9EE2]/5 cursor-pointer transition-all group"
+                        >
+                            <div className="w-10 h-10 bg-[#EFF6FF] rounded-[6px] flex items-center justify-center shrink-0">
+                                <FileText className="w-5 h-5 text-[#3B9EE2]" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[#0D1B2A] font-bold text-[14px] truncate">{rec.title}</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[#9CA3AF] text-[12px]">{rec.record_type}</span>
+                                    <span className="text-[#9CA3AF] text-[12px]">•</span>
+                                    <span className="text-[#9CA3AF] text-[12px]">
+                                        {new Date(rec.created_at).toLocaleDateString()}
+                                    </span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Document Details Modal */}
             {selectedRecord && (

@@ -17,9 +17,10 @@ import MobileNav from '../components/doctor/MobileNav';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import {
     Search,
-    ClipboardList,
+    Clock,
     Calendar,
     UserPlus,
     History,
@@ -28,14 +29,24 @@ import {
     Activity,
     ChevronRight,
     ArrowRight,
-    Clock,
     XCircle,
     AlertTriangle,
     LogOut,
     CheckCircle,
     Mail,
-    LifeBuoy,
-    Bell
+    Headphones,
+    Bell,
+    BadgeCheck,
+    QrCode,
+    FileX,
+    FolderOpen,
+    FilePlus,
+    Upload,
+    Save,
+    Shield,
+    ShieldCheck,
+    ClipboardList,
+    LifeBuoy
 } from 'lucide-react';
 
 const DoctorDashboard = () => {
@@ -374,11 +385,11 @@ const DoctorDashboard = () => {
     const pendingCount = appointments.filter(a => a.status === 'PENDING').length;
     const tabs = [
         { id: 'search', label: 'Patient Lookup', icon: Search },
-        { id: 'consultations', label: 'Recent History', icon: History },
+        { id: 'consultations', label: 'Recent History', icon: Clock },
         { id: 'appointments', label: 'Schedule', icon: Calendar },
         { id: 'notifications', label: 'Notifications', icon: Bell, badge: pendingCount },
         { id: 'register', label: 'New Registration', icon: UserPlus },
-        { id: 'support', label: 'Support & Help', icon: LifeBuoy },
+        { id: 'support', label: 'Support & Help', icon: Headphones },
     ];
 
     // ── Verification Gate ──────────────────────────────────────────────────────
@@ -530,56 +541,49 @@ const DoctorDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden font-sans text-[#0D1B2A]">
-            {/* Background decorative elements */}
-            <div className="absolute top-0 left-0 w-full h-[600px] bg-[#0D1B2A] z-0 pointer-events-none skew-y-[-2deg] origin-top-left translate-y-[-100px]" />
-            <div className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-[#3B9EE2]/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
-            <div className="absolute bottom-[20%] left-[-10%] w-[400px] h-[400px] bg-[#2EC4A9]/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="min-h-screen bg-[#F8FAFB] font-sans text-[#0D1B2A]">
+            <Header />
+            
+            {/* Tab Navigation Bar - Sticky below Header */}
+            <div className="sticky top-[56px] z-40 bg-white border-b border-[#E2E8F0] h-[48px] w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+                <div className="max-w-7xl mx-auto h-full flex items-center px-4 md:px-8">
+                    {tabs.map(tab => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        const hasUnread = tab.id === 'notifications' && tab.badge > 0;
+                        
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`h-full px-5 flex items-center gap-2 whitespace-nowrap transition-all border-b-2 relative ${
+                                    isActive 
+                                    ? 'text-[#3B9EE2] border-[#3B9EE2]' 
+                                    : 'text-[#9CA3AF] border-transparent hover:text-[#4A5568]'
+                                }`}
+                            >
+                                <div className="relative">
+                                    <Icon size={16} />
+                                    {hasUnread && (
+                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#F59E0B] rounded-full border border-white" />
+                                    )}
+                                </div>
+                                <span className="text-[13px] font-medium">{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
 
-            <div className="relative z-10 flex flex-col min-h-screen">
-                <Header />
-                <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 flex-1 w-full">
-
-                    <DashboardStats doctorProfile={doctorProfile} />
-
-                    {/* Main Dashboard Card */}
-                    <div className="bg-white/80 backdrop-blur-md rounded-[2.5rem] shadow-2xl shadow-[#0D1B2A]/5 border border-white/60 overflow-hidden mb-24 md:mb-0 transition-all duration-500">
-                        {/* Tab Navigation */}
-                        <div className="hidden md:flex bg-slate-50/50 border-b border-slate-100 p-2">
-                            {tabs.map(tab => {
-                                const Icon = tab.icon;
-                                const isActive = activeTab === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`flex-1 py-4 px-4 rounded-2xl font-black transition-all duration-500 relative group overflow-hidden ${isActive
-                                            ? 'bg-white shadow-lg text-[#0D1B2A]'
-                                            : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'
-                                            }`}
-                                    >
-                                        <div className="flex items-center justify-center gap-2 relative z-10">
-                                            <div className="relative">
-                                                <div className={`p-2 rounded-xl transition-all duration-500 ${isActive ? 'bg-[#3B9EE2]/10 text-[#3B9EE2]' : 'bg-slate-100 text-slate-300'}`}>
-                                                    <Icon size={18} />
-                                                </div>
-                                                {tab.badge > 0 && (
-                                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1 shadow-sm">{tab.badge}</span>
-                                                )}
-                                            </div>
-                                            <span className="text-[10px] tracking-[0.1em] uppercase hidden lg:inline">
-                                                {tab.label}
-                                            </span>
-                                        </div>
-                                        {isActive && (
-                                            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[#3B9EE2] to-[#2EC4A9]" />
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className="p-8 md:p-12">
+            <div className="max-w-7xl mx-auto p-8 pt-8 space-y-6">
+                <DashboardStats 
+                    doctorProfile={doctorProfile} 
+                    appointments={appointments}
+                    myConsultations={myConsultations}
+                />
+                
+                <div className="w-full">
+                    {/* Content Area */}
                             {/* Patient Search Tab */}
                             {activeTab === 'search' && (
                                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1015,8 +1019,6 @@ const DoctorDashboard = () => {
                                 </div>
                             )}
 
-                        </div>
-                    </div>
                 </div>
             </div>
 
