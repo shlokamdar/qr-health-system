@@ -16,9 +16,9 @@ const Header = () => {
         <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-50 h-[56px] flex items-center">
             <div className="w-full px-4 md:px-8 flex items-center justify-between">
                 {/* Logo */}
-                <Link to="/doctor/dashboard" className="flex items-center gap-2">
-                    <Activity className="w-6 h-6 text-[#3B9EE2]" />
-                    <span className="text-xl font-bold text-[#0D1B2A] tracking-tight">
+                <Link to="/" className="flex items-center gap-2">
+                    <Activity className="w-6 h-6 text-primary" />
+                    <span className="text-xl font-bold text-headings tracking-tight">
                         PulseID
                     </span>
                 </Link>
@@ -27,14 +27,14 @@ const Header = () => {
                 <div className="flex items-center gap-6">
                     {user && (
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-[#EFF6FF] rounded-full flex items-center justify-center border border-[#3B9EE2]/10">
-                                <span className="text-[#3B9EE2] font-bold text-sm">
+                            <div className="w-9 h-9 bg-light-blue rounded-full flex items-center justify-center border border-primary/10">
+                                <span className="text-primary font-bold text-sm">
                                     {user.first_name?.[0]}{user.last_name?.[0]}
                                 </span>
                             </div>
                             <div className="hidden sm:block">
-                                <span className="text-sm font-bold text-[#0D1B2A]">
-                                    Dr. {user.first_name} {user.last_name}
+                                <span className="text-sm font-bold text-headings">
+                                    {user.role === 'DOCTOR' ? 'Dr. ' : ''}{user.first_name} {user.last_name}
                                 </span>
                             </div>
                         </div>

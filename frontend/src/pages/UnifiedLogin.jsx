@@ -12,10 +12,10 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import HealthIdCard from '../components/patient/HealthIdCard';
 
-const UnifiedLogin = () => {
-    const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
-    const [loginRole, setLoginRole] = useState('PATIENT');
-    const [registerRole, setRegisterRole] = useState('PATIENT');
+const UnifiedLogin = ({ initialTab, initialRole }) => {
+    const [activeTab, setActiveTab] = useState(initialTab || 'login'); // 'login' or 'register'
+    const [loginRole, setLoginRole] = useState(initialRole || 'PATIENT');
+    const [registerRole, setRegisterRole] = useState(initialRole || 'PATIENT');
 
     // Login State
     const [username, setLoginUsername] = useState(''); // Renamed to avoid confusion with registration username
@@ -25,6 +25,39 @@ const UnifiedLogin = () => {
     const navigate = useNavigate();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Sync state with props when navigation occurs (deep link support)
+    useEffect(() => {
+        if (initialTab) setActiveTab(initialTab);
+    }, [initialTab]);
+
+    useEffect(() => {
+        if (initialRole) {
+            setLoginRole(initialRole);
+            setRegisterRole(initialRole);
+        }
+    }, [initialRole]);
+
+    // Update URL when internal state changes (active role/tab)
+    useEffect(() => {
+        const role = activeTab === 'login' ? loginRole : registerRole;
+        let path = '';
+        
+        // Map roles to URL paths
+        if (role === 'PATIENT') path = `/patient/${activeTab}`;
+        else if (role === 'DOCTOR') path = `/doctor/${activeTab}`;
+        else if (role === 'LAB_TECH') path = `/lab/${activeTab}`;
+        else if (role === 'HOSPITAL_ADMIN') path = `/hospital/${activeTab}`;
+        else if (role === 'ADMIN') path = `/admin/login`;
+
+        // Only navigate if path changes and is not a special registration case
+        // (Hospital/Lab registration still uses separate components)
+        const isExternalReg = (role === 'HOSPITAL_ADMIN' || role === 'LAB_TECH') && activeTab === 'register';
+        
+        if (path && window.location.pathname !== path && !isExternalReg) {
+            navigate(path, { replace: true });
+        }
+    }, [activeTab, loginRole, registerRole, navigate]);
 
     // Registration State - Patient
     const [patientStep, setPatientStep] = useState(1);
@@ -69,10 +102,10 @@ const UnifiedLogin = () => {
     const [generatedID, setGeneratedID] = useState('');
     const fileInputRef = useRef(null);
 
-    const inputStyle = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3B9EE2]/20 focus:border-[#3B9EE2] transition-all font-medium text-slate-700 placeholder:text-slate-400";
-    const labelStyle = "block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1";
-    const btnPrimaryStyle = "w-full py-4 bg-[#3B9EE2] hover:bg-[#2A8BD0] text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center";
-    const btnGhostStyle = "w-full py-4 bg-white border-2 border-slate-100 hover:border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all";
+    const inputStyle = "w-full p-4 bg-background border border-borders rounded-xl outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary transition-all font-medium text-body placeholder:text-muted";
+    const labelStyle = "block text-xs font-bold text-muted uppercase tracking-wider mb-2 ml-1";
+    const btnPrimaryStyle = "w-full py-4 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center";
+    const btnGhostStyle = "w-full py-4 bg-white border-2 border-borders hover:border-borders/120 text-body rounded-xl font-bold text-sm hover:bg-light-blue transition-all";
 
     const loginRoles = [
         { id: 'PATIENT', label: 'Patient', icon: User },
@@ -647,13 +680,13 @@ const UnifiedLogin = () => {
                                             key={role.id}
                                             type="button"
                                             onClick={() => setLoginRole(role.id)}
-                                            className={`flex flex-col items-center justify-center p-5 rounded-2xl transition-all duration-300 ${loginRole === role.id
+                                            className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 ${loginRole === role.id
                                                 ? 'bg-[#3B9EE2] text-white shadow-xl shadow-blue-500/30 ring-4 ring-blue-50/50 scale-[1.02] z-10'
                                                 : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-white hover:border-[#3B9EE2]/30 hover:text-slate-600 hover:shadow-md'
                                                 }`}
                                         >
-                                            <Icon className={`w-8 h-8 mb-3 transition-transform duration-300 ${loginRole === role.id ? 'scale-110 text-white' : 'group-hover:scale-110'}`} />
-                                            <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${loginRole === role.id ? 'text-white' : 'text-slate-500'}`}>
+                                            <Icon className={`w-6 h-6 mb-2 transition-transform duration-300 ${loginRole === role.id ? 'scale-110 text-white' : 'group-hover:scale-110'}`} />
+                                            <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${loginRole === role.id ? 'text-white' : 'text-slate-500'}`}>
                                                 {role.label}
                                             </span>
                                         </button>
@@ -745,16 +778,16 @@ const UnifiedLogin = () => {
                             <div className="grid grid-cols-2 gap-3 mb-8">
                                 <Link
                                     to="/hospital/register"
-                                    className="flex items-center justify-center gap-2 p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-indigo-500 hover:text-indigo-600 transition-all group"
+                                    className="flex items-center justify-center gap-2 p-2 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:border-indigo-500 hover:text-indigo-600 transition-all group"
                                 >
-                                    <BuildingOffice2Icon className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                    <BuildingOffice2Icon className="w-3 h-3 group-hover:scale-110 transition-transform" />
                                     Register Hospital
                                 </Link>
                                 <Link
                                     to="/lab/register"
-                                    className="flex items-center justify-center gap-2 p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-purple-500 hover:text-purple-600 transition-all group"
+                                    className="flex items-center justify-center gap-2 p-2 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:border-purple-500 hover:text-purple-600 transition-all group"
                                 >
-                                    <BeakerIcon className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                    <BeakerIcon className="w-3 h-3 group-hover:scale-110 transition-transform" />
                                     Register Lab
                                 </Link>
                             </div>

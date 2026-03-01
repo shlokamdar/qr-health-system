@@ -1,82 +1,127 @@
 import React from 'react';
-
-const inputStyle = {
-  width: '100%', border: '1px solid #E2E8F0', borderRadius: 8,
-  padding: '9px 12px', fontSize: 13, color: '#0D1B2A', outline: 'none',
-  background: '#fff', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif',
-};
-const labelStyle = {
-  display: 'block', fontSize: 11, fontWeight: 600, color: '#4A5568', marginBottom: 5,
-};
+import { Calendar, User2, Building2, Stethoscope, ClipboardList, Pill, FileText, UploadCloud, Plus } from 'lucide-react';
 
 const UploadPrescriptionForm = ({ newPrescription, setNewPrescription, handleUpload }) => {
   const up = (field, val) => setNewPrescription({ ...newPrescription, [field]: val });
 
+  const inputClasses = "w-full border border-borders rounded-xl px-4 py-2.5 text-sm transition-all focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-headings placeholder-muted bg-white font-medium";
+  const labelClasses = "flex items-center gap-2 text-headings text-[11px] font-bold mb-1.5 uppercase tracking-wider";
+
   return (
-    <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 12, padding: 20 }}>
-      <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: '#0D1B2A' }}>Add Prescription</h3>
-      <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div>
-          <label style={labelStyle}>Date *</label>
-          <input type="date" required value={newPrescription.prescription_date}
-            onChange={e => up('prescription_date', e.target.value)} style={inputStyle}
-            onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+    <div className="bg-white border border-borders rounded-2xl p-6 shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <Plus size={20} />
         </div>
         <div>
-          <label style={labelStyle}>Doctor Name *</label>
-          <input type="text" placeholder="Dr. Name" required value={newPrescription.doctor_name}
-            onChange={e => up('doctor_name', e.target.value)} style={inputStyle}
-            onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+            <h3 className="text-headings text-lg font-bold tracking-tight">Add Prescription</h3>
+            <p className="text-body text-xs font-medium">Record new medical advice or treatment</p>
         </div>
+      </div>
+
+      <form onSubmit={handleUpload} className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label className={labelClasses}><Calendar size={14} className="text-primary" /> Date *</label>
+                <input 
+                    type="date" 
+                    required 
+                    value={newPrescription.prescription_date}
+                    onChange={e => up('prescription_date', e.target.value)} 
+                    className={inputClasses}
+                />
+            </div>
+            <div>
+                <label className={labelClasses}><User2 size={14} className="text-primary" /> Doctor Name *</label>
+                <input 
+                    type="text" 
+                    placeholder="Dr. John Doe" 
+                    required 
+                    value={newPrescription.doctor_name}
+                    onChange={e => up('doctor_name', e.target.value)} 
+                    className={inputClasses}
+                />
+            </div>
+        </div>
+
         <div>
-          <label style={labelStyle}>Hospital</label>
-          <input type="text" placeholder="Hospital name" value={newPrescription.hospital_name}
-            onChange={e => up('hospital_name', e.target.value)} style={inputStyle}
-            onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+            <label className={labelClasses}><Building2 size={14} className="text-primary" /> Hospital / Clinic</label>
+            <input 
+                type="text" 
+                placeholder="Central Medical Center" 
+                value={newPrescription.hospital_name}
+                onChange={e => up('hospital_name', e.target.value)} 
+                className={inputClasses}
+            />
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label className={labelClasses}><Stethoscope size={14} className="text-primary" /> Symptoms</label>
+                <textarea 
+                    rows={2} 
+                    placeholder="Describe symptoms..." 
+                    value={newPrescription.symptoms}
+                    onChange={e => up('symptoms', e.target.value)} 
+                    className={`${inputClasses} resize-none`}
+                />
+            </div>
+            <div>
+                <label className={labelClasses}><ClipboardList size={14} className="text-primary" /> Diagnosis</label>
+                <textarea 
+                    rows={2} 
+                    placeholder="Medical diagnosis..." 
+                    value={newPrescription.diagnosis}
+                    onChange={e => up('diagnosis', e.target.value)} 
+                    className={`${inputClasses} resize-none`}
+                />
+            </div>
+        </div>
+
         <div>
-          <label style={labelStyle}>Symptoms</label>
-          <textarea rows={2} placeholder="e.g. Fever, headache" value={newPrescription.symptoms}
-            onChange={e => up('symptoms', e.target.value)} style={{ ...inputStyle, resize: 'vertical' }}
-            onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+            <label className={labelClasses}><Pill size={14} className="text-primary" /> Medicines</label>
+            <textarea 
+                rows={3} 
+                placeholder="Paracetamol, 500mg, twice daily" 
+                value={newPrescription.medicines}
+                onChange={e => up('medicines', e.target.value)} 
+                className={`${inputClasses} resize-none`}
+            />
         </div>
+
         <div>
-          <label style={labelStyle}>Diagnosis</label>
-          <textarea rows={2} placeholder="Diagnosis" value={newPrescription.diagnosis}
-            onChange={e => up('diagnosis', e.target.value)} style={{ ...inputStyle, resize: 'vertical' }}
-            onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+            <label className={labelClasses}><FileText size={14} className="text-primary" /> Insights & Notes</label>
+            <textarea 
+                rows={2} 
+                placeholder="Any additional notes..." 
+                value={newPrescription.insights}
+                onChange={e => up('insights', e.target.value)} 
+                className={`${inputClasses} resize-none`}
+            />
         </div>
-        <div>
-          <label style={labelStyle}>Medicines (one per line: name, dosage, frequency)</label>
-          <textarea rows={3} placeholder="Paracetamol, 500mg, twice daily" value={newPrescription.medicines}
-            onChange={e => up('medicines', e.target.value)} style={{ ...inputStyle, resize: 'vertical' }}
-            onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
+
+        <div className="pt-2">
+            <label className={labelClasses}><UploadCloud size={14} className="text-primary" /> Original Scanned File</label>
+            <div className="relative group">
+                <input 
+                    type="file" 
+                    onChange={e => up('file', e.target.files[0])}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="border-2 border-dashed border-borders rounded-xl p-4 flex items-center justify-center gap-3 bg-background group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
+                    <UploadCloud className="text-muted group-hover:text-primary transition-colors" size={20} />
+                    <span className="text-xs font-bold text-muted group-hover:text-primary uppercase tracking-widest">
+                        {newPrescription.file ? newPrescription.file.name : "Select Image or PDF"}
+                    </span>
+                </div>
+            </div>
         </div>
-        <div>
-          <label style={labelStyle}>Additional Notes</label>
-          <textarea rows={2} placeholder="Insights or notes" value={newPrescription.insights}
-            onChange={e => up('insights', e.target.value)} style={{ ...inputStyle, resize: 'vertical' }}
-            onFocus={e => e.target.style.borderColor = '#3B9EE2'}
-            onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
-        </div>
-        <div>
-          <label style={labelStyle}>Attach File</label>
-          <input type="file" onChange={e => up('file', e.target.files[0])}
-            style={{ ...inputStyle, padding: '7px 12px', fontSize: 12 }} />
-        </div>
-        <button type="submit" style={{
-          background: '#3B9EE2', color: '#fff', border: 'none', borderRadius: 8,
-          padding: '10px 0', fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'background 0.2s',
-        }}
-          onMouseEnter={e => e.currentTarget.style.background = '#2d8fd4'}
-          onMouseLeave={e => e.currentTarget.style.background = '#3B9EE2'}>
-          Save Prescription
+
+        <button 
+            type="submit" 
+            className="pulse-btn-primary w-full py-3.5 mt-2"
+        >
+            Add to Records
         </button>
       </form>
     </div>

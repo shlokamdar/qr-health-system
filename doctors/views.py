@@ -26,7 +26,7 @@ class HospitalViewSet(viewsets.ModelViewSet):
     serializer_class = HospitalSerializer
     
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action in ['create', 'list']:
             return [permissions.AllowAny()]
         if self.action in ['update', 'partial_update', 'destroy']:
             return [permissions.IsAdminUser()]

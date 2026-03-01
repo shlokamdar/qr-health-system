@@ -182,6 +182,44 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Swap username back so the parent serializer can proceed
         attrs["username"] = user.username
 
+        # Check for verification status based on role
+        if user.role == 'DOCTOR':
+            if not hasattr(user, 'doctor_profile') or not user.doctor_profile.is_verified:
+                raise AuthenticationFailed(
+                    _("Your doctor account is pending verification by the administrator."),
+                    code="account_pending_verification",
+                )
+        elif user.role == 'LAB_TECH':
+            if not hasattr(user, 'lab_profile') or not user.lab_profile.is_verified:
+                raise AuthenticationFailed(
+                    _("Your lab technician account is pending verification by the administrator."),
+                    code="account_pending_verification",
+                )
+            # Also check if their lab is verified
+            if user.lab_profile.lab and not user.lab_profile.lab.is_verified:
+                 raise AuthenticationFailed(
+                    _("Your diagnostic lab is pending verification by the superadmin."),
+                    code="account_pending_verification",
+                )
+        elif user.role == 'HOSPITAL_ADMIN':
+            if not hasattr(user, 'hospital_admin_profile') or not user.hospital_admin_profile.is_verified:
+                # If they just registered a hospital, the hospital itself might be unverified
+                if hasattr(user, 'hospital_admin_profile') and not user.hospital_admin_profile.hospital.is_verified:
+                    raise AuthenticationFailed(
+                        _("Your hospital and admin account are pending verification by the superadmin."),
+                        code="account_pending_verification",
+                    )
+                elif hasattr(user, 'hospital_admin_profile') and not user.hospital_admin_profile.is_verified:
+                    raise AuthenticationFailed(
+                        _("Your hospital admin account is pending verification by the administrator."),
+                        code="account_pending_verification",
+                    )
+                elif not hasattr(user, 'hospital_admin_profile'):
+                     raise AuthenticationFailed(
+                        _("No hospital admin profile found. Please contact support."),
+                        code="no_profile",
+                    )
+
         data = super().validate(attrs)
         data["role"] = self.user.role
         data["username"] = self.user.username

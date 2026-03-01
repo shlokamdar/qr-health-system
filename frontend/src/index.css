@@ -1,19 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 @import "tailwindcss";
 
 @theme {
-  /* Primary Colors (Indigo) */
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
+  /* PulseID Design System Tokens */
+  --color-background: #F8FAFB;
+  --color-white-card: #FFFFFF;
+  --color-light-blue: #EFF6FF;
+  --color-primary: #3B9EE2;
+  --color-secondary: #2EC4A9;
+  --color-headings: #0D1B2A;
+  --color-body: #4A5568;
+  --color-muted: #9CA3AF;
+  --color-borders: #E2E8F0;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
 
-  /* Secondary Colors (Purple) */
-  --color-secondary-50: #fdf4ff;
-  --color-secondary-100: #fae8ff;
-  --color-secondary-500: #a855f7;
-  --color-secondary-600: #9333ea;
+  --font-inter: "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-body font-inter;
+  }
+}
+
+@layer components {
+  .pulse-card {
+    @apply bg-white-card border border-borders rounded-[10px] p-6;
+  }
+  
+  .pulse-input {
+    @apply border border-borders rounded-lg px-4 py-2 outline-none transition-all;
+  }
+  
+  .pulse-input:focus {
+    @apply border-primary ring-4 ring-primary/15;
+  }
+
+  .pulse-btn-primary {
+    @apply bg-primary text-white rounded-md px-4 py-2 font-bold transition-all active:scale-95;
+  }
+
+  .pulse-btn-ghost {
+    @apply bg-white border border-borders text-body rounded-md px-4 py-2 font-bold transition-all hover:bg-light-blue;
+  }
 }
 
 /* Custom scrollbar */
@@ -28,15 +59,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #9CA3AF;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #4A5568;
 }
 
 /* Smooth transitions */
 * {
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }

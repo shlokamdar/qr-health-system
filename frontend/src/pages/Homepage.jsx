@@ -37,16 +37,19 @@ const WaveDivider = ({ fill, className = "" }) => (
 const HealthIDCard = ({ className = "" }) => (
     <div className={`w-full max-w-sm aspect-[85/54] bg-[#0D1B2A] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.18)] p-6 text-white relative overflow-hidden ${className}`}>
         {/* Texture */}
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '4px 4px' }}></div>
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
         
         <div className="relative z-10 flex flex-col justify-between h-full">
             {/* Top Row */}
             <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
                     <Activity className="w-5 h-5 text-white" />
-                    <span className="font-bold text-lg tracking-tight">PulseID</span>
+                    <div>
+                        <span className="font-bold text-lg tracking-tight block leading-none">PulseID</span>
+                        <span className="text-[8px] text-white/50 uppercase tracking-widest font-semibold">Unified Health Record</span>
+                    </div>
             </div>
-            <div className="bg-[#2EC4A9]/20 text-[#2EC4A9] px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Patient</div>
+            <div className="bg-[#0d2e2a] text-[#2EC4A9] px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Patient</div>
             </div>
 
             {/* Middle Row */}

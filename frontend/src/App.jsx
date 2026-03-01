@@ -22,23 +22,24 @@ import SystemAdminLogin from './pages/SystemAdminLogin';
 const ProtectedRoute = ({ children, allowedRole }) => {
     const { user, loading } = useContext(AuthContext);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-900 text-xl">Loading...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center text-headings text-xl">Loading...</div>;
 
     if (!user) {
         if (allowedRole === 'ADMIN') return <Navigate to="/system/login" replace />;
-        return <Navigate to="/" replace />;
+        return <Navigate to="/login" replace />;
     }
 
-    // If a specific role is required, check it
+    // Role mapping for redirecting unauthorized users to their own dashboards
+    const roleToPath = {
+        'PATIENT': '/patient/dashboard',
+        'DOCTOR': '/doctor/dashboard',
+        'LAB_TECH': '/lab/dashboard',
+        'HOSPITAL_ADMIN': '/hospital/dashboard',
+        'ADMIN': '/admin-dashboard'
+    };
+
     if (allowedRole && user.role !== allowedRole) {
-        // Redirect to their own dashboard
-        const redirect =
-            user.role === 'PATIENT' ? '/patient/dashboard' :
-                user.role === 'DOCTOR' ? '/doctor/dashboard' :
-                    user.role === 'LAB_TECH' ? '/lab/dashboard' :
-                        user.role === 'HOSPITAL_ADMIN' ? '/hospital/dashboard' :
-                            user.role === 'ADMIN' ? '/admin-dashboard' : '/';
-        return <Navigate to={redirect} replace />;
+        return <Navigate to={roleToPath[user.role] || '/'} replace />;
     }
 
     return children;
@@ -68,7 +69,9 @@ function App() {
                     <Route path="/" element={<Homepage />} />
 
                     {/* Organization Routes */}
+                    {/* Hospital & Lab Login/Register */}
                     <Route path="/hospital/register" element={<HospitalRegister />} />
+                    <Route path="/hospital/login" element={<UnifiedLogin initialTab="login" initialRole="HOSPITAL_ADMIN" />} />
                     <Route
                         path="/hospital/dashboard"
                         element={
@@ -78,7 +81,7 @@ function App() {
                         }
                     />
                     <Route path="/lab/register" element={<LabRegister />} />
-                    <Route path="/lab/login" element={<LabLogin />} />
+                    <Route path="/lab/login" element={<UnifiedLogin initialTab="login" initialRole="LAB_TECH" />} />
                     <Route
                         path="/lab/dashboard"
                         element={
@@ -89,8 +92,8 @@ function App() {
                     />
 
                     {/* Patient Routes */}
-                    <Route path="/patient/login" element={<PatientLogin />} />
-                    <Route path="/patient/register" element={<PatientRegister />} />
+                    <Route path="/patient/login" element={<UnifiedLogin initialTab="login" initialRole="PATIENT" />} />
+                    <Route path="/patient/register" element={<UnifiedLogin initialTab="register" initialRole="PATIENT" />} />
                     <Route
                         path="/patient/dashboard"
                         element={
@@ -101,8 +104,8 @@ function App() {
                     />
 
                     {/* Doctor Routes */}
-                    <Route path="/doctor/login" element={<DoctorLogin />} />
-                    <Route path="/doctor/register" element={<DoctorRegister />} />
+                    <Route path="/doctor/login" element={<UnifiedLogin initialTab="login" initialRole="DOCTOR" />} />
+                    <Route path="/doctor/register" element={<UnifiedLogin initialTab="register" initialRole="DOCTOR" />} />
                     <Route
                         path="/doctor/dashboard"
                         element={
@@ -123,11 +126,10 @@ function App() {
                         }
                     />
 
-                    {/* Legacy redirect */}
-                    <Route path="/dashboard" element={<DashboardRedirect />} />
+                    {/* Shared Auth Paths */}
                     <Route path="/login" element={<UnifiedLogin />} />
+                    <Route path="/register" element={<UnifiedLogin initialTab="register" />} />
                     <Route path="/system/login" element={<SystemAdminLogin />} />
-                    <Route path="/register" element={<Navigate to="/" replace />} />
 
                     {/* Catch all */}
                     <Route path="*" element={<Navigate to="/" replace />} />

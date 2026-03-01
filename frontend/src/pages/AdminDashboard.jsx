@@ -816,11 +816,10 @@ const AdminDashboard = () => {
     );
 
     if (loading) return (
-        <div className="min-h-screen bg-[#0D1B2A] flex items-center justify-center">
-            <div className="text-white text-center">
-                <Activity className="w-10 h-10 mx-auto mb-3 animate-pulse text-[#3B9EE2]" />
-                <p className="text-lg font-semibold">Loading PulseID Admin...</p>
-            </div>
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+            <img src="/pulseid-logo.svg" alt="PulseID Logo" className="w-24 h-24 mb-4 animate-pulse" />
+            <p className="text-headings font-bold animate-pulse tracking-tight text-lg">Initializing PulseID Administration...</p>
+            <p className="text-gray-500 text-sm mt-2">Please wait while we load your dashboard.</p>
         </div>
     );
 
@@ -1493,58 +1492,7 @@ const AdminDashboard = () => {
                             </div>
                         )}
 
-                        {/* DONORS TAB REMOVED */}
-                        {activeTab === 'donors' && (
-                            <div>
-                                <h3 className="font-semibold text-gray-800 mb-4">Pending Organ Donor Verifications</h3>
-                                {donors.length === 0 ? (
-                                    <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                                        <Heart className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                                        <p className="text-gray-400 text-sm italic">No pending donor requests.</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {donors.map(donor => (
-                                            <div key={donor.id} className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
-                                                        <Heart className="w-6 h-6 text-emerald-500" />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-gray-900">{donor.user?.first_name} {donor.user?.last_name}</h4>
-                                                        <p className="text-xs text-gray-400 font-mono mt-0.5">{donor.health_id}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2 mb-5 text-sm">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-500">Blood Group:</span>
-                                                        <span className="font-semibold text-gray-900">{donor.blood_group}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-500">Gender:</span>
-                                                        <span className="font-semibold text-gray-900">{donor.gender}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => handleVerifyDonor(donor.health_id)}
-                                                        className="flex-1 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 transition-colors"
-                                                    >
-                                                        Approve
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setRejectTarget({ type: 'donor', data: donor })}
-                                                        className="flex-1 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors"
-                                                    >
-                                                        Reject
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+
 
                         {/* TICKETS TAB */}
                         {activeTab === 'tickets' && (

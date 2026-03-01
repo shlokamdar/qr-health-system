@@ -95,26 +95,26 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
     };
 
     return (
-        <div className="max-w-[1400px] py-6 animate-in fade-in duration-700">
-            <div className="flex flex-col lg:grid lg:grid-cols-[1fr_400px] gap-12 items-start">
+        <div className="max-w-7xl mx-auto py-8 animate-in fade-in duration-700 font-inter px-4 sm:px-6">
+            <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-8 items-start">
                 
-                {/* LEFT COLUMN: 70% Form Area */}
+                {/* LEFT COLUMN: Form Area */}
                 <div className="w-full">
                     <form onSubmit={handleSubmit}>
-                        <div className="space-y-10">
+                        <div className="space-y-8">
                             {/* PERSONAL INFORMATION CARD */}
-                            <div className="bg-white rounded-[20px] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#F1F5F9] mb-8 relative">
-                                <div className="flex items-center gap-4 mb-10 pb-4 border-b border-[#F1F5F9]">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#2EC4A9]/10 to-[#2EC4A9]/20 text-[#2EC4A9]">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <div className="bg-white rounded-[24px] p-8 md:p-10 shadow-sm border border-borders mb-8 relative">
+                                <div className="flex items-center gap-4 mb-10 pb-4 border-b border-borders">
+                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
+                                        <User2 size={22} />
                                     </div>
                                     <div>
-                                        <h3 className="text-[#0D1B2A] text-[18px] font-bold tracking-tight">Identity & Profile</h3>
-                                        <p className="text-[#718096] text-[12px]">Your official identity and contact records</p>
+                                        <h3 className="text-headings text-lg font-bold tracking-tight">Identity & Profile</h3>
+                                        <p className="text-body text-xs font-medium">Your official identity and contact records</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                     <div>
                                         <label className={labelClasses}>First Name</label>
                                         <input name="first_name" value={formData.first_name} onChange={handleChange} className={inputClasses} placeholder="First Name" />
@@ -154,18 +154,18 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                             </div>
 
                             {/* MEDICAL INFORMATION CARD */}
-                            <div className="bg-white rounded-[20px] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#F1F5F9] relative">
-                                <div className="flex items-center gap-4 mb-10 pb-4 border-b border-[#F1F5F9]">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B9EE2]/10 to-[#3B9EE2]/20 text-[#3B9EE2]">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <div className="bg-white rounded-[24px] p-8 md:p-10 shadow-sm border border-borders relative">
+                                <div className="flex items-center gap-4 mb-10 pb-4 border-b border-borders">
+                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-secondary/10 text-secondary">
+                                        <Activity size={22} />
                                     </div>
                                     <div>
-                                        <h3 className="text-[#0D1B2A] text-[18px] font-bold tracking-tight">Clinical Background</h3>
-                                        <p className="text-[#718096] text-[12px]">Essential medical history and parameters</p>
+                                        <h3 className="text-headings text-lg font-bold tracking-tight">Clinical Background</h3>
+                                        <p className="text-body text-xs font-medium">Essential medical history and parameters</p>
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-10">
+                                <div className="space-y-8">
                                     <div>
                                         <label className={labelClasses}>Known Allergies</label>
                                         <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={2} className={inputClasses} placeholder="e.g. Penicillin, Pollen..." />
@@ -178,34 +178,39 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                             </div>
 
                             {/* ACTION BUTTONS ROW */}
-                            <div className="flex items-center justify-end gap-10 mt-12 pb-16">
+                            <div className="flex items-center justify-end gap-6 mt-8">
                                 <button 
                                     type="button" 
                                     onClick={handleReset} 
-                                    className="px-6 py-3 text-[#718096] bg-transparent hover:bg-slate-50 border-none transition-all font-semibold text-[15px] opacity-70 hover:opacity-100 ring-0 active:scale-95"
+                                    className="pulse-btn-ghost py-3"
                                 >
-                                    Cancel and Reset
+                                    Reset Changes
                                 </button>
                                 <button 
                                     type="submit" 
                                     disabled={isUpdating} 
-                                    className="px-12 py-4.5 bg-[#3B9EE2] text-white rounded-full hover:bg-[#2F81B9] transition-all font-bold text-[15px] shadow-[0_15px_30px_rgba(59,158,226,0.25)] hover:shadow-[0_20px_40px_rgba(59,158,226,0.35)] disabled:opacity-50 active:scale-95 hover:-translate-y-0.5"
+                                    className="pulse-btn-primary px-10 py-3 disabled:opacity-50"
                                 >
-                                    {isUpdating ? 'Updating Records...' : 'Save Profile Details'}
+                                    {isUpdating ? 'Updating Records...' : 'Save Profile'}
                                 </button>
                             </div>
                         </div>
                     </form>
                 </div>
 
-                {/* RIGHT COLUMN: 45% (Sticky) */}
-                <div className="w-full lg:w-[45%] lg:sticky lg:top-24 space-y-4">
-                    <div className="text-[#9CA3AF] text-[11px] font-bold tracking-wider uppercase">YOUR HEALTH ID CARD</div>
+                {/* RIGHT COLUMN: Health ID Card (Sticky) */}
+                <div className="w-full lg:sticky lg:top-24 space-y-6">
+                    <div className="text-muted text-[11px] font-bold tracking-widest uppercase ml-1">Live Preview: Health ID</div>
                     
-                    <div className="relative group">
+                    <div className="relative">
                         <HealthIdCard patient={previewPatient} />
-                        <div className="mt-3 text-[11px] text-[#9CA3AF] text-center">
-                            Changes appear on your downloaded card after saving.
+                        <div className="mt-4 p-4 bg-light-blue border border-primary/10 rounded-2xl">
+                            <div className="flex gap-3">
+                                <Clock size={16} className="text-primary shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-body leading-relaxed font-medium">
+                                    The preview card updates instantly. Click "Save Profile" to update your official digital record permanently.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
