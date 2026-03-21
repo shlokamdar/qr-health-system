@@ -7,12 +7,14 @@ from .models import (
     OldPrescription, SharingPermission
 )
 from .serializers import (
-    PatientSerializer, PatientBasicSerializer, EmergencyContactSerializer,
-    PatientDocumentSerializer, OldPrescriptionSerializer,
-    SharingPermissionSerializer, GrantAccessSerializer
+    PatientSerializer, PatientPublicSerializer, PatientBasicSerializer, 
+    EmergencyContactSerializer, PatientDocumentSerializer, 
+    OldPrescriptionSerializer, SharingPermissionSerializer, 
+    GrantAccessSerializer
 )
 from role_permissions.roles import IsDoctor, IsPatient, IsPatientOwner
 from audit.models import AccessLog
+from accounts.models import Notification
 
 
 from utils.notifications import send_access_granted_email, send_access_revoked_email
@@ -25,6 +27,8 @@ class PatientViewSet(viewsets.ModelViewSet):
     lookup_field = 'health_id'
 
     def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.AllowAny()]
         if self.action in ['create', 'destroy']:
             return [permissions.IsAdminUser()]
         if self.action in ['update', 'partial_update']:
@@ -35,7 +39,12 @@ class PatientViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         user = request.user
         
-        # Access Logging
+        # Public Access (No Login)
+        if not user.is_authenticated:
+            serializer = PatientPublicSerializer(instance)
+            return Response(serializer.data)
+        
+        # Access Logging for Authenticated Users
         action_type = AccessLog.Action.VIEW_PROFILE
         
         # Check permissions manually for finer control and logging
@@ -95,8 +104,13 @@ class PatientViewSet(viewsets.ModelViewSet):
         prescriptions = OldPrescription.objects.filter(patient=patient).order_by('-prescription_date')
         lab_reports = LabReport.objects.filter(patient=patient).order_by('-created_at')
         
+        # Generate Password: First 3 letters of Name (upper) + DOB in DDMMYYYY
+        name_part = (patient.user.first_name[:3] if patient.user.first_name else "ID").upper()
+        dob_part = patient.date_of_birth.strftime('%d%m%Y') if patient.date_of_birth else "01012000"
+        pdf_password = f"{name_part}{dob_part}"
+        
         # Generate PDF
-        pdf_buffer = generate_patient_pdf(patient, records, prescriptions, lab_reports)
+        pdf_buffer = generate_patient_pdf(patient, records, prescriptions, lab_reports, password=pdf_password)
         
         # Log Access
         AccessLog.objects.create(
@@ -294,6 +308,13 @@ class OTPRequestView(APIView):
             doctor=doctor,
             patient=patient,
             otp_code=otp_code
+        )
+
+        # Create notification for patient
+        Notification.objects.create(
+            user=patient.user,
+            title="Medical Access Request",
+            message=f"Dr. {doctor.user.get_full_name() or doctor.user.username} is requesting full access to your medical records. Your OTP is: {otp_code}. Do not share this OTP with anyone else."
         )
 
         # In production, send via SMS/Email

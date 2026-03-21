@@ -31,7 +31,13 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-        if (error.response.status === 401 && !originalRequest._retry) {
+        
+        // Bypass global 401 handling for auth endpoints so login pages can show their own error messages
+        if (originalRequest.url.includes('auth/login') || originalRequest.url.includes('auth/register')) {
+            return Promise.reject(error);
+        }
+
+        if (error.response && error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             const refreshToken = localStorage.getItem('refresh_token');
             if (refreshToken) {

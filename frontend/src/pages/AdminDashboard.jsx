@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
     Phone, MapPin, Calendar, Award, Stethoscope, User2, Building, Heart, Plus, UserPlus, Link2, LifeBuoy, MoreVertical,
-    X, ExternalLink, Activity, CheckCircle, Clock, FlaskConical, ShieldCheck, Eye, XCircle, Search, ChevronRight, MessageSquare, BarChart3, LogOut, Building2, Users, FileText
+    X, ExternalLink, Activity, CheckCircle, Clock, FlaskConical, ShieldCheck, Eye, XCircle, Search, ChevronRight, MessageSquare, BarChart3, LogOut, Building2, Users, FileText,
+    Mail, Shield
 } from 'lucide-react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
@@ -58,7 +59,7 @@ const GenericRejectModal = ({ title, entityName, onConfirm, onClose }) => {
 
 
 // ─── Doctor Profile Drawer ────────────────────────────────────────────────────
-const DoctorProfileDrawer = ({ doctor, onClose }) => {
+const DoctorProfileDrawer = ({ doctor, onClose, onApprove, onReject, onRevoke }) => {
     if (!doctor) return null;
 
     const DocLink = ({ url, label, icon: Icon }) => {
@@ -169,6 +170,31 @@ const DoctorProfileDrawer = ({ doctor, onClose }) => {
                             <DocLink url={doctor.identity_proof_url} label="Identity Proof" icon={User2} />
                         </div>
                     </div>
+
+                    {!doctor.is_verified && !doctor.rejection_reason && (
+                        <div className="flex gap-3 pt-4">
+                            <button
+                                onClick={() => { onApprove && onApprove(doctor.id); onClose(); }}
+                                className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+                            >
+                                ✓ Approve Doctor
+                            </button>
+                            <button
+                                onClick={() => { onReject && onReject(doctor); onClose(); }}
+                                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition-colors"
+                            >
+                                ✗ Reject
+                            </button>
+                        </div>
+                    )}
+                    {doctor.is_verified && (
+                        <button
+                            onClick={() => { if (window.confirm(`Revoke access for Dr. ${u.first_name} ${u.last_name}?`)) { onRevoke && onRevoke(doctor.id); onClose(); } }}
+                            className="w-full py-3 mt-4 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200 transition-colors"
+                        >
+                            Revoke Access
+                        </button>
+                    )}
                 </div>
             </div>
         </>
@@ -177,7 +203,7 @@ const DoctorProfileDrawer = ({ doctor, onClose }) => {
 
 
 // ─── Hospital Profile Drawer ──────────────────────────────────────────────────
-const HospitalProfileDrawer = ({ hospital, onClose }) => {
+const HospitalProfileDrawer = ({ hospital, onClose, onApprove, onReject, onRevoke }) => {
     if (!hospital) return null;
 
     const InfoRow = ({ icon: Icon, label, value }) => (
@@ -250,6 +276,31 @@ const HospitalProfileDrawer = ({ hospital, onClose }) => {
                             </div>
                         </div>
                     </div>
+
+                    {!hospital.is_verified && !hospital.rejection_reason && (
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => { onApprove && onApprove(hospital.id); onClose(); }}
+                                className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+                            >
+                                ✓ Approve Hospital
+                            </button>
+                            <button
+                                onClick={() => { onReject && onReject(hospital); onClose(); }}
+                                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition-colors"
+                            >
+                                ✗ Reject
+                            </button>
+                        </div>
+                    )}
+                    {hospital.is_verified && (
+                        <button
+                            onClick={() => { if (window.confirm(`Revoke access for ${hospital.name}? They will no longer be able to log in.`)) { onRevoke && onRevoke(hospital.id); onClose(); } }}
+                            className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200 transition-colors"
+                        >
+                            Revoke Access
+                        </button>
+                    )}
                 </div>
             </div>
         </>
@@ -257,7 +308,7 @@ const HospitalProfileDrawer = ({ hospital, onClose }) => {
 };
 
 // ─── Lab Profile Drawer ───────────────────────────────────────────────────────
-const LabProfileDrawer = ({ lab, onClose }) => {
+const LabProfileDrawer = ({ lab, onClose, onApprove, onReject, onRevoke }) => {
     if (!lab) return null;
 
     const InfoRow = ({ icon: Icon, label, value }) => (
@@ -330,6 +381,31 @@ const LabProfileDrawer = ({ lab, onClose }) => {
                             </div>
                         </div>
                     </div>
+
+                    {!lab.is_verified && !lab.rejection_reason && (
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => { onApprove && onApprove(lab.id); onClose(); }}
+                                className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+                            >
+                                ✓ Approve Lab
+                            </button>
+                            <button
+                                onClick={() => { onReject && onReject(lab); onClose(); }}
+                                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition-colors"
+                            >
+                                ✗ Reject
+                            </button>
+                        </div>
+                    )}
+                    {lab.is_verified && (
+                        <button
+                            onClick={() => { if (window.confirm(`Revoke access for ${lab.name}? They will no longer be able to log in.`)) { onRevoke && onRevoke(lab.id); onClose(); } }}
+                            className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200 transition-colors"
+                        >
+                            Revoke Access
+                        </button>
+                    )}
                 </div>
             </div>
         </>
@@ -473,7 +549,7 @@ const CreateUserModal = ({ isOpen, onClose, hospitals, labs, onSuccess }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            await api.post('accounts/admin/create-user/', formData);
+            await api.post('auth/admin/create-user/', formData);
             onSuccess();
             onClose();
         } catch (err) {
@@ -634,6 +710,62 @@ const CreateUserModal = ({ isOpen, onClose, hospitals, labs, onSuccess }) => {
     );
 };
 
+// ─── Credential Modal ────────────────────────────────────────────────────────
+const CredentialModal = ({ isOpen, onClose, credentials }) => {
+    if (!isOpen || !credentials) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Institution Approved!</h3>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-6">
+                    <div className="flex gap-3">
+                        <ShieldCheck className="w-5 h-5 text-emerald-600 mt-0.5" />
+                        <div>
+                            <p className="text-sm font-bold text-emerald-900">Credentials Generated</p>
+                            <p className="text-xs text-emerald-700 mt-1">Please share these with the institution administrator.</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="space-y-4 mb-6">
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5 ml-1 font-sans">Username</p>
+                        <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl font-mono text-sm text-gray-800 break-all select-all flex justify-between items-center group">
+                            <span>{credentials.username}</span>
+                            <button onClick={() => { navigator.clipboard.writeText(credentials.username); alert('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Link2 className="w-4 h-4 text-blue-500" />
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5 ml-1 font-sans">Official Email</p>
+                        <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl font-mono text-sm text-gray-800 break-all select-all flex justify-between items-center group">
+                            <span>{credentials.email}</span>
+                            <button onClick={() => { navigator.clipboard.writeText(credentials.email); alert('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Link2 className="w-4 h-4 text-blue-500" />
+                            </button>
+                        </div>
+                    </div>
+                    <p className="text-[11px] text-gray-500 text-center italic bg-blue-50/50 py-2 rounded-lg font-sans">
+                        Password was set by the applicant during registration.
+                    </p>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="w-full py-3.5 bg-[#0D1B2A] text-white rounded-xl font-bold text-sm hover:bg-black transition-all shadow-xl shadow-gray-900/10 active:scale-[0.98] font-sans"
+                >
+                    Close & Continue
+                </button>
+            </div>
+        </div>
+    );
+};
+
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 const StatusBadge = ({ verified, rejected }) => {
     if (rejected) return (
@@ -674,6 +806,14 @@ const AdminDashboard = () => {
     const [assignTarget, setAssignTarget] = useState(null); // { type: 'doctor'|'tech', data: object }
     const [ticketTarget, setTicketTarget] = useState(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showCredentialModal, setShowCredentialModal] = useState(false);
+    const [approvalCredentials, setApprovalCredentials] = useState(null);
+    const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 5000);
+    };
 
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -707,7 +847,7 @@ const AdminDashboard = () => {
         try { const r = await api.get('support/tickets/'); setTickets(r.data.results || r.data); } catch { }
     };
     const fetchUsers = async () => {
-        try { const r = await api.get('accounts/admin/users/'); setUsers(r.data.results || r.data); } catch { }
+        try { const r = await api.get('auth/admin/users/'); setUsers(r.data.results || r.data); } catch { }
     };
 
     const handleVerifyDoctor = async (id) => {
@@ -727,9 +867,14 @@ const AdminDashboard = () => {
 
     const handleVerifyHospital = async (id) => {
         try {
-            await api.patch(`admin/hospitals/${id}/manage/`, { verify: true });
+            const r = await api.patch(`admin/hospitals/${id}/manage/`, { verify: true });
+            if (r.data.credentials) {
+                setApprovalCredentials(r.data.credentials);
+                setShowCredentialModal(true);
+            }
+            showToast(`✅ ${r.data.message || 'Hospital approved!'}`);
             fetchHospitals(); fetchStats();
-        } catch { alert('Failed to verify hospital'); }
+        } catch { showToast('Failed to approve hospital', 'error'); }
     };
 
     const handleRejectHospital = async (id, reason) => {
@@ -742,9 +887,14 @@ const AdminDashboard = () => {
 
     const handleVerifyLab = async (id) => {
         try {
-            await api.patch(`admin/labs/${id}/manage/`, { verify: true });
+            const r = await api.patch(`admin/labs/${id}/manage/`, { verify: true });
+            if (r.data.credentials) {
+                setApprovalCredentials(r.data.credentials);
+                setShowCredentialModal(true);
+            }
+            showToast(`✅ ${r.data.message || 'Lab approved!'}`);
             fetchLabs(); fetchStats();
-        } catch { alert('Failed to verify lab'); }
+        } catch { showToast('Failed to approve lab', 'error'); }
     };
 
     const handleRejectLab = async (id, reason) => {
@@ -825,6 +975,17 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-[#F1F5F9] font-sans">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`fixed top-4 right-4 z-[100] max-w-md px-5 py-4 rounded-2xl shadow-2xl text-sm font-semibold animate-in slide-in-from-top-2 duration-300 flex items-start gap-3 ${
+                    toast.type === 'error'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-emerald-600 text-white'
+                }`}>
+                    <span className="flex-1 leading-relaxed">{toast.message}</span>
+                    <button onClick={() => setToast(null)} className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
+                </div>
+            )}
             {rejectTarget?.type === 'doctor' && (
                 <GenericRejectModal
                     title="Reject Doctor Registration"
@@ -878,22 +1039,37 @@ const AdminDashboard = () => {
                 />
             )}
 
+            <CredentialModal
+                isOpen={showCredentialModal}
+                onClose={() => { setShowCredentialModal(false); setApprovalCredentials(null); }}
+                credentials={approvalCredentials}
+            />
+
             {viewTarget && viewTarget.type === 'doctor' && (
                 <DoctorProfileDrawer
                     doctor={viewTarget.data}
                     onClose={() => setViewTarget(null)}
+                    onApprove={(id) => handleVerifyDoctor(id)}
+                    onReject={(d) => setRejectTarget({ type: 'doctor', data: d })}
+                    onRevoke={(id) => handleRejectDoctor(id, 'Access revoked by administrator')}
                 />
             )}
             {viewTarget && viewTarget.type === 'hospital' && (
                 <HospitalProfileDrawer
                     hospital={viewTarget.data}
                     onClose={() => setViewTarget(null)}
+                    onApprove={(id) => handleVerifyHospital(id)}
+                    onReject={(h) => setRejectTarget({ type: 'hospital', data: h })}
+                    onRevoke={(id) => handleRejectHospital(id, 'Access revoked by administrator')}
                 />
             )}
             {viewTarget && viewTarget.type === 'lab' && (
                 <LabProfileDrawer
                     lab={viewTarget.data}
                     onClose={() => setViewTarget(null)}
+                    onApprove={(id) => handleVerifyLab(id)}
+                    onReject={(l) => setRejectTarget({ type: 'lab', data: l })}
+                    onRevoke={(id) => handleRejectLab(id, 'Access revoked by administrator')}
                 />
             )}
 
@@ -1028,10 +1204,20 @@ const AdminDashboard = () => {
                                     <div className="bg-white p-6 border border-gray-100 rounded-2xl shadow-sm">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="font-bold text-gray-800">Registration Trends</h3>
-                                            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">+12% this week</span>
+                                            {stats?.registration_trends?.length >= 6 ? (() => {
+                                                const trends = stats.registration_trends;
+                                                const recent = trends.slice(3).reduce((s, d) => s + d.value, 0);
+                                                const prev = trends.slice(0, 3).reduce((s, d) => s + d.value, 0);
+                                                const pct = prev === 0 ? (recent > 0 ? 100 : 0) : Math.round(((recent - prev) / prev) * 100);
+                                                return (
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pct >= 0 ? 'text-emerald-500 bg-emerald-50' : 'text-red-500 bg-red-50'}`}>
+                                                        {pct >= 0 ? '+' : ''}{pct}% this week
+                                                    </span>
+                                                );
+                                            })() : <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">Live data</span>}
                                         </div>
                                         <div className="h-[240px] w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                                 <LineChart data={stats?.registration_trends || []}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
@@ -1060,7 +1246,7 @@ const AdminDashboard = () => {
                                             </div>
                                         </div>
                                         <div className="h-[240px] w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                                 <BarChart data={[
                                                     { name: 'Hospitals', value: stats?.total_hospitals || 0 },
                                                     { name: 'Labs', value: stats?.total_labs || 0 },
@@ -1315,7 +1501,7 @@ const AdminDashboard = () => {
                                                                         <CheckCircle className="w-3.5 h-3.5" /> Approve
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => setRejectTarget({ type: 'hospital', data: hText })}
+                                                                        onClick={() => setRejectTarget({ type: 'hospital', data: h })}
                                                                         className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors border border-red-200"
                                                                     >
                                                                         <XCircle className="w-3.5 h-3.5" /> Reject

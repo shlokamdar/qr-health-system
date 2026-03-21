@@ -87,12 +87,19 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     // Registration State - Doctor (step state)
     const [doctorStep, setDoctorStep] = useState(1);
 
-    // Registration State - Lab Tech
+    // Lab Tech Data State
     const [labTechStep, setLabTechStep] = useState(1);
     const [labTechData, setLabTechData] = useState({
-        username: '', firstName: '', lastName: '', dob: '', gender: 'Male', phone: '', email: '',
-        password: '', confirmPassword: '', lab: '', licenseNumber: ''
+        firstName: '', lastName: '', username: '', email: '', password: '', confirmPassword: '', lab: '', licenseNumber: ''
     });
+
+    // Hospital Registration State
+    const [hospitalStep, setHospitalStep] = useState(1);
+    const [hospitalData, setHospitalData] = useState({
+        admin_username: '', email: '', admin_password: '', confirmPassword: '',
+        name: '', registration_number: '', phone: '', address: ''
+    });
+
     const [availableLabs, setAvailableLabs] = useState([]);
 
     const [showRegisterPassword, setShowRegisterPassword] = useState(false);
@@ -232,6 +239,49 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     }, [registerRole]);
 
 
+    const handleHospitalNext = () => {
+        if (hospitalStep === 1) {
+            if (!hospitalData.admin_username) { setError("Admin Username is required."); return; }
+            if (!hospitalData.email) { setError("Official Hospital Email is required."); return; }
+            if (!isEmailValid(hospitalData.email)) { setError("Please enter a valid email address."); return; }
+            if (!hospitalData.admin_password) { setError("Password is required."); return; }
+            if (hospitalData.admin_password !== hospitalData.confirmPassword) { setError("Passwords do not match"); return; }
+        }
+        if (hospitalStep === 2 && (!hospitalData.name || !hospitalData.registration_number || !hospitalData.phone)) {
+            setError('Please fill all identity fields');
+            return;
+        }
+        if (hospitalStep === 3 && !hospitalData.address) {
+            setError('Please enter the hospital address');
+            return;
+        }
+        setError('');
+        setHospitalStep(s => s + 1);
+    };
+
+    const handleHospitalRegister = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+            await api.post('doctors/hospitals/', {
+                admin_username: hospitalData.admin_username,
+                email: hospitalData.email,
+                admin_password: hospitalData.admin_password,
+                name: hospitalData.name,
+                registration_number: hospitalData.registration_number,
+                phone: hospitalData.phone,
+                address: hospitalData.address
+            });
+            setLoading(false);
+            setHospitalStep(5);
+        } catch (err) {
+            setLoading(false);
+            console.error(err);
+            setError(err.response?.data?.registration_number?.[0] || err.response?.data?.email?.[0] || 'Registration failed. Please try again.');
+        }
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -298,9 +348,14 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     const handlePatientNext = () => {
         if (patientStep === 1) {
             const { firstName, lastName, email, password, confirmPassword, username, dob, gender, phone } = patientData;
-            if (!firstName || !lastName || !email || !password || !username || !dob || !gender || !phone) {
-                setError("Please fill all required fields."); return;
-            }
+            if (!firstName) { setError("First Name is required."); return; }
+            if (!lastName) { setError("Last Name is required."); return; }
+            if (!email) { setError("Email address is required."); return; }
+            if (!username) { setError("Username is required."); return; }
+            if (!dob) { setError("Date of Birth is required."); return; }
+            if (!gender) { setError("Gender is required."); return; }
+            if (!phone) { setError("Phone number is required."); return; }
+            if (!password) { setError("Password is required."); return; }
             if (!/^[a-zA-Z0-9_]+$/.test(username)) {
                 setError("Username can only contain letters, numbers, and underscores."); return;
             }
@@ -486,9 +541,10 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     const handleDoctorNext = () => {
         if (doctorStep === 1) {
             const { firstName, lastName, email, password, confirmPassword } = doctorData;
-            if (!firstName || !lastName || !email || !password) {
-                setError("Please fill all required fields."); return;
-            }
+            if (!firstName) { setError("First Name is required."); return; }
+            if (!lastName) { setError("Last Name is required."); return; }
+            if (!email) { setError("Email address is required."); return; }
+            if (!password) { setError("Password is required."); return; }
             if (!isEmailValid(email)) {
                 setError("Please enter a valid email address."); return;
             }
@@ -576,9 +632,12 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     const handleLabTechNext = () => {
         if (labTechStep === 1) {
             const { firstName, lastName, email, password, confirmPassword, username } = labTechData;
-            if (!firstName || !lastName || !email || !password || !username) {
-                setError("Please fill all required fields."); return;
-            }
+            if (!firstName) { setError("First Name is required."); return; }
+            if (!lastName) { setError("Last Name is required."); return; }
+            if (!email) { setError("Email address is required."); return; }
+            if (!isEmailValid(email)) { setError("Please enter a valid email address."); return; }
+            if (!username) { setError("Username is required."); return; }
+            if (!password) { setError("Password is required."); return; }
             if (password !== confirmPassword) {
                 setError("Passwords do not match."); return;
             }
@@ -700,46 +759,45 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleLogin} className="space-y-5">
-                                <div>
-                                    <label className={labelStyle}>Email or Username</label>
-                                    <input
-                                        type="text"
-                                        value={username} onChange={e => setLoginUsername(e.target.value)}
-                                        className={inputStyle}
-                                        placeholder="name@domain.com or johndoe123"
-                                    />
-                                </div>
-                                <div className="relative">
-                                    <div className="flex justify-between items-center mb-2.5">
-                                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0">Password</label>
-                                        <a href="#" className="text-xs font-bold text-[#3B9EE2] hover:text-[#2d8ac9] hover:underline transition-colors">Forgot password?</a>
+                                <form onSubmit={handleLogin} className="space-y-5">
+                                    <div>
+                                        <label className={labelStyle}>Email or Username</label>
+                                        <input
+                                            type="text"
+                                            value={username} onChange={e => setLoginUsername(e.target.value)}
+                                            className={inputStyle}
+                                            placeholder="name@domain.com or johndoe123"
+                                        />
                                     </div>
                                     <div className="relative">
-                                        <input
-                                            type={showLoginPassword ? "text" : "password"}
-                                            value={password} onChange={e => setLoginPassword(e.target.value)}
-                                            className={`${inputStyle} pr-12`}
-                                            placeholder="••••••••"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowLoginPassword(!showLoginPassword)}
-                                            className="absolute right-4 top-3.5 text-slate-400 hover:text-[#3B9EE2] transition-colors focus:outline-none"
-                                        >
-                                            {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                        </button>
+                                        <div className="flex justify-between items-center mb-2.5">
+                                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0">Password</label>
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type={showLoginPassword ? "text" : "password"}
+                                                value={password} onChange={e => setLoginPassword(e.target.value)}
+                                                className={`${inputStyle} pr-12`}
+                                                placeholder="••••••••"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                                className="absolute right-4 top-3.5 text-slate-400 hover:text-[#3B9EE2] transition-colors focus:outline-none"
+                                            >
+                                                {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={`${btnPrimaryStyle} mt-2`}
-                                >
-                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
-                                </button>
-                            </form>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`${btnPrimaryStyle} mt-2`}
+                                    >
+                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
+                                    </button>
+                                </form>
 
                             <div className="mt-8 text-center pt-6 border-t border-slate-100">
                                 <p className="text-sm text-slate-500 font-medium">
@@ -761,35 +819,18 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                             {/* Registration Role Selector */}
                             <div className="flex bg-slate-50 p-1.5 rounded-xl mb-6 border border-slate-100">
-                                {['PATIENT', 'DOCTOR', 'LAB_TECH'].map(role => (
+                                {['PATIENT', 'DOCTOR', 'HOSPITAL_ADMIN', 'LAB_TECH'].map(role => (
                                     <button
                                         key={role}
-                                        onClick={() => { setRegisterRole(role); setPatientStep(1); setDoctorStep(1); setLabTechStep(1); setError(''); }}
+                                        onClick={() => { setRegisterRole(role); setPatientStep(1); setDoctorStep(1); setHospitalStep(1); setLabTechStep(1); setError(''); }}
                                         className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${registerRole === role
                                             ? 'bg-white text-[#3B9EE2] shadow-sm ring-1 ring-slate-200 transform scale-105'
                                             : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                                             }`}
                                     >
-                                        {role === 'LAB_TECH' ? 'Lab Tech' : role.charAt(0) + role.slice(1).toLowerCase()}
+                                        {role === 'LAB_TECH' ? 'Lab Tech' : role === 'HOSPITAL_ADMIN' ? 'Hospital' : role.charAt(0) + role.slice(1).toLowerCase()}
                                     </button>
                                 ))}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3 mb-8">
-                                <Link
-                                    to="/hospital/register"
-                                    className="flex items-center justify-center gap-2 p-2 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:border-indigo-500 hover:text-indigo-600 transition-all group"
-                                >
-                                    <BuildingOffice2Icon className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                                    Register Hospital
-                                </Link>
-                                <Link
-                                    to="/lab/register"
-                                    className="flex items-center justify-center gap-2 p-2 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:border-purple-500 hover:text-purple-600 transition-all group"
-                                >
-                                    <BeakerIcon className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                                    Register Lab
-                                </Link>
                             </div>
 
                             {error && (
@@ -1379,6 +1420,122 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                             </div>
 
                                             <Link to="/" className={btnGhostStyle}>Return to Homepage</Link>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Hospital Registration */}
+                            {registerRole === 'HOSPITAL_ADMIN' && (
+                                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                    {hospitalStep < 5 && <ProgressBar step={hospitalStep} total={4} />}
+
+                                    {hospitalStep === 1 && (
+                                        <div className="space-y-5">
+                                            <div>
+                                                <label className={labelStyle}>Admin Username</label>
+                                                <input type="text" className={inputStyle} value={hospitalData.admin_username} onChange={e => setHospitalData({ ...hospitalData, admin_username: e.target.value })} placeholder="hospital_admin" />
+                                            </div>
+                                            <div>
+                                                <label className={labelStyle}>Official Hospital Email</label>
+                                                <input type="email" className={inputStyle} value={hospitalData.email} onChange={e => setHospitalData({ ...hospitalData, email: e.target.value })} placeholder="admin@hospital.com" />
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <div className="flex-1">
+                                                    <label className={labelStyle}>Password</label>
+                                                    <input type="password" className={inputStyle} value={hospitalData.admin_password} onChange={e => setHospitalData({ ...hospitalData, admin_password: e.target.value })} placeholder="••••••••" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className={labelStyle}>Verify Password</label>
+                                                    <input type="password" className={inputStyle} value={hospitalData.confirmPassword} onChange={e => setHospitalData({ ...hospitalData, confirmPassword: e.target.value })} placeholder="••••••••" />
+                                                </div>
+                                            </div>
+                                            <button onClick={handleHospitalNext} className={`${btnPrimaryStyle} mt-4`}>Continue <ArrowRight className="w-5 h-5 ml-2" /></button>
+                                        </div>
+                                    )}
+
+                                    {hospitalStep === 2 && (
+                                        <div className="space-y-5">
+                                            <div>
+                                                <label className={labelStyle}>Hospital Name</label>
+                                                <input type="text" className={inputStyle} value={hospitalData.name} onChange={e => setHospitalData({ ...hospitalData, name: e.target.value })} placeholder="St. Lukes Medical Center" />
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <div className="flex-[2]">
+                                                    <label className={labelStyle}>Registration Number</label>
+                                                    <input type="text" className={inputStyle} value={hospitalData.registration_number} onChange={e => setHospitalData({ ...hospitalData, registration_number: e.target.value })} placeholder="HOSP123456" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className={labelStyle}>Contact</label>
+                                                    <input type="text" className={inputStyle} value={hospitalData.phone} onChange={e => setHospitalData({ ...hospitalData, phone: e.target.value })} placeholder="+1 234 567 890" />
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-4 pt-4">
+                                                <button onClick={() => setHospitalStep(1)} className={btnGhostStyle}>Back</button>
+                                                <button onClick={handleHospitalNext} className={btnPrimaryStyle}>Continue</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {hospitalStep === 3 && (
+                                        <div className="space-y-5">
+                                            <div>
+                                                <label className={labelStyle}>Full Address</label>
+                                                <textarea rows="4" className={inputStyle} value={hospitalData.address} onChange={e => setHospitalData({ ...hospitalData, address: e.target.value })} placeholder="123 Health Ave, Medical District, City, State, ZIP" />
+                                            </div>
+                                            <div className="flex gap-4 pt-4">
+                                                <button onClick={() => setHospitalStep(2)} className={btnGhostStyle}>Back</button>
+                                                <button onClick={handleHospitalNext} className={btnPrimaryStyle}>Review Application</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {hospitalStep === 4 && (
+                                        <div className="space-y-5">
+                                            <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-2xl flex gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                                    <ShieldCheck className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-[#0D1B2A] text-sm mb-1">Verify Details</h4>
+                                                    <p className="text-xs text-slate-500 leading-relaxed font-medium">Verify your registration details carefully. Once submitted, our system admin will review your application within 24-48 business hours.</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="space-y-3 bg-white border border-slate-100 p-5 rounded-xl shadow-sm">
+                                                <div className="flex justify-between text-sm py-2 border-b border-slate-50">
+                                                    <span className="text-slate-500 font-bold">Hospital Name</span>
+                                                    <span className="text-[#0D1B2A] font-bold text-right">{hospitalData.name}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm py-2 border-b border-slate-50">
+                                                    <span className="text-slate-500 font-bold">Registration No.</span>
+                                                    <span className="text-[#0D1B2A] font-medium text-right font-mono">{hospitalData.registration_number}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm py-2">
+                                                    <span className="text-slate-500 font-bold">Admin Email</span>
+                                                    <span className="text-[#0D1B2A] font-medium text-right">{hospitalData.email}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-4 pt-4">
+                                                <button onClick={() => setHospitalStep(3)} className={btnGhostStyle}>Back</button>
+                                                <button onClick={handleHospitalRegister} className={btnPrimaryStyle} disabled={loading}>
+                                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Application'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {hospitalStep === 5 && (
+                                        <div className="text-center py-12 animate-in zoom-in duration-500">
+                                            <div className="w-24 h-24 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-white">
+                                                <Check className="w-12 h-12" />
+                                            </div>
+                                            <h2 className="text-3xl font-bold text-[#0D1B2A] mb-4 tracking-tight">Application Received</h2>
+                                            <p className="text-slate-500 text-base mb-10 px-4 leading-relaxed max-w-sm mx-auto font-medium">
+                                                Your hospital profile has been submitted for review. You'll receive an email once our admin verifies your registration documents.
+                                            </p>
+                                            <button onClick={() => setActiveTab('login')} className={btnGhostStyle}>Return to Login</button>
                                         </div>
                                     )}
                                 </div>

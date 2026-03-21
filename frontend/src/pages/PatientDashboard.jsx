@@ -74,7 +74,7 @@ const PatientDashboard = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(localStorage.getItem('patientActiveTab') || 'overview');
   const [patient, setPatient] = useState(null);
   const [recentRecords, setRecentRecords] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -85,6 +85,8 @@ const PatientDashboard = () => {
   const [sharingPermissions, setSharingPermissions] = useState([]);
   const [emergencyContacts, setEmergencyContacts] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -107,19 +109,23 @@ const PatientDashboard = () => {
   const fetchAllData = async () => {
     try {
       setLoading(true);
-      const safe = (promise) => promise.catch(e => { console.warn('API call failed:', e); return []; });
-      const [pData, rData, aData, dData, lData, hData, sData, eData, odData, docData, tData] = await Promise.all([
-        PatientService.getProfile().catch(e => { console.warn('Profile failed:', e); return null; }),
-        safe(PatientService.getRecords()),
-        safe(PatientService.getMyAppointments()),
-        safe(PatientService.getDocuments()),
-        safe(PatientService.getLabReports()),
-        safe(PatientService.getAccessHistory()),
-        safe(PatientService.getSharingPermissions()),
-        safe(PatientService.getEmergencyContacts()),
-        safe(PatientService.getPrescriptions()),
-        safe(DoctorService.getVerifiedDoctors()),
-        safe(api.get('support/tickets/').then(res => res.data.results || res.data))
+      const safe = (promise, label) => promise.catch(e => { 
+        console.error(`API call failed [${label}]:`, e); 
+        return []; 
+      });
+      const [pData, rData, aData, dData, lData, hData, sData, eData, odData, docData, tData, notificationsData] = await Promise.all([
+        PatientService.getProfile().catch(e => { console.error('Profile failed:', e); return null; }),
+        safe(PatientService.getRecords(), 'records'),
+        safe(PatientService.getMyAppointments(), 'appointments'),
+        safe(PatientService.getDocuments(), 'documents'),
+        safe(PatientService.getLabReports(), 'labReports'),
+        safe(PatientService.getAccessHistory(), 'accessHistory'),
+        safe(PatientService.getSharingPermissions(), 'sharing'),
+        safe(PatientService.getEmergencyContacts(), 'contacts'),
+        safe(PatientService.getPrescriptions(), 'prescriptions'),
+        safe(DoctorService.getVerifiedDoctors(), 'doctors'),
+        safe(api.get('support/tickets/').then(res => res.data.results || res.data), 'tickets'),
+        safe(api.get('auth/notifications/').then(res => res.data.results || res.data), 'notifications')
       ]);
 
       if (pData) setPatient(pData);
@@ -133,6 +139,7 @@ const PatientDashboard = () => {
       setPrescriptions(Array.isArray(odData) ? odData : []);
       setDoctorsList(Array.isArray(docData) ? docData : []);
       setTickets(Array.isArray(tData) ? tData : []);
+      setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
       if (pData) setEditForm(pData);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -145,6 +152,10 @@ const PatientDashboard = () => {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('patientActiveTab', activeTab);
+  }, [activeTab]);
 
   // ── HANDLERS ─────────────────────────────────────────────────────────────
   const handleLogout = () => { logout(); navigate('/login'); };
@@ -204,6 +215,14 @@ const PatientDashboard = () => {
     } catch (err) { alert('Failed to add contact.'); }
   };
 
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.post('accounts/notifications/mark_all_as_read/');
+      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      toast.success('All marked as read');
+    } catch (err) { toast.error('Action failed'); }
+  };
 
   const handleCreateTicket = async (e) => {
     e.preventDefault();
@@ -322,6 +341,54 @@ const PatientDashboard = () => {
           <button onClick={handleLogout} className="pd-logout-btn">
             <Icon d={ICONS.LogOut} size={16} /> Logout
           </button>
+          
+          {/* Notification Bell Desktop */}
+          <div className="pd-notification-wrapper" style={{ position: 'relative', marginLeft: 10 }}>
+            <button 
+              className="pd-icon-btn" 
+              onClick={() => setShowNotifications(!showNotifications)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4A5568', position: 'relative', display: 'flex', alignItems: 'center' }}
+            >
+              <Icon d={ICONS.Bell} size={22} />
+              {notifications.filter(n => !n.is_read).length > 0 && (
+                <span style={{ position: 'absolute', top: -2, right: -2, background: '#EF4444', color: '#fff', fontSize: 9, fontWeight: 900, minWidth: 14, height: 14, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}>
+                  {notifications.filter(n => !n.is_read).length}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="pd-notification-dropdown fade-in" style={{ position: 'absolute', top: '100%', right: 0, width: 320, background: '#fff', borderRadius: 16, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', border: '1px solid #E2E8F0', zIndex: 1000, marginTop: 12, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFBFC' }}>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0D1B2A' }}>Notifications</h4>
+                  <button onClick={handleMarkAllRead} style={{ fontSize: 11, color: '#3B9EE2', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Mark all as read</button>
+                </div>
+                <div style={{ maxHeight: 350, overflowY: 'auto' }}>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>
+                      <Icon d={ICONS.Bell} size={32} className="mx-auto mb-2 opacity-20" />
+                      <p style={{ fontSize: 13, margin: 0 }}>No new notifications</p>
+                    </div>
+                  ) : (
+                    notifications.map(n => (
+                      <div key={n.id} style={{ padding: '16px 20px', borderBottom: '1px solid #F1F5F9', background: n.is_read ? '#fff' : '#F0F9FF', transition: 'all 0.2s' }}>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          <div style={{ marginTop: 2 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: n.is_read ? 'transparent' : '#3B9EE2' }} />
+                          </div>
+                          <div>
+                            <p style={{ margin: '0 0 4px 0', fontSize: 13, fontWeight: 700, color: '#1A202C' }}>{n.title}</p>
+                            <p style={{ margin: 0, fontSize: 12, color: '#4A5568', lineHeight: 1.5 }}>{n.message}</p>
+                            <p style={{ margin: '8px 0 0 0', fontSize: 10, color: '#A0AEC0', fontWeight: 600 }}>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {new Date(n.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -335,9 +402,9 @@ const PatientDashboard = () => {
           <div className="pd-avatar" style={{ width: 28, height: 28, background: '#EFF6FF', color: '#3B9EE2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
             {(user?.first_name || 'P').charAt(0).toUpperCase()}
           </div>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative' }} onClick={() => { setActiveTab('overview'); setShowNotifications(!showNotifications); }}>
             <Icon d={ICONS.Bell} size={20} style={{ color: '#4A5568' }} />
-            {stats.pendingRequests > 0 && <div style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1px solid #fff' }} />}
+            {notifications.filter(n => !n.is_read).length > 0 && <div style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1px solid #fff' }} />}
           </div>
         </div>
       </header>

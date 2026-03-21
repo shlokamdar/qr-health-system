@@ -47,6 +47,23 @@ class PatientSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class PatientPublicSerializer(serializers.ModelSerializer):
+    """Public basic patient info for QR scan view (no login required)."""
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    age = serializers.ReadOnlyField()
+    emergency_contacts = EmergencyContactSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Patient
+        fields = [
+            'health_id', 'first_name', 'last_name', 'age', 'gender', 
+            'blood_group', 'allergies', 'chronic_conditions',
+            'emergency_contacts'
+        ]
+        read_only_fields = fields
+
+
 class PatientBasicSerializer(serializers.ModelSerializer):
     """Basic patient info for BASIC authorization level doctors."""
     user = UserSerializer(read_only=True)

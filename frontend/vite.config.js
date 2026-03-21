@@ -53,17 +53,6 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
-          },
-          {
-            urlPattern: /\/api\/patients\/profile\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'patient-data-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              }
-            }
           }
         ]
       }

@@ -586,9 +586,9 @@ const Homepage = () => {
                     
                     <div className="flex flex-col md:flex-row gap-8 md:gap-16 text-[#94A3B8] text-sm">
                         <div className="flex flex-col gap-4">
-                            <a href="#" className="hover:text-white transition-colors">About</a>
-                            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+                            <Link to="/about" className="hover:text-white transition-colors">About</Link>
+                            <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                            <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
                         </div>
                         <div className="flex flex-col gap-4">
                              <Link to="/login" className="hover:text-[#3B9EE2] transition-colors">Register Hospital</Link>

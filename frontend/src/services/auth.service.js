@@ -29,6 +29,16 @@ const AuthService = {
     checkUsername: async (username) => {
         const response = await api.get(`auth/check-username/?username=${username}`);
         return response.data;
+    },
+
+    forgotPassword: async (email) => {
+        const response = await api.post('auth/password-reset/', { email });
+        return response.data;
+    },
+
+    resetPassword: async (token, new_password) => {
+        const response = await api.post('auth/password-reset-confirm/', { token, new_password });
+        return response.data;
     }
 };
 

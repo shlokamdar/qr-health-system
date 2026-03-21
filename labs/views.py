@@ -58,12 +58,35 @@ class LabTestListView(generics.ListAPIView):
 
 class LabReportViewSet(viewsets.ModelViewSet):
     """ViewSet for LabReport CRUD operations."""
-    permission_classes = [IsLabTech]
     serializer_class = LabReportSerializer
     
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsLabTech()]
+        return [permissions.IsAuthenticated()]
+    
     def get_queryset(self):
-        technician = get_object_or_404(LabTechnician, user=self.request.user)
-        return LabReport.objects.filter(technician=technician)
+        user = self.request.user
+        if user.role == 'LAB_TECH':
+            try:
+                technician = LabTechnician.objects.get(user=user)
+                return LabReport.objects.filter(technician=technician)
+            except LabTechnician.DoesNotExist:
+                return LabReport.objects.none()
+        elif user.role == 'PATIENT':
+            try:
+                patient = Patient.objects.get(user=user)
+                return LabReport.objects.filter(patient=patient)
+            except Patient.DoesNotExist:
+                return LabReport.objects.none()
+        elif user.role == 'DOCTOR':
+            # Show reports for patients who have granted access to this doctor
+            return LabReport.objects.filter(
+                patient__sharingpermission__doctor__user=user, 
+                patient__sharingpermission__is_active=True
+            ).distinct()
+        
+        return LabReport.objects.none()
     
     def perform_create(self, serializer):
         technician = get_object_or_404(LabTechnician, user=self.request.user)
@@ -73,7 +96,7 @@ class LabReportViewSet(viewsets.ModelViewSet):
         AccessLog.objects.create(
             actor=self.request.user,
             patient=report.patient,
-            action=AccessLog.Action.VIEW_RECORDS, # Or add a new action type if needed
+            action=AccessLog.Action.VIEW_RECORDS,
             details=f"Uploaded lab report: {report.test_type.name}"
         )
 
@@ -124,9 +147,28 @@ class LabVerificationView(generics.UpdateAPIView):
         else:
             lab.rejection_reason = ""
         lab.save()
+
+        if verify:
+            # Find the first technician linked as admin of this lab
+            admin_tech = LabTechnician.objects.filter(lab=lab).first()
+            if admin_tech:
+                print(f"\n{'='*60}")
+                print(f"LAB APPROVED: {lab.name}")
+                print(f"Admin Username: {admin_tech.user.username}")
+                print(f"Admin Email:    {admin_tech.user.email}")
+                print(f"Login at: http://localhost:5173/login (select Lab Tech role)")
+                print(f"{'='*60}\n")
+                return Response({
+                    "message": "Lab approved successfully.",
+                    "credentials": {
+                        "username": admin_tech.user.username,
+                        "email": admin_tech.user.email,
+                        "role": "Lab Technician"
+                    }
+                }, status=status.HTTP_200_OK)
+            return Response({"message": "Lab approved successfully."}, status=status.HTTP_200_OK)
         
-        status_msg = "verified" if verify else "rejected"
-        return Response({"message": f"Lab {status_msg} successfully"}, status=status.HTTP_200_OK)
+        return Response({"message": f"Lab rejected. Reason has been recorded."}, status=status.HTTP_200_OK)
 
 
 class TechnicianListView(generics.ListAPIView):

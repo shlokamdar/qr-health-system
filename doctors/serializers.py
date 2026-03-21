@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Hospital, Department, Doctor, Consultation, Appointment
 from accounts.serializers import UserSerializer
+from django.db import transaction
 
 User = get_user_model()
 
@@ -56,6 +57,17 @@ class HospitalRegisterSerializer(serializers.ModelSerializer):
             'admin_username', 'admin_password'
         ]
 
+    def validate_admin_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    @transaction.atomic
     def create(self, validated_data):
         admin_username = validated_data.pop('admin_username')
         admin_password = validated_data.pop('admin_password')

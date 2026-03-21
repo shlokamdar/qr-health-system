@@ -10,13 +10,15 @@ import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
-import HospitalRegister from './pages/HospitalRegister';
-import LabRegister from './pages/LabRegister';
-import LabLogin from './pages/LabLogin';
-import LabDashboard from './pages/LabDashboard';
 import HospitalDashboard from './pages/HospitalDashboard';
+import LabDashboard from './pages/LabDashboard';
 import UnifiedLogin from './pages/UnifiedLogin';
 import SystemAdminLogin from './pages/SystemAdminLogin';
+import ResetPassword from './pages/ResetPassword';
+import PublicPatientView from './pages/PublicPatientView';
+import About from './pages/About';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 
 // Protected Route — requires authentication
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -70,7 +72,7 @@ function App() {
 
                     {/* Organization Routes */}
                     {/* Hospital & Lab Login/Register */}
-                    <Route path="/hospital/register" element={<HospitalRegister />} />
+                    <Route path="/hospital/register" element={<UnifiedLogin initialTab="register" initialRole="HOSPITAL_ADMIN" />} />
                     <Route path="/hospital/login" element={<UnifiedLogin initialTab="login" initialRole="HOSPITAL_ADMIN" />} />
                     <Route
                         path="/hospital/dashboard"
@@ -80,7 +82,7 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                    <Route path="/lab/register" element={<LabRegister />} />
+                    <Route path="/lab/register" element={<UnifiedLogin initialTab="register" initialRole="LAB_TECH" />} />
                     <Route path="/lab/login" element={<UnifiedLogin initialTab="login" initialRole="LAB_TECH" />} />
                     <Route
                         path="/lab/dashboard"
@@ -130,6 +132,11 @@ function App() {
                     <Route path="/login" element={<UnifiedLogin />} />
                     <Route path="/register" element={<UnifiedLogin initialTab="register" />} />
                     <Route path="/system/login" element={<SystemAdminLogin />} />
+                    <Route path="/reset-password/:token" element={<ResetPassword />} />
+                    <Route path="/patients/:healthId" element={<PublicPatientView />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<Terms />} />
 
                     {/* Catch all */}
                     <Route path="*" element={<Navigate to="/" replace />} />

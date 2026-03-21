@@ -177,12 +177,39 @@ class HospitalVerificationView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         hospital = self.get_object()
-        
+
         if 'verify' in request.data:
-            hospital.is_verified = True
+            is_verified = bool(request.data.get('verify', False))
+            hospital.is_verified = is_verified
+            if not is_verified:
+                hospital.rejection_reason = request.data.get('rejection_reason', '')
+            else:
+                hospital.rejection_reason = ''
             hospital.save()
-            return Response({'message': 'Hospital verified successfully'})
-            
+
+            if is_verified:
+                # Find the admin user linked to this hospital
+                from .models import HospitalAdmin
+                admin_profile = HospitalAdmin.objects.filter(hospital=hospital).first()
+                if admin_profile:
+                    print(f"\n{'='*60}")
+                    print(f"HOSPITAL APPROVED: {hospital.name}")
+                    print(f"Admin Username: {admin_profile.user.username}")
+                    print(f"Admin Email:    {admin_profile.user.email}")
+                    print(f"Login at: http://localhost:5173/login (select Hospital role)")
+                    print(f"{'='*60}\n")
+                    return Response({
+                        'message': 'Hospital approved successfully.',
+                        'credentials': {
+                            'username': admin_profile.user.username,
+                            'email': admin_profile.user.email,
+                            'role': 'Hospital Admin'
+                        }
+                    })
+                return Response({'message': 'Hospital approved successfully.'})
+            else:
+                return Response({'message': f'Hospital rejected. Reason has been recorded.'})
+
         return super().update(request, *args, **kwargs)
 
 

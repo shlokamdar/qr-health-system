@@ -3,12 +3,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from io import BytesIO
+from pypdf import PdfReader, PdfWriter
 
-def generate_patient_pdf(patient, records, prescriptions, lab_reports):
+def generate_patient_pdf(patient, records, prescriptions, lab_reports, password=None):
     """
     Generate a PDF report for a patient including their profile,
     medical records, prescriptions, and lab reports.
-    Returns: BytesIO object containing the PDF.
+    Returns: BytesIO object containing the (optionally encrypted) PDF.
     """
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -106,5 +107,21 @@ def generate_patient_pdf(patient, records, prescriptions, lab_reports):
 
     # Build PDF
     doc.build(story)
+    
+    if password:
+        buffer.seek(0)
+        reader = PdfReader(buffer)
+        writer = PdfWriter()
+        for page in reader.pages:
+            writer.add_page(page)
+        
+        # Binary password encryption
+        writer.encrypt(password)
+        
+        encrypted_buffer = BytesIO()
+        writer.write(encrypted_buffer)
+        encrypted_buffer.seek(0)
+        return encrypted_buffer
+
     buffer.seek(0)
     return buffer
