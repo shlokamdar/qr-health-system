@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import OTPRequestModal from '../components/patient/OTPRequestModal';
+import OTPEntryModal from '../components/patient/OTPEntryModal';
 
 const PublicPatientView = () => {
     const { healthId } = useParams();
@@ -14,6 +16,12 @@ const PublicPatientView = () => {
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
+    // Modals state
+    const [showRequestModal, setShowRequestModal] = useState(false);
+    const [showEntryModal, setShowEntryModal] = useState(false);
+    const [activeRequestId, setActiveRequestId] = useState(null);
+    const [deliveryMethod, setDeliveryMethod] = useState('');
 
     useEffect(() => {
         const fetchPublicData = async () => {
@@ -148,7 +156,7 @@ const PublicPatientView = () => {
                     {/* Full Access CTA */}
                     <div className="pt-4">
                         <button 
-                            onClick={() => navigate('/login')}
+                            onClick={() => setShowRequestModal(true)}
                             className="w-full bg-[#0D1B2A] hover:bg-[#1A365D] text-white p-5 rounded-[20px] font-extrabold flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20"
                         >
                             <Lock size={18} className="text-[#3B9EE2]" />
@@ -163,13 +171,39 @@ const PublicPatientView = () => {
                 </div>
             </div>
             
-            {/* Footer */}
             <footer className="text-center py-10 opacity-40">
                 <div className="pd-logo justify-center grayscale scale-75">
                     <div className="pd-logo-mark"><span className="text-white font-black">P</span></div>
                     <div className="pd-logo-text text-[#0D1B2A]">PulseID</div>
                 </div>
             </footer>
+
+            {/* Modals */}
+            {showRequestModal && (
+                <OTPRequestModal 
+                    patient={patient} 
+                    onClose={() => setShowRequestModal(false)}
+                    onSuccess={(reqId, method) => {
+                        setShowRequestModal(false);
+                        setActiveRequestId(reqId);
+                        setDeliveryMethod(method);
+                        setShowEntryModal(true);
+                    }}
+                />
+            )}
+            
+            {showEntryModal && (
+                <OTPEntryModal
+                    patient={patient}
+                    requestId={activeRequestId}
+                    deliveryMethod={deliveryMethod}
+                    onClose={() => setShowEntryModal(false)}
+                    onSuccess={() => {
+                        setShowEntryModal(false);
+                        window.location.reload();
+                    }}
+                />
+            )}
         </div>
     );
 };

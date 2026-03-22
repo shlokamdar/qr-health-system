@@ -26,6 +26,7 @@ import UploadPrescriptionForm from '../components/patient/UploadPrescriptionForm
 import AddEmergencyContactForm from '../components/patient/AddEmergencyContactForm';
 import ProfileEditModal from '../components/patient/ProfileEditModal';
 import ProfileTab from '../components/patient/ProfileTab';
+import PendingOTPWidget from '../components/patient/PendingOTPWidget';
 import toast from 'react-hot-toast';
 
 const Icon = ({ d, size = 20, className = '' }) => (
@@ -447,6 +448,8 @@ const PatientDashboard = () => {
       <main className="pd-content fade-in">
         {/* Tab Heading (Desktop only typically, but kept for context) */}
         {!isMobile && <h2 className="pd-tab-heading">{activeTab.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h2>}
+
+        <PendingOTPWidget />
 
         {activeTab === 'overview' && (
           <OverviewTab

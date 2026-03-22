@@ -259,6 +259,15 @@ class SharingPermission(models.Model):
 class OTPRequest(models.Model):
     """Temporary storage for OTPs requested by doctors."""
     
+    class DeliveryMethod(models.TextChoices):
+        SMS = 'SMS', _('SMS')
+        EMAIL = 'EMAIL', _('Email')
+        DASHBOARD = 'DASHBOARD', _('Dashboard')
+        
+    class VerifierType(models.TextChoices):
+        PATIENT = 'PATIENT', _('Patient')
+        EMERGENCY_CONTACT = 'EMERGENCY_CONTACT', _('Emergency Contact')
+    
     doctor = models.ForeignKey(
         'doctors.Doctor', 
         on_delete=models.CASCADE, 
@@ -272,6 +281,27 @@ class OTPRequest(models.Model):
     otp_code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
+    
+    # New Extended Fields
+    attempts = models.IntegerField(default=0)
+    is_revoked = models.BooleanField(default=False)
+    delivery_method = models.CharField(
+        max_length=20,
+        choices=DeliveryMethod.choices,
+        default=DeliveryMethod.DASHBOARD
+    )
+    verifier_type = models.CharField(
+        max_length=20,
+        choices=VerifierType.choices,
+        default=VerifierType.PATIENT
+    )
+    verifier_contact = models.ForeignKey(
+        'EmergencyContact',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='otp_requests_to_verify'
+    )
     
     def __str__(self):
         return f"OTP for {self.patient.health_id} by Dr. {self.doctor.user.username}"

@@ -23,6 +23,7 @@ class PatientSerializer(serializers.ModelSerializer):
     """Full patient serializer with user details."""
     user = UserSerializer(read_only=True)
     emergency_contacts = EmergencyContactSerializer(many=True, read_only=True)
+    age = serializers.ReadOnlyField()
     
     # Writeable fields for name updates
     first_name = serializers.CharField(source='user.first_name', required=False)

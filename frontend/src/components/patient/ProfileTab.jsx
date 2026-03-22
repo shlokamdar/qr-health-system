@@ -83,8 +83,8 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
         }
     };
 
-    const inputClasses = "w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] transition-all focus:outline-none focus:border-[#3B9EE2] text-[#0D1B2A] placeholder-[#9CA3AF] bg-white font-medium";
-    const labelClasses = "block text-[#718096] text-[11px] font-bold mb-1.5 uppercase tracking-wider";
+    const inputClasses = "w-full border border-[#dfe3e6] rounded-xl px-3.5 py-3 text-[14px] font-normal text-[#0D1B2A] bg-[#fafbfc] placeholder-teal-900/40 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 focus:outline-none focus:border-[#10b981] focus:ring-[3px] focus:ring-[#10b981]/15";
+    const labelClasses = "block text-slate-700 text-[13px] font-medium mb-1.5 tracking-wide";
 
     const previewPatient = {
         ...patient,
@@ -104,18 +104,18 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                     <form onSubmit={handleSubmit}>
                         <div className="space-y-8">
                             {/* PERSONAL INFORMATION CARD */}
-                            <div className="bg-white rounded-[24px] p-8 md:p-10 shadow-sm border border-borders mb-8 relative">
-                                <div className="flex items-center gap-4 mb-10 pb-4 border-b border-borders">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
-                                        <User2 size={22} />
+                            <div className="bg-[#F8FAFC] rounded-[32px] p-10 md:p-12 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-10 relative">
+                                <div className="flex items-center gap-4 mb-10 pb-5 border-b border-slate-200/60">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 text-primary">
+                                        <User2 size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-headings text-lg font-bold tracking-tight">Identity & Profile</h3>
-                                        <p className="text-body text-xs font-medium">Your official identity and contact records</p>
+                                        <h3 className="text-slate-800 text-xl font-extrabold tracking-tight">Identity & Profile</h3>
+                                        <p className="text-slate-500 text-sm font-medium mt-1">Your official identity and contact records</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                                     <div>
                                         <label className={labelClasses}>First Name</label>
                                         <input name="first_name" value={formData.first_name} onChange={handleChange} className={inputClasses} placeholder="First Name" />
@@ -134,14 +134,14 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                                     </div>
                                     <div>
                                         <label className={labelClasses}>Blood Group</label>
-                                        <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%239CA3AF\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
+                                        <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2310b981\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '1.2em' }}>
                                             <option value="">Select Group</option>
                                             {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(g => <option key={g} value={g}>{g}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className={labelClasses}>Gender</label>
-                                        <select name="gender" value={formData.gender} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%239CA3AF\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
+                                        <select name="gender" value={formData.gender} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2310b981\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '1.2em' }}>
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
                                             <option value="Other">Other</option>
@@ -155,25 +155,25 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                             </div>
 
                             {/* MEDICAL INFORMATION CARD */}
-                            <div className="bg-white rounded-[24px] p-8 md:p-10 shadow-sm border border-borders relative">
-                                <div className="flex items-center gap-4 mb-10 pb-4 border-b border-borders">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-secondary/10 text-secondary">
-                                        <Activity size={22} />
+                            <div className="bg-[#F8FAFC] rounded-[32px] p-10 md:p-12 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative mb-10">
+                                <div className="flex items-center gap-4 mb-10 pb-5 border-b border-slate-200/60">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-secondary/10 text-secondary">
+                                        <Activity size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-headings text-lg font-bold tracking-tight">Clinical Background</h3>
-                                        <p className="text-body text-xs font-medium">Essential medical history and parameters</p>
+                                        <h3 className="text-slate-800 text-xl font-extrabold tracking-tight">Clinical Background</h3>
+                                        <p className="text-slate-500 text-sm font-medium mt-1">Essential medical history and parameters</p>
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                                     <div>
                                         <label className={labelClasses}>Known Allergies</label>
-                                        <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={2} className={inputClasses} placeholder="e.g. Penicillin, Pollen..." />
+                                        <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={3} className={inputClasses} placeholder="e.g. Penicillin, Pollen..." />
                                     </div>
                                     <div>
                                         <label className={labelClasses}>Chronic Conditions</label>
-                                        <textarea name="chronic_conditions" value={formData.chronic_conditions} onChange={handleChange} rows={2} className={inputClasses} placeholder="e.g. Type 2 Diabetes..." />
+                                        <textarea name="chronic_conditions" value={formData.chronic_conditions} onChange={handleChange} rows={3} className={inputClasses} placeholder="e.g. Type 2 Diabetes..." />
                                     </div>
                                 </div>
                             </div>
@@ -200,7 +200,7 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                 </div>
 
                 {/* RIGHT COLUMN: Health ID Card (Sticky) */}
-                <div className="w-full lg:sticky lg:top-24 space-y-6">
+                <div className="w-full lg:sticky lg:top-24 space-y-6 lg:pl-6">
                     <div className="text-muted text-[11px] font-bold tracking-widest uppercase ml-1">Live Preview: Health ID</div>
                     
                     <div className="relative">

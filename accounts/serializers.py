@@ -65,19 +65,19 @@ class RegisterSerializer(serializers.ModelSerializer):
             patient, created = Patient.objects.get_or_create(user=user)
             
             # Update fields
-            patient.contact_number = profile_data.get('phone', '')
-            patient.date_of_birth = profile_data.get('dob')
-            patient.gender = profile_data.get('gender', 'Male')
-            patient.blood_group = profile_data.get('bloodGroup', '')
-            patient.allergies = profile_data.get('allergies', '')
-            patient.chronic_conditions = profile_data.get('conditions', '')
+            patient.contact_number = profile_data.get('phone') or ''
+            patient.date_of_birth = profile_data.get('dob') or None
+            patient.gender = profile_data.get('gender') or 'Male'
+            patient.blood_group = profile_data.get('bloodGroup') or ''
+            patient.allergies = profile_data.get('allergies') or ''
+            patient.chronic_conditions = profile_data.get('conditions') or ''
             
             # Construct address
             addr_parts = [
-                profile_data.get('addressLine1', ''),
-                profile_data.get('city', ''),
-                profile_data.get('state', ''),
-                profile_data.get('pin', '')
+                profile_data.get('addressLine1') or '',
+                profile_data.get('city') or '',
+                profile_data.get('state') or '',
+                profile_data.get('pin') or ''
             ]
             patient.address = ", ".join([p for p in addr_parts if p])
             patient.save()
@@ -100,15 +100,15 @@ class RegisterSerializer(serializers.ModelSerializer):
             Doctor.objects.create(
                 user=user,
                 hospital=hospital,
-                specialization=profile_data.get('specialization', 'General'),
-                license_number=profile_data.get('licenseNumber', ''),
-                issuing_medical_council=profile_data.get('issuingCouncil', ''),
+                specialization=profile_data.get('specialization') or 'General',
+                license_number=profile_data.get('licenseNumber') or '',
+                issuing_medical_council=profile_data.get('issuingCouncil') or '',
                 license_expiry_date=profile_data.get('licenseExpiry') or None,
-                years_of_experience=profile_data.get('experience', 0),
+                years_of_experience=profile_data.get('experience') or 0,
 
                 date_of_birth=profile_data.get('dob') or None,
-                contact_number=profile_data.get('phone', ''),
-                address=f"{profile_data.get('addressLine1', '')}, {profile_data.get('city', '')}, {profile_data.get('state', '')} - {profile_data.get('pin', '')}",
+                contact_number=profile_data.get('phone') or '',
+                address=f"{profile_data.get('addressLine1') or ''}, {profile_data.get('city') or ''}, {profile_data.get('state') or ''} - {profile_data.get('pin') or ''}",
 
                 license_document=license_document,
                 degree_certificate=degree_certificate,
@@ -141,7 +141,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             LabTechnician.objects.create(
                 user=user,
                 lab=lab,
-                license_number=profile_data.get('license_number') or profile_data.get('licenseNumber', f"TEMP-{user.id}"),
+                license_number=profile_data.get('license_number') or profile_data.get('licenseNumber') or f"TEMP-{user.id}",
                 is_verified=False  # Requires admin approval
             )
         
