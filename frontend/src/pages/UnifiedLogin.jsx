@@ -772,6 +772,9 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                     <div className="relative">
                                         <div className="flex justify-between items-center mb-2.5">
                                             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0">Password</label>
+                                            <Link to="/forgot-password" className="text-xs font-semibold text-[#3B9EE2] hover:text-[#2EC4A9] transition-colors">
+                                                Forgot password?
+                                            </Link>
                                         </div>
                                         <div className="relative">
                                             <input

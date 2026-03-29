@@ -49,7 +49,10 @@ const AdminLogin = () => {
                         />
                     </div>
                     <div className="mb-6">
-                        <label className="block text-gray-700 mb-2">Password</label>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-gray-700 mb-0">Password</label>
+                            <Link to="/forgot-password" className="text-sm text-blue-500 hover:text-blue-600 transition-colors">Forgot password?</Link>
+                        </div>
                         <input
                             type="password"
                             name="password"

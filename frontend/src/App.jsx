@@ -15,6 +15,7 @@ import LabDashboard from './pages/LabDashboard';
 import UnifiedLogin from './pages/UnifiedLogin';
 import SystemAdminLogin from './pages/SystemAdminLogin';
 import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './pages/ForgotPassword';
 import PublicPatientView from './pages/PublicPatientView';
 import About from './pages/About';
 import Privacy from './pages/Privacy';
@@ -132,6 +133,7 @@ function App() {
                     <Route path="/login" element={<UnifiedLogin />} />
                     <Route path="/register" element={<UnifiedLogin initialTab="register" />} />
                     <Route path="/system/login" element={<SystemAdminLogin />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password/:token" element={<ResetPassword />} />
                     <Route path="/patients/:healthId" element={<PublicPatientView />} />
                     <Route path="/about" element={<About />} />

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Activity, ShieldAlert, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 const SystemAdminLogin = () => {
@@ -111,7 +111,10 @@ const SystemAdminLogin = () => {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-[#0D1B2A] uppercase tracking-wider mb-2">Password</label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="block text-xs font-bold text-[#0D1B2A] uppercase tracking-wider mb-0">Password</label>
+                                <Link to="/forgot-password" className="text-xs font-semibold text-[#3B9EE2] hover:text-[#2EC4A9] transition-colors">Forgot password?</Link>
+                            </div>
                             <input
                                 type="password"
                                 id="admin-password"

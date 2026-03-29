@@ -1,6 +1,8 @@
 # PulseID - QR-Based Unified Health Record System
 ## Comprehensive Testing Checklist & Final Submission Handoff
 
+
+
 ---
 
 ## PART 1: FUNCTIONAL TESTING CHECKLIST
@@ -8,18 +10,19 @@
 ### 1.1 Authentication & Authorization Testing
 
 #### Patient Authentication
-- [ ] Patient can register with valid email and password
-- [ ] Duplicate email registration is rejected with error message
-- [ ] Password confirmation requirement is enforced
-- [ ] Patient receives Health ID immediately after registration
-- [ ] QR code is generated and displayable after registration
-- [ ] Patient can login with correct credentials
-- [ ] Patient login is rejected with invalid credentials
-- [ ] Password reset functionality works correctly
+- [works] Patient can register with valid email and password
+- [!!!!!!!] Duplicate email registration is rejected with error message
+      works but on last step. change it to step 1 when user enters email. ask user to login instead. AND add phone number duplication not allowed as well. 
+- [works] Password confirmation requirement is enforced
+- [works] Patient receives Health ID immediately after registration
+- [works] QR code is generated and displayable after registration
+- [works] Patient can login with correct credentials
+- [works] Patient login is rejected with invalid credentials
+- [works] Password reset functionality works correctly
 - [ ] JWT token is issued on successful login
 - [ ] Token expires after defined time period
-- [ ] User remains logged in across page refreshes (token persistence)
-- [ ] Logout clears session and redirects to login page
+- [works] User remains logged in across page refreshes (token persistence)
+- [works] Logout clears session and redirects to login page
 
 #### Doctor Authentication
 - [ ] Doctor can register with valid license number
