@@ -61,6 +61,30 @@ class CheckUsernameView(APIView):
         is_taken = User.objects.filter(username__iexact=username).exists()
         return Response({'available': not is_taken})
 
+class CheckEmailView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        email = request.query_params.get('email', '')
+        if not email:
+             return Response({'available': False, 'error': 'Email required'}, status=400)
+        
+        is_taken = User.objects.filter(email__iexact=email).exists()
+        return Response({'available': not is_taken})
+
+class CheckPhoneView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        phone = request.query_params.get('phone', '')
+        if not phone:
+             return Response({'available': False, 'error': 'Phone required'}, status=400)
+        
+        from patients.models import Patient
+        is_taken = Patient.objects.filter(contact_number=phone).exists()
+        
+        return Response({'available': not is_taken})
+
 class PasswordResetRequestView(APIView):
     permission_classes = (AllowAny,)
 

@@ -1,11 +1,6 @@
 # PulseID — Next Steps & Issue Tracker
 Last updated: 22nd March 2026 (22.03.2026)
 
-pulseid.health@gmail.com 
-1234@1234   
-
-app password 
-oyhm myoy jfki yxwk
 
 ## 🏆 Completed Today (22.03.2026)
 1. ✅ **Registration Bugfix:** Resolved `IntegrityError` (NOT NULL constraint) during patient registration by correctly handling missing optional fields across all user roles.

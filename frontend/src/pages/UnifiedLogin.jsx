@@ -74,6 +74,12 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     const [usernameAvailable, setUsernameAvailable] = useState(null); // null, true, false
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
+    const [emailAvailable, setEmailAvailable] = useState(null);
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+    const [phoneAvailable, setPhoneAvailable] = useState(null);
+    const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+
     // Registration State - Doctor
     const [doctorData, setDoctorData] = useState({
         username: '', firstName: '', lastName: '', dob: '', gender: 'Male', phone: '', email: '',
@@ -185,6 +191,54 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
         const timeoutId = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timeoutId);
     }, [patientData.username]);
+
+    // Check Email Availability
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (registerRole !== 'PATIENT' || !patientData.email || !isEmailValid(patientData.email)) {
+                setEmailAvailable(null);
+                return;
+            }
+
+            setIsCheckingEmail(true);
+            try {
+                const response = await api.get(`auth/check-email/?email=${patientData.email}`);
+                setEmailAvailable(response.data.available);
+            } catch (err) {
+                console.error("Failed to check email", err);
+                setEmailAvailable(null);
+            } finally {
+                setIsCheckingEmail(false);
+            }
+        };
+
+        const timeoutId = setTimeout(checkAvailability, 500);
+        return () => clearTimeout(timeoutId);
+    }, [patientData.email, registerRole]);
+
+    // Check Phone Availability
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (registerRole !== 'PATIENT' || !patientData.phone || patientData.phone.length < 10) {
+                setPhoneAvailable(null);
+                return;
+            }
+
+            setIsCheckingPhone(true);
+            try {
+                const response = await api.get(`auth/check-phone/?phone=${patientData.phone}`);
+                setPhoneAvailable(response.data.available);
+            } catch (err) {
+                console.error("Failed to check phone", err);
+                setPhoneAvailable(null);
+            } finally {
+                setIsCheckingPhone(false);
+            }
+        };
+
+        const timeoutId = setTimeout(checkAvailability, 500);
+        return () => clearTimeout(timeoutId);
+    }, [patientData.phone, registerRole]);
 
     // Generate Suggested Usernames for Doctor
     useEffect(() => {
@@ -364,6 +418,12 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             }
             if (usernameAvailable === false) {
                 setError("Username is already taken. Please choose another."); return;
+            }
+            if (emailAvailable === false) {
+                setError("Email is already registered. Please login instead."); return;
+            }
+            if (phoneAvailable === false) {
+                setError("Phone number is already associated with another account. Please login instead."); return;
             }
             if (getPasswordStrength(password) < 2) {
                 setError("Password is too weak. Please use mix of letters and numbers."); return;
@@ -838,7 +898,15 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
                             {error && (
                                 <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium flex items-center gap-3 animate-in shake">
-                                    <Activity className="w-4 h-4 shrink-0" /> {error}
+                                    <Activity className="w-4 h-4 shrink-0" /> 
+                                    <span>
+                                        {error}
+                                        {error.includes("login instead") && (
+                                            <button type="button" onClick={() => { setActiveTab('login'); setError(''); }} className="ml-2 underline font-bold hover:text-red-800">
+                                                Sign in here
+                                            </button>
+                                        )}
+                                    </span>
                                 </div>
                             )}
 
@@ -908,11 +976,53 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                     <div className="flex gap-4">
                                                         <div className="flex-1">
                                                             <label className={labelStyle}>Phone Number</label>
-                                                            <input type="tel" className={inputStyle} value={patientData.phone} onChange={e => setPatientData({ ...patientData, phone: e.target.value })} placeholder="+91 98765 43210" />
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="tel"
+                                                                    className={`${inputStyle} pr-10 ${phoneAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                                        phoneAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                                        }`}
+                                                                    value={patientData.phone}
+                                                                    onChange={e => setPatientData({ ...patientData, phone: e.target.value })}
+                                                                    placeholder="+91 98765 43210"
+                                                                />
+                                                                <div className="absolute right-3 top-3.5">
+                                                                    {isCheckingPhone ? (
+                                                                        <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                                    ) : patientData.phone.length >= 10 ? (
+                                                                        phoneAvailable === true ? (
+                                                                            <Check className="w-5 h-5 text-green-500" />
+                                                                        ) : phoneAvailable === false ? (
+                                                                            <X className="w-5 h-5 text-red-500" />
+                                                                        ) : null
+                                                                    ) : null}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                         <div className="flex-1">
                                                             <label className={labelStyle}>Email</label>
-                                                            <input type="email" className={inputStyle} value={patientData.email} onChange={e => setPatientData({ ...patientData, email: e.target.value })} placeholder="name@domain.com" />
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="email"
+                                                                    className={`${inputStyle} pr-10 ${emailAvailable === true && isEmailValid(patientData.email) ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                                        (emailAvailable === false || (patientData.email.length > 5 && !isEmailValid(patientData.email))) ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                                        }`}
+                                                                    value={patientData.email}
+                                                                    onChange={e => setPatientData({ ...patientData, email: e.target.value })}
+                                                                    placeholder="name@domain.com"
+                                                                />
+                                                                <div className="absolute right-3 top-3.5">
+                                                                    {isCheckingEmail ? (
+                                                                        <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                                    ) : patientData.email.length > 5 ? (
+                                                                        (emailAvailable === true && isEmailValid(patientData.email)) ? (
+                                                                            <Check className="w-5 h-5 text-green-500" />
+                                                                        ) : (emailAvailable === false || !isEmailValid(patientData.email)) ? (
+                                                                            <X className="w-5 h-5 text-red-500" />
+                                                                        ) : null
+                                                                    ) : null}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
 
