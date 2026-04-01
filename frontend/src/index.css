@@ -39,11 +39,11 @@
   }
 
   .pulse-btn-primary {
-    @apply bg-primary text-white rounded-md px-4 py-2 font-bold transition-all active:scale-95;
+    @apply bg-primary text-white rounded px-4 py-2 font-bold transition-all active:scale-95;
   }
 
   .pulse-btn-ghost {
-    @apply bg-white border border-borders text-body rounded-md px-4 py-2 font-bold transition-all hover:bg-light-blue;
+    @apply bg-white border border-borders text-body rounded px-4 py-2 font-bold transition-all hover:bg-light-blue;
   }
 }
 

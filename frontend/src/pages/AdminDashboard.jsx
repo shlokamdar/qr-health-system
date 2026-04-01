@@ -799,6 +799,7 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [showMobileSearch, setShowMobileSearch] = useState(false);
+    const [roleFilter, setRoleFilter] = useState('ALL');
 
     // Entity Modal States
     const [rejectTarget, setRejectTarget] = useState(null); // { type: 'doctor'|'hospital'|'lab'|'tech', data: object }
@@ -1774,12 +1775,26 @@ const AdminDashboard = () => {
                                             placeholder="Search users by name, email, or username..."
                                         />
                                     </div>
-                                    <button
-                                        onClick={() => setShowCreateModal(true)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-[#0D1B2A] text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-sm active:scale-95"
-                                    >
-                                        <UserPlus className="w-4 h-4" /> Create User
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={roleFilter}
+                                            onChange={e => setRoleFilter(e.target.value)}
+                                            className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0D1B2A]/10 focus:border-[#0D1B2A] bg-white font-medium"
+                                        >
+                                            <option value="ALL">All Roles</option>
+                                            <option value="ADMIN">Administrators</option>
+                                            <option value="DOCTOR">Doctors</option>
+                                            <option value="PATIENT">Patients</option>
+                                            <option value="LAB_TECH">Lab Techs</option>
+                                            <option value="HOSPITAL_ADMIN">Hospital Admins</option>
+                                        </select>
+                                        <button
+                                            onClick={() => setShowCreateModal(true)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-[#0D1B2A] text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-sm active:scale-95 whitespace-nowrap"
+                                        >
+                                            <UserPlus className="w-4 h-4" /> Create User
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="hidden md:block overflow-x-auto">
@@ -1794,7 +1809,13 @@ const AdminDashboard = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
-                                            {users.filter(u => !search || `${u.first_name} ${u.last_name} ${u.username} ${u.email}`.toLowerCase().includes(search.toLowerCase())).map(u => (
+                                            {users.filter(u => {
+                                                const matchesSearch = !search || `${u.first_name} ${u.last_name} ${u.username} ${u.email}`.toLowerCase().includes(search.toLowerCase());
+                                                const matchesRole = roleFilter === 'ALL' || 
+                                                                    (roleFilter === 'ADMIN' && (u.role === 'ADMIN' || u.is_superuser)) ||
+                                                                    u.role === roleFilter;
+                                                return matchesSearch && matchesRole;
+                                            }).map(u => (
                                                 <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
                                                     <td className="py-4 pr-4">
                                                         <div className="flex items-center gap-3">
@@ -1808,11 +1829,17 @@ const AdminDashboard = () => {
                                                         </div>
                                                     </td>
                                                     <td className="py-4 pr-4">
-                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.is_superuser ? 'bg-purple-100 text-purple-700' :
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                                            u.is_superuser ? 'bg-purple-100 text-purple-700' :
+                                                            u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                                                            u.role === 'DOCTOR' ? 'bg-emerald-100 text-emerald-700' :
+                                                            u.role === 'LAB_TECH' ? 'bg-amber-100 text-amber-700' :
+                                                            u.role === 'HOSPITAL_ADMIN' ? 'bg-blue-100 text-blue-700' :
+                                                            u.role === 'PATIENT' ? 'bg-indigo-100 text-indigo-700' :
                                                             u.is_staff ? 'bg-indigo-100 text-indigo-700' :
-                                                                'bg-slate-100 text-slate-700'
-                                                            }`}>
-                                                            {u.is_superuser ? 'SuperAdmin' : (u.is_staff ? 'Staff' : 'User')}
+                                                            'bg-slate-100 text-slate-700'
+                                                        }`}>
+                                                            {u.is_superuser ? 'SuperAdmin' : (u.role?.replace('_', ' ') || (u.is_staff ? 'Staff' : 'User'))}
                                                         </span>
                                                     </td>
                                                     <td className="py-4 pr-4 text-gray-600">{u.email}</td>
@@ -1832,7 +1859,13 @@ const AdminDashboard = () => {
 
                                 {/* Mobile User Cards */}
                                 <div className="grid grid-cols-1 gap-4 md:hidden">
-                                    {users.filter(u => !search || `${u.first_name} ${u.last_name} ${u.username} ${u.email}`.toLowerCase().includes(search.toLowerCase())).map(u => (
+                                    {users.filter(u => {
+                                        const matchesSearch = !search || `${u.first_name} ${u.last_name} ${u.username} ${u.email}`.toLowerCase().includes(search.toLowerCase());
+                                        const matchesRole = roleFilter === 'ALL' || 
+                                                            (roleFilter === 'ADMIN' && (u.role === 'ADMIN' || u.is_superuser)) ||
+                                                            u.role === roleFilter;
+                                        return matchesSearch && matchesRole;
+                                    }).map(u => (
                                         <div key={u.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3">
@@ -1844,11 +1877,17 @@ const AdminDashboard = () => {
                                                         <div className="text-[10px] text-gray-400 font-mono italic">@{u.username}</div>
                                                     </div>
                                                 </div>
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.is_superuser ? 'bg-purple-100 text-purple-700' :
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                                    u.is_superuser ? 'bg-purple-100 text-purple-700' :
+                                                    u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                                                    u.role === 'DOCTOR' ? 'bg-emerald-100 text-emerald-700' :
+                                                    u.role === 'LAB_TECH' ? 'bg-amber-100 text-amber-700' :
+                                                    u.role === 'HOSPITAL_ADMIN' ? 'bg-blue-100 text-blue-700' :
+                                                    u.role === 'PATIENT' ? 'bg-indigo-100 text-indigo-700' :
                                                     u.is_staff ? 'bg-indigo-100 text-indigo-700' :
-                                                        'bg-slate-100 text-slate-700'
-                                                    }`}>
-                                                    {u.is_superuser ? 'Super' : (u.is_staff ? 'Staff' : 'User')}
+                                                    'bg-slate-100 text-slate-700'
+                                                }`}>
+                                                    {u.is_superuser ? 'Super' : (u.role?.split('_')[0] || (u.is_staff ? 'Staff' : 'User'))}
                                                 </span>
                                             </div>
                                             <div className="space-y-2 text-xs">

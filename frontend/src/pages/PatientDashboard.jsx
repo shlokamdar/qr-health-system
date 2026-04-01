@@ -279,18 +279,17 @@ const PatientDashboard = () => {
     try {
       const html2canvas = (await import('html2canvas')).default;
       
-      // Force 1200x750 for high-fidelity capture
-      cardElement.style.width = '1200px';
-      cardElement.style.height = '750px';
-      cardElement.style.maxWidth = 'none';
-
+      // Capture the card with high fidelity
       const canvas = await html2canvas(cardElement, {
-        scale: 1, 
+        scale: 4, // Higher scale for clinical-grade clarity
         useCORS: true,
-        backgroundColor: '#0D1B2A',
         logging: false,
-        width: 1200,
-        height: 750
+        backgroundColor: '#0D1B2A',
+        onclone: (clonedDoc) => {
+          // Additional safety: Ensure the hide-in-download elements are really gone
+          const hiddenElements = clonedDoc.querySelectorAll('[data-html2canvas-ignore="true"]');
+          hiddenElements.forEach(el => el.style.display = 'none');
+        }
       });
 
       // Restore original styles
@@ -313,10 +312,32 @@ const PatientDashboard = () => {
   };
 
 
-  // ── CALCULATED STATS ─────────────────────────────────────────────────────
+  // ── UNIFIED MEDICAL RECORDS ─────────────────────────────────────────────
+  const allMedicalRecords = [
+    ...recentRecords.map(r => ({
+      ...r,
+      type: 'OFFICIAL',
+      date: r.created_at,
+      doctor_name: r.doctor_details?.first_name ? `Dr. ${r.doctor_details.first_name} ${r.doctor_details.last_name || ''}` : r.doctor_name
+    })),
+    ...documents.filter(d => d.document_type === 'REPORT').map(d => ({
+      ...d,
+      type: 'PERSONAL_DOC',
+      date: d.uploaded_at,
+      doctor_name: null // This will trigger the "Personal" badge
+    })),
+    ...prescriptions.map(p => ({
+      ...p,
+      type: 'PERSONAL_PRE',
+      date: p.prescription_date || p.uploaded_at,
+      title: `Prescription: ${p.hospital_name || 'Personal Archive'}`,
+      doctor_name: p.doctor_name
+    }))
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   const stats = {
-    totalVisits: recentRecords.length + appointments.filter(a => a.status === 'COMPLETED').length,
-    lastVisit: recentRecords[0] ? new Date(recentRecords[0].created_at).toLocaleDateString() : 'None',
+    totalVisits: allMedicalRecords.length,
+    lastVisit: allMedicalRecords[0] ? new Date(allMedicalRecords[0].date).toLocaleDateString() : 'None',
     activeDoctors: sharingPermissions.filter(p => p.is_active).length,
     pendingRequests: sharingPermissions.filter(p => !p.is_active && !p.revoked_at).length,
   };
@@ -466,7 +487,19 @@ const PatientDashboard = () => {
 
         {/* ── OTHER TABS (Simplified for brevity as they just wrap components) ── */}
         {activeTab === 'records' && (
-          <div className="pd-card"><MedicalRecordList records={recentRecords} /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <UploadDocumentForm 
+              newDocument={newDocument} 
+              setNewDocument={setNewDocument} 
+              handleUpload={handleUploadDocument} 
+            />
+            <div className="pd-card">
+              <div className="pd-section-heading">
+                <Icon d={ICONS.ClipboardList} /> Official & Personal Records
+              </div>
+              <MedicalRecordList records={allMedicalRecords} />
+            </div>
+          </div>
         )}
 
         {activeTab === 'appointments' && (

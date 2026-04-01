@@ -83,7 +83,7 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
         }
     };
 
-    const inputClasses = "w-full border border-[#dfe3e6] rounded-xl px-3.5 py-3 text-[14px] font-normal text-[#0D1B2A] bg-[#fafbfc] placeholder-teal-900/40 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 focus:outline-none focus:border-[#10b981] focus:ring-[3px] focus:ring-[#10b981]/15";
+    const inputClasses = "w-full border border-[#dfe3e6] rounded-md px-3.5 py-3 text-[14px] font-normal text-[#0D1B2A] bg-[#fafbfc] placeholder-teal-900/40 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 focus:outline-none focus:border-[#10b981] focus:ring-[3px] focus:ring-[#10b981]/15";
     const labelClasses = "block text-slate-700 text-[13px] font-medium mb-1.5 tracking-wide";
 
     const previewPatient = {
@@ -104,18 +104,18 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                     <form onSubmit={handleSubmit}>
                         <div className="space-y-8">
                             {/* PERSONAL INFORMATION CARD */}
-                            <div className="bg-[#F8FAFC] rounded-[32px] p-10 md:p-12 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-10 relative">
-                                <div className="flex items-center gap-4 mb-10 pb-5 border-b border-slate-200/60">
-                                    <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 text-primary">
-                                        <User2 size={24} />
+                            <div className="bg-[#F8FAFC] rounded-[12px] p-12 md:p-14 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-14 relative">
+                                <div className="flex items-center gap-4 mb-12 pb-6 border-b border-slate-200/60">
+                                    <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary">
+                                        <User2 size={28} />
                                     </div>
                                     <div>
-                                        <h3 className="text-slate-800 text-xl font-extrabold tracking-tight">Identity & Profile</h3>
+                                        <h3 className="text-slate-800 text-2xl font-extrabold tracking-tight">Identity & Profile</h3>
                                         <p className="text-slate-500 text-sm font-medium mt-1">Your official identity and contact records</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                                     <div>
                                         <label className={labelClasses}>First Name</label>
                                         <input name="first_name" value={formData.first_name} onChange={handleChange} className={inputClasses} placeholder="First Name" />
@@ -155,18 +155,18 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                             </div>
 
                             {/* MEDICAL INFORMATION CARD */}
-                            <div className="bg-[#F8FAFC] rounded-[32px] p-10 md:p-12 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative mb-10">
-                                <div className="flex items-center gap-4 mb-10 pb-5 border-b border-slate-200/60">
-                                    <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-secondary/10 text-secondary">
-                                        <Activity size={24} />
+                            <div className="bg-[#F8FAFC] rounded-[12px] p-12 md:p-14 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative mb-14">
+                                <div className="flex items-center gap-4 mb-12 pb-6 border-b border-slate-200/60">
+                                    <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-secondary/10 text-secondary">
+                                        <Activity size={28} />
                                     </div>
                                     <div>
-                                        <h3 className="text-slate-800 text-xl font-extrabold tracking-tight">Clinical Background</h3>
+                                        <h3 className="text-slate-800 text-2xl font-extrabold tracking-tight">Clinical Background</h3>
                                         <p className="text-slate-500 text-sm font-medium mt-1">Essential medical history and parameters</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                                     <div>
                                         <label className={labelClasses}>Known Allergies</label>
                                         <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={3} className={inputClasses} placeholder="e.g. Penicillin, Pollen..." />
@@ -183,14 +183,14 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                                 <button 
                                     type="button" 
                                     onClick={handleReset} 
-                                    className="pulse-btn-ghost py-3"
+                                    className="pulse-btn-ghost px-14 py-5 shadow-sm"
                                 >
                                     Reset Changes
                                 </button>
                                 <button 
                                     type="submit" 
                                     disabled={isUpdating} 
-                                    className="pulse-btn-primary px-10 py-3 disabled:opacity-50"
+                                    className="pulse-btn-primary px-16 py-5 shadow-lg shadow-primary/20 disabled:opacity-50"
                                 >
                                     {isUpdating ? 'Updating Records...' : 'Save Profile'}
                                 </button>

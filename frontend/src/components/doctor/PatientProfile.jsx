@@ -4,7 +4,8 @@ import { User, Phone, ShieldPlus, AlertCircle, Lock, Droplets, BadgeCheck, Activ
 const PatientProfile = ({ patient, handleRequestOTP }) => {
     if (!patient) return null;
 
-    const age = new Date().getFullYear() - new Date(patient.date_of_birth).getFullYear();
+    const age = patient.age ?? (patient.date_of_birth ? new Date().getFullYear() - new Date(patient.date_of_birth).getFullYear() : 'N/A');
+    const formattedDOB = patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString() : 'Not provided';
 
     return (
         <div className="bg-white rounded-[10px] border border-[#E2E8F0] p-5 shadow-sm space-y-5">
@@ -12,12 +13,13 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
             <div className="flex items-center gap-4">
                 <div className="w-[48px] h-[48px] bg-[#EFF6FF] rounded-full flex items-center justify-center">
                     <span className="text-[#3B9EE2] font-bold text-[18px]">
-                        {patient.user.first_name?.[0]}{patient.user.last_name?.[0]}
+                        {(patient.user?.first_name || patient.first_name)?.[0]}
+                        {(patient.user?.last_name || patient.last_name)?.[0]}
                     </span>
                 </div>
                 <div className="flex-1">
                     <h2 className="text-[18px] font-bold text-[#0D1B2A] leading-tight">
-                        {patient.user.first_name} {patient.user.last_name}
+                        {patient.user?.first_name || patient.first_name} {patient.user?.last_name || patient.last_name}
                     </h2>
                     <div className="flex items-center gap-2">
                         <span className="text-[#9CA3AF] text-[13px]">{patient.health_id}</span>
@@ -39,7 +41,7 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
                 </div>
                 <div>
                     <label className="text-[#9CA3AF] text-[11px] font-bold uppercase tracking-wider block">Blood Type</label>
-                    <span className="text-[#3B9EE2] font-bold text-[14px]">{patient.blood_group}</span>
+                    <span className="text-[#3B9EE2] font-bold text-[14px]">{patient.blood_group || 'Not set'}</span>
                 </div>
                 <div>
                     <label className="text-[#9CA3AF] text-[11px] font-bold uppercase tracking-wider block">Gender</label>
@@ -48,7 +50,7 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
                 <div>
                     <label className="text-[#9CA3AF] text-[11px] font-bold uppercase tracking-wider block">DOB</label>
                     <span className="text-[#0D1B2A] font-bold text-[14px]">
-                        {new Date(patient.date_of_birth).toLocaleDateString()}
+                        {formattedDOB}
                     </span>
                 </div>
             </div>
@@ -59,7 +61,7 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
             <div className="space-y-4">
                 <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-[#9CA3AF]" />
-                    <span className="text-[#4A5568] text-[14px]">{patient.contact_number}</span>
+                    <span className="text-[#4A5568] text-[14px]">{patient.contact_number || 'N/A'}</span>
                 </div>
                 <div className="flex items-start gap-3">
                     <Activity className="w-4 h-4 text-[#9CA3AF] mt-1" />
@@ -82,15 +84,17 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
             </div>
 
             {/* Access Button */}
-            <div className="pt-2">
-                <button
-                    onClick={handleRequestOTP}
-                    className="w-full bg-[#3B9EE2] text-white py-3 rounded-[8px] font-bold flex items-center justify-center gap-2 hover:bg-[#2e8dd1] transition-all shadow-sm"
-                >
-                    <Shield className="w-4 h-4" />
-                    <span>Request Full Access</span>
-                </button>
-            </div>
+            {!patient.has_full_access && (
+                <div className="pt-2">
+                    <button
+                        onClick={handleRequestOTP}
+                        className="w-full bg-[#3B9EE2] text-white py-3 rounded-[8px] font-bold flex items-center justify-center gap-2 hover:bg-[#2e8dd1] transition-all shadow-sm"
+                    >
+                        <Shield className="w-4 h-4" />
+                        <span>Request Full Access</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

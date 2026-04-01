@@ -45,6 +45,7 @@ import {
     Save,
     Shield,
     ShieldCheck,
+    Lock,
     ClipboardList,
     LifeBuoy
 } from 'lucide-react';
@@ -707,70 +708,97 @@ const DoctorDashboard = () => {
                                                     patient={patientResult}
                                                     handleRequestOTP={handleRequestOTP}
                                                 />
-                                                <UploadRecordForm
-                                                    newRecord={newRecord}
-                                                    setNewRecord={setNewRecord}
-                                                    handleUpload={handleUpload}
-                                                />
+                                                {patientResult.has_full_access && (
+                                                    <UploadRecordForm
+                                                        newRecord={newRecord}
+                                                        setNewRecord={setNewRecord}
+                                                        handleUpload={handleUpload}
+                                                    />
+                                                )}
+                                                {!patientResult.has_full_access && (
+                                                    <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 flex flex-col items-center text-center">
+                                                        <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-4">
+                                                            <Lock size={24} />
+                                                        </div>
+                                                        <h4 className="text-amber-900 font-bold text-sm mb-2">Restricted Access</h4>
+                                                        <p className="text-amber-700 text-xs leading-relaxed">
+                                                            Detailed medical records and upload features are locked. Request full access to view history or add new records.
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Right Column: History & Forms */}
                                             <div className="lg:col-span-8 space-y-12">
-                                                <div className="space-y-6">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="p-2.5 bg-[#3B9EE2]/10 rounded-2xl text-[#3B9EE2]">
-                                                                <History className="w-6 h-6" />
+                                                {patientResult.has_full_access ? (
+                                                    <>
+                                                        <div className="space-y-6">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2.5 bg-[#3B9EE2]/10 rounded-2xl text-[#3B9EE2]">
+                                                                        <History className="w-6 h-6" />
+                                                                    </div>
+                                                                    <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Clinical History</h3>
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
+                                                                    <Activity className="w-3 h-3 text-[#2EC4A9]" />
+                                                                    <span>{consultations.length} Visits Traceable</span>
+                                                                </div>
                                                             </div>
-                                                            <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Clinical History</h3>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-                                                            <Activity className="w-3 h-3 text-[#2EC4A9]" />
-                                                            <span>{consultations.length} Visits Traceable</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
-                                                        <div className="max-h-[500px] overflow-y-auto custom-scrollbar p-2">
-                                                            <ConsultationHistory consultations={consultations} />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-6">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="p-2.5 bg-[#2EC4A9]/10 rounded-2xl text-[#2EC4A9]">
-                                                                <FileText className="w-6 h-6" />
+                                                            <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
+                                                                <div className="max-h-[500px] overflow-y-auto custom-scrollbar p-2">
+                                                                    <ConsultationHistory consultations={consultations} />
+                                                                </div>
                                                             </div>
-                                                            <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Medical Ledger</h3>
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-                                                            <span>{records.length} Documents Encrypted</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
-                                                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
-                                                            <MedicalRecordList records={records} />
-                                                        </div>
-                                                    </div>
-                                                </div>
 
-                                                <div className="space-y-6">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2.5 bg-[#0D1B2A] rounded-2xl text-white">
-                                                            <Stethoscope className="w-6 h-6" />
+                                                        <div className="space-y-6">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2.5 bg-[#2EC4A9]/10 rounded-2xl text-[#2EC4A9]">
+                                                                        <FileText className="w-6 h-6" />
+                                                                    </div>
+                                                                    <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Medical Ledger</h3>
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
+                                                                    <span>{records.length} Documents Encrypted</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
+                                                                <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
+                                                                    <MedicalRecordList records={records} />
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">New Consultation</h3>
+
+                                                        <div className="space-y-6">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2.5 bg-[#0D1B2A] rounded-2xl text-white">
+                                                                    <Stethoscope className="w-6 h-6" />
+                                                                </div>
+                                                                <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">New Consultation</h3>
+                                                            </div>
+                                                            <div className="bg-[#0D1B2A] rounded-[2.5rem] p-10 text-white shadow-2xl shadow-[#0D1B2A]/20 relative overflow-hidden group">
+                                                                <div className="absolute top-0 right-0 w-64 h-64 bg-[#3B9EE2]/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+                                                                <ConsultationForm
+                                                                    newConsultation={newConsultation}
+                                                                    setNewConsultation={setNewConsultation}
+                                                                    handleSubmit={handleCreateConsultation}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-100 p-20 flex flex-col items-center justify-center text-center">
+                                                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-6">
+                                                            <Shield size={40} />
+                                                        </div>
+                                                        <h3 className="text-xl font-black text-slate-300 tracking-tight uppercase">Medical History Locked</h3>
+                                                        <p className="max-w-xs text-xs text-slate-400 font-bold uppercase tracking-widest mt-3 leading-relaxed">
+                                                            Please verify OTP to decrypt clinical history and unlock medical record management for this patient.
+                                                        </p>
                                                     </div>
-                                                    <div className="bg-[#0D1B2A] rounded-[2.5rem] p-10 text-white shadow-2xl shadow-[#0D1B2A]/20 relative overflow-hidden group">
-                                                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#3B9EE2]/10 rounded-full blur-[80px] -mr-32 -mt-32" />
-                                                        <ConsultationForm
-                                                            newConsultation={newConsultation}
-                                                            setNewConsultation={setNewConsultation}
-                                                            handleSubmit={handleCreateConsultation}
-                                                        />
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (

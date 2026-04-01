@@ -106,6 +106,7 @@ const OverviewTab = ({
             patient={patient}
             onDownloadQR={handleDownloadQR}
             onDownloadCard={handleDownloadCard}
+            setActiveTab={setActiveTab}
           />
 
           {/* Quick Stats Grid */}

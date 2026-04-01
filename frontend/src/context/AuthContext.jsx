@@ -18,13 +18,20 @@ export const AuthProvider = ({ children }) => {
                         id: decoded.user_id,
                         role: decoded.role || null,
                         username: decoded.username || null,
+                        first_name: decoded.first_name || '',
+                        last_name: decoded.last_name || '',
                     });
 
                     // Fallback: if role not in token, fetch from /me/
                     if (!decoded.role) {
                         try {
                             const data = await AuthService.getCurrentUser();
-                            setUser(prev => ({ ...prev, role: data.role }));
+                            setUser(prev => ({ 
+                                ...prev, 
+                                role: data.role,
+                                first_name: data.first_name,
+                                last_name: data.last_name
+                            }));
                         } catch (err) {
                             console.error('Failed to fetch user info', err);
                         }
@@ -42,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (username, password) => {
         try {
             const data = await AuthService.login(username, password);
-            const { access, refresh, role, username: resUsername, is_superuser } = data;
+            const { access, refresh, role, username: resUsername, is_superuser, first_name, last_name } = data;
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
 
@@ -52,6 +59,8 @@ export const AuthProvider = ({ children }) => {
                 role: role || decoded.role || null,
                 username: resUsername || decoded.username || null,
                 is_superuser: is_superuser || decoded.is_superuser || false,
+                first_name: first_name || decoded.first_name || '',
+                last_name: last_name || decoded.last_name || '',
             };
             setUser(userData);
             return userData;

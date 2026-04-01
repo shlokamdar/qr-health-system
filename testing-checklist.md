@@ -11,8 +11,8 @@
 
 #### Patient Authentication
 - [works] Patient can register with valid email and password
-- [!!!!!!!] Duplicate email registration is rejected with error message
-      works but on last step. change it to step 1 when user enters email. ask user to login instead. AND add phone number duplication not allowed as well. 
+- [works] Duplicate email/phone number registration is rejected with error message
+      Resolved: Duplicate check is performed at step 1 as requested and phone number duplication is also prevented.
 - [works] Password confirmation requirement is enforced
 - [works] Patient receives Health ID immediately after registration
 - [works] QR code is generated and displayable after registration
@@ -25,12 +25,12 @@
 - [works] Logout clears session and redirects to login page
 
 #### Doctor Authentication
-- [ ] Doctor can register with valid license number
-- [ ] Doctor registration is pending System Admin approval
-- [ ] Doctor cannot access system before approval
-- [ ] Approved doctor can login successfully
-- [ ] Doctor login generates JWT token
-- [ ] Doctor can view only approved status doctors list
+- [works] Doctor can register with valid license number
+- [works] Doctor registration is pending System Admin approval
+- [works] Doctor cannot access system before approval
+- [works] Approved doctor can login successfully
+- [works] Doctor login generates JWT token
+- [works] Doctor can view only approved status doctors list
 
 #### Role-Based Access Control
 - [ ] Patients cannot access doctor dashboard/routes
@@ -44,13 +44,13 @@
 ### 1.2 Patient Module Testing
 
 #### Health ID & QR Code
-- [ ] Each patient receives unique Health ID (no duplicates)
-- [ ] Health ID format is consistent (HID-XXXXXXXXX)
-- [ ] QR code is generated correctly on registration
-- [ ] QR code encodes the correct Health ID
-- [ ] QR code image is downloadable
-- [ ] QR code can be scanned with standard QR scanner
-- [ ] Scanning QR code displays public patient view
+- [works] Each patient receives unique Health ID (no duplicates)
+- [works] Health ID format is consistent (HID-XXXXXXXXX)
+- [works] QR code is generated correctly on registration
+- [works] QR code encodes the correct Health ID
+- [works] QR code image is downloadable
+- [works] QR code can be scanned with standard QR scanner
+- [works] Scanning QR code displays public patient view
 
 #### Patient Profile Management
 - [ ] Patient can view their complete profile
@@ -63,13 +63,13 @@
 - [ ] Patient cannot view/edit other patient profiles
 
 #### Medical Document Management
-- [ ] Patient can upload old prescriptions
-- [ ] Patient can upload ID proofs
-- [ ] Patient can upload insurance documents
-- [ ] File upload validation works (format, size)
-- [ ] Uploaded files are displayed in patient records
-- [ ] Patient can download their uploaded documents
-- [ ] Files are securely stored
+- [works] Patient can upload old prescriptions
+- [works] Patient can upload ID proofs
+- [works] Patient can upload insurance documents
+- [works] File upload validation works (format, size)
+- [works] Uploaded files are displayed in patient records
+- [works] Patient can download their uploaded documents
+- [works] Files are securely stored
 
 ### 1.3 Doctor Module Testing
 
@@ -155,9 +155,9 @@
 - [ ] Admin can approve/reject hospital registration
 - [ ] Admin can view all diagnostic labs
 - [ ] Admin can approve/reject lab registration
-- [ ] Admin can view complete audit logs
-- [ ] Admin can filter audit logs by date
-- [ ] Admin can filter audit logs by user/patient
+- [works] Admin can view complete audit logs
+- [works] Admin can filter audit logs by date
+- [works] Admin can filter audit logs by user/patient
 - [ ] Admin can view system statistics
 - [ ] Admin can view registration trends
 - [ ] Admin can deactivate user accounts

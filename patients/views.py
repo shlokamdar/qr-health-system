@@ -67,10 +67,9 @@ class PatientViewSet(viewsets.ModelViewSet):
                 
                 AccessLog.objects.create(actor=user, patient=instance, action=action_type, details=f"Doctor viewed profile (Full Access: {has_full_access})")
                 
-                if has_full_access:
-                    return Response(self.get_serializer(instance).data)
-                else:
-                    return Response(PatientPublicSerializer(instance).data)
+                data = PatientSerializer(instance).data if has_full_access else PatientPublicSerializer(instance).data
+                data['has_full_access'] = has_full_access
+                return Response(data)
 
         # For lab techs or any other authenticated users returning public view
         AccessLog.objects.create(actor=user, patient=instance, action=action_type, details="Authenticated user viewed public profile")
@@ -333,10 +332,6 @@ class OTPRequestView(APIView):
             message=message
         )
 
-        print(f"==========================================")
-        print(f"OTP for {patient.health_id} ({delivery_method}): {otp_code}")
-        print(f"==========================================")
-
         return Response({
             "message": "OTP request sent successfully.",
             "request_id": otp_request.id,
@@ -357,22 +352,28 @@ class OTPVerifyView(APIView):
             return Response({"error": "Health ID and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         patient = get_object_or_404(Patient, health_id=health_id)
-        doctor = get_object_or_404(Doctor, user=request.user)
+        
+        # Try to get doctor profile, but handle Admins who might not have one but want to verify (though normally they'd have one if they requested)
+        doctor = Doctor.objects.filter(user=request.user).first()
+        if not doctor and request.user.role != 'ADMIN':
+             return Response({"error": "Doctor profile not found."}, status=status.HTTP_403_FORBIDDEN)
 
         # Find active OTP request
         qs = OTPRequest.objects.filter(
-            doctor=doctor,
             patient=patient,
             is_verified=False,
             is_revoked=False
         )
+        if doctor:
+            qs = qs.filter(doctor=doctor)
+            
         if request_id:
             qs = qs.filter(id=request_id)
             
         otp_request = qs.order_by('-created_at').first()
 
         if not otp_request:
-            return Response({"error": "Invalid or no pending access request found."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "No pending access request found for this doctor/patient pair."}, status=status.HTTP_400_BAD_REQUEST)
 
         if otp_request.is_expired:
             return Response({"error": "Access request has expired."}, status=status.HTTP_400_BAD_REQUEST)

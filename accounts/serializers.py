@@ -11,8 +11,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'role', 'first_name', 'last_name')
-        read_only_fields = ('id', 'role')
+        fields = ('id', 'username', 'email', 'role', 'first_name', 'last_name', 'date_joined', 'is_active', 'is_staff', 'is_superuser')
+        read_only_fields = ('id', 'role', 'date_joined', 'is_staff', 'is_superuser')
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -231,6 +231,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["role"] = self.user.role
         data["username"] = self.user.username
         data["is_superuser"] = self.user.is_superuser
+        data["first_name"] = self.user.first_name
+        data["last_name"] = self.user.last_name
         return data
 
     @classmethod
@@ -239,4 +241,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["role"] = user.role
         token["username"] = user.username
         token["is_superuser"] = user.is_superuser
+        token["first_name"] = user.first_name
+        token["last_name"] = user.last_name
         return token
