@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PROD_HOST     = credentials('prod-ec2-host')   // Jenkins credential: plain text IP
-        PROD_USER     = 'ubuntu'
+        PROD_USER     = 'ec2-user'
         APP_DIR       = '/var/www/djangoapp'
         VENV_DIR      = '/var/www/djangoapp/venv'
         DJANGO_SETTINGS_MODULE = 'myproject.settings.production'
