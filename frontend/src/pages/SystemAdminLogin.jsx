@@ -2,34 +2,34 @@ import React, { useState, useContext } from 'react';
 import { Activity, ShieldAlert, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const SystemAdminLogin = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { login } = useContext(AuthContext);
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
         try {
             const user = await login(username, password);
             if (!user) {
-                setError('Invalid credentials. Please try again.');
+                toast.error('Invalid credentials. Please try again.');
                 setLoading(false);
                 return;
             }
             if (user.role !== 'ADMIN' && !user.is_superuser) {
-                setError('Access denied. This portal is for System Administrators only.');
+                toast.error('Access denied. This portal is for System Administrators only.');
                 setLoading(false);
                 return;
             }
+            toast.success('System Admin Access Granted');
             navigate('/admin-dashboard');
         } catch (err) {
-            setError('Login failed. Please check your credentials.');
+            toast.error('Login failed. Please check your credentials.');
             setLoading(false);
         }
     };
@@ -88,13 +88,6 @@ const SystemAdminLogin = () => {
                         <h1 className="text-2xl font-bold text-[#0D1B2A] mb-2">Admin Login</h1>
                         <p className="text-sm text-[#64748B]">Please enter your system administrator credentials.</p>
                     </div>
-
-                    {error && (
-                        <div className="mb-6 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
-                            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                            <p className="text-sm text-red-700">{error}</p>
-                        </div>
-                    )}
 
                     <form onSubmit={handleLogin} className="space-y-6">
                         <div>

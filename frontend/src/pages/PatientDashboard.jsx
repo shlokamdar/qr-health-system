@@ -144,7 +144,7 @@ const PatientDashboard = () => {
       if (pData) setEditForm(pData);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
-      setError("Failed to load dashboard data.");
+      toast.error("Failed to load dashboard data.");
     } finally {
       setLoading(false);
     }
@@ -176,10 +176,10 @@ const PatientDashboard = () => {
     e.preventDefault();
     try {
       await PatientService.bookAppointment(newAppointment);
-      alert('Appointment request sent!');
+      toast.success('Appointment request sent!');
       setNewAppointment({ doctor: '', appointment_date: '', reason: '' });
       fetchAllData();
-    } catch (err) { alert('Failed to book appointment.'); }
+    } catch (err) { toast.error('Failed to book appointment.'); }
   };
 
   const handleUploadDocument = async (e) => {
@@ -188,10 +188,10 @@ const PatientDashboard = () => {
     Object.keys(newDocument).forEach(k => fd.append(k, newDocument[k]));
     try {
       await PatientService.uploadDocument(fd);
-      alert('Document uploaded!');
+      toast.success('Document uploaded successfully!');
       setNewDocument({ title: '', document_type: 'REPORT', description: '', file: null });
       fetchAllData();
-    } catch (err) { alert('Upload failed.'); }
+    } catch (err) { toast.error('Upload failed. Please try again.'); }
   };
 
   const handleUploadPrescription = async (e) => {
@@ -200,20 +200,20 @@ const PatientDashboard = () => {
     Object.keys(newPrescription).forEach(k => fd.append(k, newPrescription[k]));
     try {
       await PatientService.uploadOldPrescription(fd);
-      alert('Prescription uploaded!');
+      toast.success('Prescription uploaded successfully!');
       // Reset form...
       fetchAllData();
-    } catch (err) { alert('Upload failed.'); }
+    } catch (err) { toast.error('Upload failed. Please try again.'); }
   };
 
   const handleAddContact = async (e) => {
     e.preventDefault();
     try {
       await PatientService.addEmergencyContact(newContact);
-      alert('Emergency contact added!');
+      toast.success('Emergency contact added!');
       setNewContact({ name: '', relationship: '', phone: '', can_grant_access: false });
       fetchAllData();
-    } catch (err) { alert('Failed to add contact.'); }
+    } catch (err) { toast.error('Failed to add contact.'); }
   };
 
 
@@ -229,12 +229,12 @@ const PatientDashboard = () => {
     e.preventDefault();
     try {
       await api.post('support/tickets/', ticketForm);
-      alert('Support ticket created successfully!');
+      toast.success('Support ticket created successfully!');
       setShowTicketModal(false);
       setTicketForm({ subject: '', description: '', priority: 'MEDIUM' });
       fetchAllData();
     } catch (err) {
-      alert('Failed to create ticket.');
+      toast.error('Failed to create support ticket.');
     }
   };
 
@@ -242,32 +242,35 @@ const PatientDashboard = () => {
     if (!window.confirm('Remove this emergency contact?')) return;
     try {
       await PatientService.deleteEmergencyContact(id);
+      toast.success('Emergency contact removed.');
       fetchAllData();
-    } catch { alert('Failed to remove contact.'); }
+    } catch { toast.error('Failed to remove contact.'); }
   };
 
   const handleUpdateContact = async (id) => {
     try {
       await PatientService.updateEmergencyContact(id, editContactForm);
+      toast.success('Contact updated.');
       setEditContactId(null);
       fetchAllData();
-    } catch { alert('Failed to update contact.'); }
+    } catch { toast.error('Failed to update contact.'); }
   };
 
   const handleRevokeAccess = (id) => setRevokeId(id);
   const confirmRevoke = async () => {
     try {
       await PatientService.revokeAccess(revokeId);
+      toast.success('Access revoked.');
       setRevokeId(null);
       fetchAllData();
-    } catch (err) { alert('Revoke failed.'); }
+    } catch (err) { toast.error('Revoke failed.'); }
   };
 
   const handleDownloadQR = () => { if (patient?.qr_code) { const link = document.createElement('a'); link.href = patient.qr_code; link.download = 'HealthID_QR.png'; link.click(); } };
   const handleDownloadCard = async () => {
     const cardElement = document.getElementById('patient-health-card');
     if (!cardElement) {
-      alert("Could not locate card element for download.");
+      toast.error("Could not locate card element for download.");
       return;
     }
 
@@ -307,7 +310,7 @@ const PatientDashboard = () => {
       cardElement.style.width = originalWidth;
       cardElement.style.height = originalHeight;
       cardElement.style.maxWidth = originalMaxW;
-      alert("Download failed. Please try again.");
+      toast.error("Download failed. Please try again.");
     }
   };
 

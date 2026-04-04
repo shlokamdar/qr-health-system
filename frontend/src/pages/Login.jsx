@@ -1,21 +1,22 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
-    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const success = await login(username, password);
         if (success) {
+            toast.success('Login successful!');
             navigate('/dashboard');
         } else {
-            setError('Invalid credentials');
+            toast.error('Invalid credentials');
         }
     };
 
@@ -23,7 +24,6 @@ const Login = () => {
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
                 <h2 className="text-2xl font-bold text-center text-gray-900">Sign in to your account</h2>
-                {error && <p className="text-red-500 text-center">{error}</p>}
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Username</label>

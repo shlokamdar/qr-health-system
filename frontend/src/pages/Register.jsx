@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -20,9 +21,10 @@ const Register = () => {
         e.preventDefault();
         try {
             await register(formData);
+            toast.success('Registration successful!');
             navigate('/login');
         } catch (error) {
-            alert('Registration failed');
+            toast.error('Registration failed. Please try again.');
         }
     };
 

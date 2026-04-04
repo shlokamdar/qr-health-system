@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const PatientRegister = () => {
     const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ const PatientRegister = () => {
         setError('');
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            toast.error('Passwords do not match');
             return;
         }
 
@@ -35,12 +36,14 @@ const PatientRegister = () => {
                 password: formData.password,
                 role: 'PATIENT'
             });
+            toast.success('Registration successful!');
             navigate('/');
         } catch (error) {
-            setError('Registration failed. Please try again.');
+            toast.error('Registration failed. Please try again.');
         }
         setLoading(false);
     };
+封装
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-slate-900 flex flex-col items-center justify-center px-6 py-12">
@@ -72,12 +75,6 @@ const PatientRegister = () => {
                         <p className="text-slate-400 mt-2">Create your health record account</p>
                     </div>
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-                            {error}
-                        </div>
-                    )}
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">

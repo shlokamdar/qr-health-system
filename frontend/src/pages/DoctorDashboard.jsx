@@ -90,7 +90,6 @@ const DoctorDashboard = () => {
 
     // Scanner State
     const [isScannerOpen, setIsScannerOpen] = useState(false);
-    const [scannerError, setScannerError] = useState(null);
     const [isCameraLoading, setIsCameraLoading] = useState(false);
 
     // Register Patient Form State
@@ -240,13 +239,12 @@ const DoctorDashboard = () => {
                 }
 
                 if (!healthId || healthId.trim() === '') {
-                    setScannerError('Invalid QR code scanned');
+                    toast.error('Invalid QR code scanned');
                     return;
                 }
 
                 setSearchId(healthId);
                 setIsScannerOpen(false);
-                setScannerError(null);
                 setIsCameraLoading(false);
 
                 PatientService.getByHealthId(healthId)
@@ -276,28 +274,26 @@ const DoctorDashboard = () => {
         if (error?.message) {
             const errorMsg = error.message.toLowerCase();
             if (errorMsg.includes('permission') || errorMsg.includes('notallowederror')) {
-                setScannerError('Camera permission denied. Please allow camera access in your browser settings.');
+                toast.error('Camera permission denied. Please allow camera access in your browser settings.');
             } else if (errorMsg.includes('notfound') || errorMsg.includes('notfounderror')) {
-                setScannerError('No camera found on this device.');
+                toast.error('No camera found on this device.');
             } else if (errorMsg.includes('notreadable') || errorMsg.includes('notreadableerror')) {
-                setScannerError('Camera is in use by another application.');
+                toast.error('Camera is in use by another application.');
             } else {
-                setScannerError('Failed to access camera. Please try again.');
+                toast.error('Failed to access camera. Please try again.');
             }
         } else {
-            setScannerError('Failed to access camera. Please try again.');
+            toast.error('Failed to access camera. Please try again.');
         }
     };
 
     const openScanner = () => {
         setIsScannerOpen(true);
-        setScannerError(null);
         setIsCameraLoading(true);
     };
 
     const closeScanner = () => {
         setIsScannerOpen(false);
-        setScannerError(null);
         setIsCameraLoading(false);
     };
 

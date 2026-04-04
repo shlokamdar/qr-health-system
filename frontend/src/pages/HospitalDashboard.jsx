@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     UserPlus, Mail, Phone, MapPin, Search, Filter,
-    LayoutGrid, ClipboardList, Trash2, Plus
+    LayoutGrid, ClipboardList, Trash2, Plus, LogOut, Users, AlertCircle, Beaker, BarChart3, Building2, CheckCircle2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import HospitalService from '../services/hospital.service';
 import Header from '../components/Header';
 
@@ -67,12 +68,13 @@ const HospitalDashboard = () => {
         e.preventDefault();
         try {
             await HospitalService.createDepartment(deptForm);
+            toast.success("Department created successfully!");
             setShowCreateDeptModal(false);
             setDeptForm({ name: '', description: '' });
             const updated = await HospitalService.getDepartments();
             setDepartments(updated);
         } catch (err) {
-            alert("Failed to create department");
+            toast.error("Failed to create department");
         }
     };
 
@@ -80,10 +82,28 @@ const HospitalDashboard = () => {
         if (!window.confirm("Are you sure you want to delete this department?")) return;
         try {
             await HospitalService.deleteDepartment(id);
+            toast.success("Department deleted.");
             const updated = await HospitalService.getDepartments();
             setDepartments(updated);
         } catch (err) {
-            alert("Failed to delete department");
+            toast.error("Failed to delete department");
+        }
+    };
+
+    const handleCreateTech = async (e) => {
+        e.preventDefault();
+        try {
+            await HospitalService.createTechnician(techForm);
+            toast.success("Technician onboarded successfully!");
+            setShowCreateTechModal(false);
+            setTechForm({
+                username: '', email: '', password: '',
+                first_name: '', last_name: '', license_number: '', lab: labs[0]?.id || ''
+            });
+            const updated = await HospitalService.getTechnicians();
+            setTechnicians(updated);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to create technician");
         }
     };
 
@@ -413,10 +433,13 @@ const HospitalDashboard = () => {
                                         <div className="grid grid-cols-1 gap-3">
                                             <button
                                                 onClick={async () => {
-                                                    await HospitalService.assignDoctorDepartment(selectedDoctor.id, null);
-                                                    setShowAssignDeptModal(false);
-                                                    const updated = await HospitalService.getDoctors();
-                                                    setDoctors(updated);
+                                                    try {
+                                                        await HospitalService.assignDoctorDepartment(selectedDoctor.id, null);
+                                                        toast.success("Department removed.");
+                                                        setShowAssignDeptModal(false);
+                                                        const updated = await HospitalService.getDoctors();
+                                                        setDoctors(updated);
+                                                    } catch (err) { toast.error("Assignment failed."); }
                                                 }}
                                                 className="w-full p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 text-left transition-all group"
                                             >
@@ -426,10 +449,13 @@ const HospitalDashboard = () => {
                                                 <button
                                                     key={dept.id}
                                                     onClick={async () => {
-                                                        await HospitalService.assignDoctorDepartment(selectedDoctor.id, dept.id);
-                                                        setShowAssignDeptModal(false);
-                                                        const updated = await HospitalService.getDoctors();
-                                                        setDoctors(updated);
+                                                        try {
+                                                            await HospitalService.assignDoctorDepartment(selectedDoctor.id, dept.id);
+                                                            toast.success(`Assigned to ${dept.name}`);
+                                                            setShowAssignDeptModal(false);
+                                                            const updated = await HospitalService.getDoctors();
+                                                            setDoctors(updated);
+                                                        } catch (err) { toast.error("Assignment failed."); }
                                                     }}
                                                     className={`w-full p-4 rounded-2xl border transition-all text-left ${selectedDoctor?.department === dept.id
                                                         ? 'border-[#3B9EE2] bg-blue-50/50'

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, Mail, ArrowLeft, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import AuthService from '../services/auth.service';
+import toast from 'react-hot-toast';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
@@ -12,8 +13,7 @@ const ForgotPassword = () => {
         e.preventDefault();
         
         if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            setStatus('error');
-            setMessage('Please enter a valid email address.');
+            toast.error('Please enter a valid email address.');
             return;
         }
 
@@ -23,15 +23,15 @@ const ForgotPassword = () => {
         try {
             const response = await AuthService.forgotPassword(email);
             setStatus('success');
-            // Backend provides a success message like "If an account with that email exists..."
             setMessage(response.message || 'If an account exists with that email, a password reset link has been sent.');
+            toast.success('Reset link sent!');
         } catch (err) {
             setStatus('error');
-            setMessage(
-                err.response?.data?.error || 
+            const errMsg = err.response?.data?.error || 
                 err.response?.data?.detail || 
-                'Failed to submit password reset request. Please try again later.'
-            );
+                'Failed to submit password reset request. Please try again later.';
+            setMessage(errMsg);
+            toast.error(errMsg);
         }
     };
 
@@ -74,12 +74,6 @@ const ForgotPassword = () => {
                         </div>
                     ) : (
                         <div className="animate-in fade-in slide-in-from-left-4 duration-300">
-                            {status === 'error' && (
-                                <div className="mb-6 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                                    <p className="text-sm text-red-700">{message}</p>
-                                </div>
-                            )}
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>

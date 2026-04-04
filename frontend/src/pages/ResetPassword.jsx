@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Activity, ShieldCheck, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import AuthService from '../services/auth.service';
+import toast from 'react-hot-toast';
 
 const ResetPassword = () => {
     const { token } = useParams();
@@ -14,14 +15,13 @@ const ResetPassword = () => {
 
     const handleReset = async (e) => {
         e.preventDefault();
+        setMessage('');
         if (password !== confirmPassword) {
-            setStatus('error');
-            setMessage('Passwords do not match');
+            toast.error('Passwords do not match');
             return;
         }
         if (password.length < 8) {
-            setStatus('error');
-            setMessage('Password must be at least 8 characters long');
+            toast.error('Password must be at least 8 characters long');
             return;
         }
 
@@ -30,14 +30,18 @@ const ResetPassword = () => {
             await AuthService.resetPassword(token, password);
             setStatus('success');
             setMessage('Your password has been successfully reset! You can now log in.');
+            toast.success('Password reset successful!');
             setTimeout(() => {
                 navigate('/login');
             }, 3000);
         } catch (err) {
+            const errorMsg = err.response?.data?.error || 'Failed to reset password. The link might be invalid or expired.';
             setStatus('error');
-            setMessage(err.response?.data?.error || 'Failed to reset password. The link might be invalid or expired.');
+            setMessage(errorMsg);
+            toast.error(errorMsg);
         }
     };
+封装
 
     return (
         <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center p-6 font-sans">
@@ -51,13 +55,6 @@ const ResetPassword = () => {
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 sm:p-10 text-center">
                 <h2 className="text-xl font-bold text-[#0D1B2A] mb-2">Create New Password</h2>
                 <p className="text-sm text-slate-500 mb-8">Please enter and confirm your new password below.</p>
-
-                {status === 'error' && (
-                    <div className="mb-6 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-left">
-                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                        <p className="text-sm text-red-700">{message}</p>
-                    </div>
-                )}
 
                 {status === 'success' ? (
                     <div className="py-6">

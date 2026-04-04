@@ -48,7 +48,6 @@ const LabDashboard = () => {
     const [lookupId, setLookupId] = useState('');
     const [lookupResults, setLookupResults] = useState(null);
     const [lookupLoading, setLookupLoading] = useState(false);
-    const [lookupError, setLookupError] = useState('');
 
     // History tab state
     const [searchQuery, setSearchQuery] = useState('');
@@ -148,12 +147,12 @@ const LabDashboard = () => {
         if (!lookupId.trim()) return;
         setLookupLoading(true);
         setLookupResults(null);
-        setLookupError('');
         try {
             const data = await labService.getPatientReports(lookupId.trim());
             setLookupResults(Array.isArray(data) ? data : data.results || []);
+            toast.success('Reports fetched successfully!');
         } catch (err) {
-            setLookupError(err.response?.status === 404
+            toast.error(err.response?.status === 404
                 ? 'No patient found with that Health ID.'
                 : 'Failed to fetch patient reports. Please try again.');
         } finally {
@@ -435,12 +434,6 @@ const LabDashboard = () => {
                                     </button>
                                 </form>
 
-                                {lookupError && (
-                                    <div className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl px-5 py-4 max-w-xl">
-                                        <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-                                        <p className="text-sm font-bold text-red-600">{lookupError}</p>
-                                    </div>
-                                )}
 
                                 {lookupResults !== null && (
                                     lookupResults.length === 0 ? (

@@ -11,6 +11,7 @@ import { BuildingOffice2Icon, BeakerIcon } from '@heroicons/react/24/outline';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import HealthIdCard from '../components/patient/HealthIdCard';
+import toast from 'react-hot-toast';
 
 const UnifiedLogin = ({ initialTab, initialRole }) => {
     const [activeTab, setActiveTab] = useState(initialTab || 'login'); // 'login' or 'register'
@@ -294,19 +295,46 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
 
     const handleHospitalNext = () => {
-        if (hospitalStep === 1) {
-            if (!hospitalData.admin_username) { setError("Admin Username is required."); return; }
-            if (!hospitalData.email) { setError("Official Hospital Email is required."); return; }
-            if (!isEmailValid(hospitalData.email)) { setError("Please enter a valid email address."); return; }
-            if (!hospitalData.admin_password) { setError("Password is required."); return; }
-            if (hospitalData.admin_password !== hospitalData.confirmPassword) { setError("Passwords do not match"); return; }
+        if (hospitalStep === 1 && !hospitalData.admin_username) {
+            const message = "Admin Username is required.";
+            setError(message);
+            toast.error(message);
+            return;
+        }
+        if (hospitalStep === 1 && !hospitalData.email) {
+            const message = "Official Hospital Email is required.";
+            setError(message);
+            toast.error(message);
+            return;
+        }
+        if (hospitalStep === 1 && !isEmailValid(hospitalData.email)) {
+            const message = "Please enter a valid email address.";
+            setError(message);
+            toast.error(message);
+            return;
+        }
+        if (hospitalStep === 1 && !hospitalData.admin_password) {
+            const message = "Password is required.";
+            setError(message);
+            toast.error(message);
+            return;
+        }
+        if (hospitalStep === 1 && hospitalData.admin_password !== hospitalData.confirmPassword) {
+            const message = "Passwords do not match";
+            setError(message);
+            toast.error(message);
+            return;
         }
         if (hospitalStep === 2 && (!hospitalData.name || !hospitalData.registration_number || !hospitalData.phone)) {
-            setError('Please fill all identity fields');
+            const message = 'Please fill all identity fields';
+            setError(message);
+            toast.error(message);
             return;
         }
         if (hospitalStep === 3 && !hospitalData.address) {
-            setError('Please enter the hospital address');
+            const message = 'Please enter the hospital address';
+            setError(message);
+            toast.error(message);
             return;
         }
         setError('');
@@ -329,10 +357,13 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             });
             setLoading(false);
             setHospitalStep(5);
+            toast.success('Hospital registration submitted for review!');
         } catch (err) {
             setLoading(false);
             console.error(err);
-            setError(err.response?.data?.registration_number?.[0] || err.response?.data?.email?.[0] || 'Registration failed. Please try again.');
+            const message = err.response?.data?.registration_number?.[0] || err.response?.data?.email?.[0] || 'Registration failed. Please try again.';
+            setError(message);
+            toast.error(message);
         }
     };
 
@@ -340,7 +371,6 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-
         try {
             const result = await login(username, password);
             if (result) {
@@ -348,10 +378,13 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                 
                 // Validate that the account role matches the selected portal role
                 if (loginRole && role !== loginRole) {
-                    setError(`Access denied. This account is registered as a ${role}. Please use the correct portal tab or login page.`);
+                    const message = `Access denied. This account is registered as a ${role}. Please use the correct portal tab or login page.`;
+                    setError(message);
+                    toast.error(message);
                     return; // Prevent redirect
                 }
 
+                toast.success(`Welcome back, ${result.username || 'User'}!`);
                 if (role === 'PATIENT') navigate('/patient/dashboard');
                 else if (role === 'DOCTOR') navigate('/doctor/dashboard');
                 else if (role === 'LAB_TECH') navigate('/lab/dashboard');
@@ -359,10 +392,14 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                 else if (role === 'ADMIN') navigate('/admin-dashboard');
                 else navigate('/');
             } else {
-                setError('Invalid credentials. Please try again.');
+                const message = 'Invalid credentials. Please try again.';
+                setError(message);
+                toast.error(message);
             }
         } catch (err) {
-            setError('Login failed. Please check connection.');
+            const message = 'Login failed. Please check connection.';
+            setError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -402,34 +439,48 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     const handlePatientNext = () => {
         if (patientStep === 1) {
             const { firstName, lastName, email, password, confirmPassword, username, dob, gender, phone } = patientData;
-            if (!firstName) { setError("First Name is required."); return; }
-            if (!lastName) { setError("Last Name is required."); return; }
-            if (!email) { setError("Email address is required."); return; }
-            if (!username) { setError("Username is required."); return; }
-            if (!dob) { setError("Date of Birth is required."); return; }
-            if (!gender) { setError("Gender is required."); return; }
-            if (!phone) { setError("Phone number is required."); return; }
-            if (!password) { setError("Password is required."); return; }
+            if (!firstName) { setError("First Name is required."); toast.error("First Name is required."); return; }
+            if (!lastName) { setError("Last Name is required."); toast.error("Last Name is required."); return; }
+            if (!email) { setError("Email address is required."); toast.error("Email address is required."); return; }
+            if (!username) { setError("Username is required."); toast.error("Username is required."); return; }
+            if (!dob) { setError("Date of Birth is required."); toast.error("Date of Birth is required."); return; }
+            if (!gender) { setError("Gender is required."); toast.error("Gender is required."); return; }
+            if (!phone) { setError("Phone number is required."); toast.error("Phone number is required."); return; }
+            if (!password) { setError("Password is required."); toast.error("Password is required."); return; }
             if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                setError("Username can only contain letters, numbers, and underscores."); return;
+                setError("Username can only contain letters, numbers, and underscores.");
+                toast.error("Username invalid format.");
+                return;
             }
             if (!isEmailValid(email)) {
-                setError("Please enter a valid email address."); return;
+                setError("Please enter a valid email address.");
+                toast.error("Invalid email format.");
+                return;
             }
             if (usernameAvailable === false) {
-                setError("Username is already taken. Please choose another."); return;
+                setError("Username is already taken. Please choose another.");
+                toast.error("Username unavailable.");
+                return;
             }
             if (emailAvailable === false) {
-                setError("Email is already registered. Please login instead."); return;
+                setError("Email is already registered. Please login instead.");
+                toast.error("Email already exists.");
+                return;
             }
             if (phoneAvailable === false) {
-                setError("Phone number is already associated with another account. Please login instead."); return;
+                setError("Phone number is already associated with another account. Please login instead.");
+                toast.error("Phone number already exists.");
+                return;
             }
             if (getPasswordStrength(password) < 2) {
-                setError("Password is too weak. Please use mix of letters and numbers."); return;
+                setError("Password is too weak. Please use mix of letters and numbers.");
+                toast.error("Weak password.");
+                return;
             }
             if (password !== confirmPassword) {
-                setError("Passwords do not match."); return;
+                setError("Passwords do not match.");
+                toast.error("Passwords mismatch.");
+                return;
             }
             setPatientStep(2);
             setError("");
@@ -454,7 +505,9 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
         if (patientStep === 3) {
             const { addressLine1, city, state, pin } = patientData;
             if (!addressLine1 || !city || !state || !pin) {
-                setError("Please complete all address details."); return;
+                setError("Please complete all address details.");
+                toast.error("Incomplete address.");
+                return;
             }
             setPatientStep(4);
             setError("");
@@ -471,7 +524,9 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             // Validate first emergency contact if "full" registration
             const ec = patientData.emergencyContacts[0];
             if (!ec.name || !ec.phone || !ec.relationship) {
-                setError("Please provide at least one emergency contact."); return;
+                setError("Please provide at least one emergency contact.");
+                toast.error("Emergency contact required.");
+                return;
             }
             
             setIsGeneratingID(true);
@@ -519,7 +574,9 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             pdf.save(`PulseID-HealthCard-${patientData.lastName || 'Card'}.pdf`);
         } catch (err) {
             console.error("PDF generation failed", err);
-            setError("Failed to download card. Please try again.");
+            const msg = "Failed to download card. Please try again.";
+            setError(msg);
+            toast.error(msg);
         }
     };
 
@@ -544,7 +601,9 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             document.body.removeChild(link);
         } catch (err) {
             console.error("Image generation failed", err);
-            setError("Failed to download image. Please try again.");
+            const msg = "Failed to download image. Please try again.";
+            setError(msg);
+            toast.error(msg);
         }
     };
 
@@ -583,36 +642,31 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             if (err.response && err.response.data) {
                 const errorMsg = Object.values(err.response.data).flat().join(' ');
                 setError(errorMsg || "Registration failed.");
+                toast.error(errorMsg || "Registration failed.");
             } else {
                 setError("Registration failed. Please check your network.");
+                toast.error("Network error. Try again.");
             }
         } finally {
             setLoading(false);
         }
     };
 
-    // ... (Handle Doctor Next same as before)
-
-    // Login form input needs update to use 'username' state (which I renamed to 'loginUsername' but setLoginUsername)
-    // Actually I renamed the state variable to avoid confusion, so I need to update the input value/onChange too.
-
-
-
     const handleDoctorNext = () => {
         if (doctorStep === 1) {
             const { firstName, lastName, email, password, confirmPassword } = doctorData;
-            if (!firstName) { setError("First Name is required."); return; }
-            if (!lastName) { setError("Last Name is required."); return; }
-            if (!email) { setError("Email address is required."); return; }
-            if (!password) { setError("Password is required."); return; }
+            if (!firstName) { setError("First Name is required."); toast.error("First Name is required."); return; }
+            if (!lastName) { setError("Last Name is required."); toast.error("Last Name is required."); return; }
+            if (!email) { setError("Email address is required."); toast.error("Email address is required."); return; }
+            if (!password) { setError("Password is required."); toast.error("Password is required."); return; }
             if (!isEmailValid(email)) {
-                setError("Please enter a valid email address."); return;
+                setError("Please enter a valid email address."); toast.error("Invalid email."); return;
             }
             if (getPasswordStrength(password) < 2) {
-                setError("Password is too weak."); return;
+                setError("Password is too weak."); toast.error("Weak password."); return;
             }
             if (password !== confirmPassword) {
-                setError("Passwords do not match."); return;
+                setError("Passwords do not match."); toast.error("Passwords mismatch."); return;
             }
         }
         setError("");
@@ -623,7 +677,9 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                setError("File size should be less than 5MB");
+                const msg = "File size should be less than 5MB";
+                setError(msg);
+                toast.error(msg);
                 return;
             }
             setDoctorData({ ...doctorData, licenseDoc: file });
@@ -680,26 +736,28 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             if (err.response && err.response.data) {
                 const errorMsg = Object.values(err.response.data).flat().join(' ');
                 setError(errorMsg || "Registration failed.");
+                toast.error(errorMsg || "Registration failed.");
             } else {
                 setError("Registration failed. Please try again.");
+                toast.error("Registration failed. Please try again.");
             }
             // If failed, don't go to step 4
         } finally {
-            setLoading(false); // Only set loading false if error, otherwise we are moving to step 4
+            setLoading(false);
         }
     };
 
     const handleLabTechNext = () => {
         if (labTechStep === 1) {
             const { firstName, lastName, email, password, confirmPassword, username } = labTechData;
-            if (!firstName) { setError("First Name is required."); return; }
-            if (!lastName) { setError("Last Name is required."); return; }
-            if (!email) { setError("Email address is required."); return; }
-            if (!isEmailValid(email)) { setError("Please enter a valid email address."); return; }
-            if (!username) { setError("Username is required."); return; }
-            if (!password) { setError("Password is required."); return; }
+            if (!firstName) { setError("First Name is required."); toast.error("First Name is required."); return; }
+            if (!lastName) { setError("Last Name is required."); toast.error("Last Name is required."); return; }
+            if (!email) { setError("Email address is required."); toast.error("Email address is required."); return; }
+            if (!isEmailValid(email)) { setError("Please enter a valid email address."); toast.error("Invalid email."); return; }
+            if (!username) { setError("Username is required."); toast.error("Username is required."); return; }
+            if (!password) { setError("Password is required."); toast.error("Password is required."); return; }
             if (password !== confirmPassword) {
-                setError("Passwords do not match."); return;
+                setError("Passwords do not match."); toast.error("Passwords mismatch."); return;
             }
         }
         setError("");
@@ -742,15 +800,15 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             if (err.response && err.response.data) {
                 const errorMsg = Object.values(err.response.data).flat().join(' ');
                 setError(errorMsg || "Registration failed.");
+                toast.error(errorMsg || "Registration failed.");
             } else {
                 setError("Registration failed. Please try again.");
+                toast.error("Registration failed. Try again.");
             }
         } finally {
             setLoading(false);
         }
     };
-
-
 
     return (
         <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center p-6 font-sans selection:bg-[#3B9EE2]/20">
@@ -1282,6 +1340,8 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                         </div>
                                     )}
 
+
+
                             {/* Doctor Registration */}
                             {registerRole === 'DOCTOR' && (
                                 <div>
@@ -1497,15 +1557,12 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                 <input type="file" onChange={(e) => setDoctorData({ ...doctorData, identityProof: e.target.files[0] })} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                                             </div>
 
-                                            <div className="flex gap-4 pt-4">
-                                                <button onClick={() => setDoctorStep(3)} className={btnGhostStyle}>Back</button>
                                                 <button onClick={handleDoctorRegister} className={btnPrimaryStyle}>Submit Application</button>
                                             </div>
-                                        </div>
                                     )}
 
                                     {/* Doctor Step 4: Pending */}
-                                    {doctorStep === 4 && (
+                                    {doctorStep === 5 && (
                                         <div className="text-center py-12 animate-in zoom-in duration-500">
                                             <div className="w-24 h-24 bg-[#EFF6FF] rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-white">
                                                 <Clock className="w-12 h-12 text-[#3B9EE2] animate-pulse" />

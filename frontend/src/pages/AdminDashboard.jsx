@@ -4,6 +4,7 @@ import {
     X, ExternalLink, Activity, CheckCircle, Clock, FlaskConical, ShieldCheck, Eye, XCircle, Search, ChevronRight, MessageSquare, BarChart3, LogOut, Building2, Users, FileText,
     Mail, Shield
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -552,8 +553,9 @@ const CreateUserModal = ({ isOpen, onClose, hospitals, labs, onSuccess }) => {
             await api.post('auth/admin/create-user/', formData);
             onSuccess();
             onClose();
+            toast.success('User created successfully!');
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to create user');
+            toast.error(err.response?.data?.message || 'Failed to create user');
         } finally {
             setLoading(false);
         }
@@ -737,7 +739,7 @@ const CredentialModal = ({ isOpen, onClose, credentials }) => {
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5 ml-1 font-sans">Username</p>
                         <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl font-mono text-sm text-gray-800 break-all select-all flex justify-between items-center group">
                             <span>{credentials.username}</span>
-                            <button onClick={() => { navigator.clipboard.writeText(credentials.username); alert('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => { navigator.clipboard.writeText(credentials.username); toast.success('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Link2 className="w-4 h-4 text-blue-500" />
                             </button>
                         </div>
@@ -746,7 +748,7 @@ const CredentialModal = ({ isOpen, onClose, credentials }) => {
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5 ml-1 font-sans">Official Email</p>
                         <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl font-mono text-sm text-gray-800 break-all select-all flex justify-between items-center group">
                             <span>{credentials.email}</span>
-                            <button onClick={() => { navigator.clipboard.writeText(credentials.email); alert('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => { navigator.clipboard.writeText(credentials.email); toast.success('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Link2 className="w-4 h-4 text-blue-500" />
                             </button>
                         </div>
@@ -809,13 +811,6 @@ const AdminDashboard = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showCredentialModal, setShowCredentialModal] = useState(false);
     const [approvalCredentials, setApprovalCredentials] = useState(null);
-    const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
-
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 5000);
-    };
-
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -854,16 +849,18 @@ const AdminDashboard = () => {
     const handleVerifyDoctor = async (id) => {
         try {
             await api.patch(`admin/doctors/${id}/manage/`, { verify: true });
+            toast.success('Doctor verified successfully!');
             fetchDoctors(); fetchStats();
-        } catch { alert('Failed to verify doctor'); }
+        } catch { toast.error('Failed to verify doctor'); }
     };
 
     const handleRejectDoctor = async (id, reason) => {
         try {
             await api.patch(`admin/doctors/${id}/manage/`, { verify: false, rejection_reason: reason });
+            toast.success('Doctor registration rejected.');
             setRejectTarget(null);
             fetchDoctors(); fetchStats();
-        } catch { alert('Failed to reject doctor'); }
+        } catch { toast.error('Failed to reject doctor'); }
     };
 
     const handleVerifyHospital = async (id) => {
@@ -873,17 +870,18 @@ const AdminDashboard = () => {
                 setApprovalCredentials(r.data.credentials);
                 setShowCredentialModal(true);
             }
-            showToast(`✅ ${r.data.message || 'Hospital approved!'}`);
+            toast.success(`✅ ${r.data.message || 'Hospital approved!'}`);
             fetchHospitals(); fetchStats();
-        } catch { showToast('Failed to approve hospital', 'error'); }
+        } catch { toast.error('Failed to approve hospital'); }
     };
 
     const handleRejectHospital = async (id, reason) => {
         try {
             await api.patch(`admin/hospitals/${id}/manage/`, { verify: false, rejection_reason: reason });
+            toast.success('Hospital registration rejected.');
             setRejectTarget(null);
             fetchHospitals(); fetchStats();
-        } catch { alert('Failed to reject hospital'); }
+        } catch { toast.error('Failed to reject hospital'); }
     };
 
     const handleVerifyLab = async (id) => {
@@ -893,39 +891,43 @@ const AdminDashboard = () => {
                 setApprovalCredentials(r.data.credentials);
                 setShowCredentialModal(true);
             }
-            showToast(`✅ ${r.data.message || 'Lab approved!'}`);
+            toast.success(`✅ ${r.data.message || 'Lab approved!'}`);
             fetchLabs(); fetchStats();
-        } catch { showToast('Failed to approve lab', 'error'); }
+        } catch { toast.error('Failed to approve lab'); }
     };
 
     const handleRejectLab = async (id, reason) => {
         try {
             await api.patch(`admin/labs/${id}/manage/`, { verify: false, rejection_reason: reason });
+            toast.success('Lab registration rejected.');
             setRejectTarget(null);
             fetchLabs(); fetchStats();
-        } catch { alert('Failed to reject lab'); }
+        } catch { toast.error('Failed to reject lab'); }
     };
 
     const handleVerifyTech = async (id) => {
         try {
             await api.patch(`labs/admin/technicians/${id}/verify/`, { verify: true });
+            toast.success('Technician verified successfully!');
             fetchTechs(); fetchStats();
-        } catch { alert('Failed to verify technician'); }
+        } catch { toast.error('Failed to verify technician'); }
     };
 
     const handleRejectTech = async (id, reason) => {
         try {
             await api.patch(`labs/admin/technicians/${id}/verify/`, { verify: false, rejection_reason: reason });
+            toast.success('Technician registration rejected.');
             setRejectTarget(null);
             fetchTechs(); fetchStats();
-        } catch { alert('Failed to reject technician'); }
+        } catch { toast.error('Failed to reject technician'); }
     };
 
     const handleUpdateAuth = async (id, level) => {
         try {
             await api.patch(`admin/doctors/${id}/manage/`, { auth_level: level });
+            toast.success('Authorization level updated.');
             fetchDoctors();
-        } catch { alert('Failed to update authorization'); }
+        } catch { toast.error('Failed to update authorization'); }
     };
 
 
@@ -937,16 +939,18 @@ const AdminDashboard = () => {
             const payload = assignTarget.type === 'doctor' ? { hospital: instId } : { lab: instId };
 
             await api.patch(endpoint, payload);
+            toast.success('Assigned successfully!');
             assignTarget.type === 'doctor' ? fetchDoctors() : fetchTechs();
             setAssignTarget(null);
-        } catch { alert('Assignment failed'); }
+        } catch { toast.error('Assignment failed'); }
     };
 
     const handleUpdateTicketStatus = async (ticketId, status, notes) => {
         try {
             await api.post(`support/tickets/${ticketId}/update_status/`, { status, admin_notes: notes });
+            toast.success('Ticket status updated.');
             fetchTickets();
-        } catch { alert('Failed to update ticket'); }
+        } catch { toast.error('Failed to update ticket'); }
     };
 
     const handleLogout = () => { logout(); navigate('/system/login'); };
@@ -976,17 +980,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-[#F1F5F9] font-sans">
-            {/* Toast Notification */}
-            {toast && (
-                <div className={`fixed top-4 right-4 z-[100] max-w-md px-5 py-4 rounded-2xl shadow-2xl text-sm font-semibold animate-in slide-in-from-top-2 duration-300 flex items-start gap-3 ${
-                    toast.type === 'error'
-                        ? 'bg-red-600 text-white'
-                        : 'bg-emerald-600 text-white'
-                }`}>
-                    <span className="flex-1 leading-relaxed">{toast.message}</span>
-                    <button onClick={() => setToast(null)} className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
-                </div>
-            )}
+            {/* Nav Components... */}
             {rejectTarget?.type === 'doctor' && (
                 <GenericRejectModal
                     title="Reject Doctor Registration"
