@@ -1,0 +1,89 @@
+# Chapter 8: User Manual
+
+## SECTION A: GENERAL INSTRUCTIONS
+
+### A1. System Requirements for Users
+1. **Browser Requirements:**
+   - Supported browsers: Modern standards only (Google Chrome, Mozilla Firefox, Safari, Microsoft Edge). Minimum version supported is standard ECMAScript 6+ standard compliances roughly equivalent to versions launched post-2022.
+   - Mobile browsers: Fully supported natively scaling structurally to smaller device parameters.
+2. **Device Requirements:**
+   - Cross-platform. Smartphones specifically encouraged for structural QR reading via Web-Camera integrations. Desktop configurations perfectly viable for generic documentation reads and profile manipulations.
+3. **Internet Requirements:**
+   - Standard 3G bounds mapping minimum limits. Seamless execution on WiFi lines preserving native state transitions cleanly.
+
+### A2. How to Access the System
+1. **Access Link:** Connect to the root server deployment node via registered URL configurations. 
+2. **Security Warnings:**
+   - Passwords and explicit `HID` details must be secured. Do not share raw passwords with other entities. Platform communication maps cleanly to encrypted TLS parameters mitigating MITM intercept queries securely.
+
+---
+
+## SECTION B: PATIENT USER MANUAL
+
+### B1. Registration & Account Setup
+**Step 1: Account Instantiation**
+1. Navigate directly to the `Register` toggle via the primary portal.
+2. Ensure you initialize via the `Patient` module.
+3. Fill required fields (Name, Date of Birth, Email mapped logically avoiding invalid schemas). Form validators strictly enforce parameters such as specific Regex combinations avoiding invalid data.
+4. Completing steps creates immediate associations rendering your unique Health ID.
+
+**Output Renderings:**
+- Health ID: `HID-XXXXXXXX-XXXX` string mapping cleanly identifying canonical records globally across deployments.
+- Registration implicitly triggers JWT grants assigning dashboard access automatically skipping redundant verification hoops.
+
+### B2. Login & Dashboard Setup
+1. Enter your validated credentials through the base `/login` component natively mapped. 
+2. Dashboard natively aggregates explicit visual constraints identifying the overarching metadata surrounding your canonical account mapping. Data bounds include active relationships highlighting doctor sharing permissions strictly.
+
+### B3. Managing Health ID
+1. Navigate to the top level Health ID widget located globally globally parsing your details.
+2. Export logic permits clean downloads embedding the QR string mappings to physical devices saving standard `.png` objects cleanly rendering roughly 1200x750 aspect bounded templates securely.
+
+### B4. Exploring Medical Timelines
+1. Utilizing the 'Medical Records' bounding tab structurally queries all uploaded canonical document objects historically bound exclusively your unique UID mapping. Data sorts natively rendering `Consultations` cleanly separating `Personal Doc` uploads cleanly.
+
+### B5. Managing Doctor Permissions
+1. The platform operates explicitly under Role-Based authorizations. Medical documents cannot be requested arbitrarily without matching corresponding structural queries authorized uniquely by you explicitly granting tokens corresponding dynamically tracking timestamps effectively terminating rights dynamically natively without user constraints.
+2. Limits such as `QR_QUICK` dictate strict timed expiration mapping 24-hr rules natively. 
+
+### B6. Security Control
+1. Navigating configuration tools structurally updates dynamic models mapped safely tracking changes via explicit validations enforcing strict integrity. Password alterations trigger immediate structural re-validation checks mapping limits avoiding bad actors mapping parameters manually illegally.
+
+---
+
+## SECTION C: DOCTOR USER MANUAL
+
+### C1. Verification Protocols
+1. System limits inherently restrict newly registered practitioner accounts manually pending Administrative visual inspection parsing explicit Medical License credentials. 
+2. Following explicit verification processes mapping status variants triggers internal tokens securely mapping Dashboard access variants rendering the core app functional fully structurally bypassing temporary restrictions effectively unlocking the platform uniquely.
+
+### C2. Patient Access Modals 
+1. **Camera Usage:** Ensure permissions explicitly grant local camera mapping capabilities allowing generic barcode tracking schemas inherently interpreting string limits rendering outputs querying unique patients natively bypassing typographical constraints seamlessly.
+2. **OTP Protocols:** Secondary workflows permit manual insertion constraints natively pushing notification systems prompting remote validations resolving requests actively circumventing boundaries implicitly locked naturally by global configurations safely linking historical data securely parsing parameters appropriately natively.
+
+### C3. Adding Medical Contexts
+1. Explicit bindings render structural interfaces mapped to dynamically insert `Consultation` notes mapping specific diagnosis parameters mapping generic structures uniquely creating unique records linking specific doctors securely to explicitly unique patient arrays structurally linking records inherently explicitly safely.
+
+### C4. History & Follow-ups
+1. A unique bounded 'My Patients' history queue maps explicit patients interacted directly uniquely preserving unique identifiers mapped quickly allowing seamlessly easy traversal mapping quick re-access bounds inherently inherently correctly rendering outputs accurately structurally correctly.
+
+---
+
+## SECTION D: ADMIN USER MANUAL
+
+### D1. System Access Protocols
+1. Requires `is_staff` / `ADMIN` bounds dictating complete uninhibited traverse bounding explicit rules bypassing generalized limitations mapped standard users.
+
+### D2. User & Provider Structuring
+1. Review metrics explicitly isolating pending lists mapping incoming queries strictly structurally reviewing configurations validating structures safely preserving system balances uniquely. Approving or optionally inherently terminating applications manually inserting corresponding explicit reasons uniquely structurally mapped bounds explicitly uniquely.
+
+### D3. Audit Constraints 
+1. Granular HIPAA-style structures log dynamic changes explicitly uniquely capturing explicit queries mapping specific targets directly inherently natively preserving strict system timelines explicit uniquely mapped specifically uniquely tracking explicitly correctly correctly structurally.
+
+---
+
+## SECTION E: FAQ & TROUBLESHOOTING
+
+- **QR won't scan:** Ensure browser constraints permit camera access fully ensuring clear structural focus explicit uniquely avoiding visual glare explicitly.
+- **Lost Health ID:** The system automatically references UID schemas mapped to explicit login validations cleanly avoiding generic failures seamlessly ensuring complete system compliance inherently strictly natively.
+- **File Upload Limitations:** Storage explicitly enforces bounds strictly avoiding massive insertions mapping bounds tightly strictly enforcing 5-10MB limits dynamically securely protecting servers uniquely explicitly properly tightly completely natively naturally structurally safely.

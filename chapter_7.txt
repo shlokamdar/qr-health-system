@@ -1,0 +1,178 @@
+# Chapter 7: Implementation Procedure
+
+## SECTION A: DEVELOPMENT ENVIRONMENT SETUP
+
+### A1. System Requirements
+1. **Minimum Requirements:**
+   - **OS:** Windows 10/11, macOS 12+, or Ubuntu 22.04 LTS.
+   - **RAM:** 8GB minimum (16GB recommended for simultaneous Vite/Django/Docker execution).
+   - **Storage:** 2GB minimum for node_modules and virtual environments. SSD highly preferred.
+   - **Internet:** Standard broadband for installing dependencies (`pip`/`npm`).
+
+2. **Hardware Used:**
+   - Evaluated efficiently on standard workstation configurations supporting modern full-stack web processes.
+
+### A2. Software Prerequisites
+1. **Programming Languages & Frameworks:**
+   - **Backend:** Python 3.10+
+   - **Frontend:** Node.js v18+ (LTS)
+   - **Package Managers:** `pip` for Python, `npm` for Node.
+
+2. **Databases:**
+   - **Development:** SQLite3 (native Django integration).
+   - **Production Readiness:** `psycopg2-binary` packaged for PostgreSQL 14+.
+
+3. **Version Control & Other Tools:**
+   - **Git:** Required for cloning.
+   - **Code Editor:** VS Code with Python and ESLint extensions recommended.
+
+### A3. Installation Steps
+
+1. **Clone Repository**
+   ```bash
+   git clone <repository_url>
+   cd final-year-project
+   ```
+
+2. **Backend Setup**
+   ```bash
+   # Create virtual environment
+   python -m venv venv
+   
+   # Activate virtual environment
+   venv\Scripts\activate  # Windows
+   # OR: source venv/bin/activate # Linux/Mac
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Setup .env file mapped to python-decouple expectations
+   echo "SECRET_KEY=dev-secret" > .env
+   echo "DEBUG=True" >> .env
+   
+   # Database migrations
+   python manage.py makemigrations
+   python manage.py migrate
+   
+   # Create superuser
+   python manage.py createsuperuser
+   
+   # Run development server
+   python manage.py runserver
+   # Server accessible on http://localhost:8000
+   ```
+
+3. **Frontend Setup**
+   ```bash
+   # Navigate to frontend package
+   cd frontend
+   
+   # Install dependencies
+   npm install
+   
+   # Start Vite dev server
+   npm run dev
+   # Server accessible on http://localhost:5173
+   ```
+
+---
+
+## SECTION B: PROJECT STRUCTURE & ORGANIZATION
+
+### B1. Backend Project Structure
+Organized strictly by Django component logic scaling to microservices if needed:
+```
+backend/
+├── config/             # Django Core Settings & URLs
+├── accounts/           # Auth/Role logic & Custom User Models
+├── patients/           # Health ID & QR code auto-generation models
+├── doctors/            # Practitioner profiling & verification models
+├── records/            # Medical ledger abstractions (Prescriptions/Documents)
+├── audit/              # HIPAA-style logging tools
+├── labs/               # Reporting functionality 
+├── support/            # Support ticketing logic
+├── requirements.txt    # Python dependencies
+└── manage.py           # Django execution terminal commands
+```
+
+### B2. Frontend Project Structure
+Vite-compiled React adhering to specific routing standards:
+```
+frontend/
+├── public/             # Static images / base assets
+├── src/
+│   ├── pages/          # UnifiedLogin, PatientDashboard, DoctorDashboard
+│   ├── components/     # Functional React splits (Auth/, Patient/, Doctor/)
+│   ├── services/       # Axios wrappers (api.js, auth.service.js)
+│   ├── context/        # AuthContext.jsx global state provider
+│   ├── App.jsx         # ReactRouter DOM layout limits
+│   └── main.jsx        # Root injector
+├── tailwind.config.js  # V4 Tailwind rules execution mapping
+└── package.json        # Node.js dependencies
+```
+
+---
+
+## SECTION C: CONFIGURATION & ENVIRONMENT VARIABLES
+
+### C1. Backend Configuration (.env file)
+Environment routing explicitly protected by `python-decouple`:
+```properties
+SECRET_KEY=django-insecure-development-key-only-for-testing-purposes
+DEBUG=True
+
+EMAIL_HOST_USER=pulseid.health@gmail.com
+EMAIL_HOST_PASSWORD=[app-pwd]
+DEFAULT_FROM_EMAIL=pulseid.health@gmail.com
+ADMIN_EMAIL=pulseid.health@gmail.com
+```
+
+### C2. Django Settings.py Key Configurations
+- **Third Party Installed Apps:** `rest_framework`, `rest_framework_simplejwt`, `corsheaders`, `drf_yasg`.
+- **JWT Lifetimes:** Configured to `ACCESS_TOKEN_LIFETIME` of 60 minutes and Refresh lifespan 1-day.
+- **Throttles:** Configured API `AnonRateThrottle` mapping `100/day`, User rate bounding `1000/day`.
+- **CORS Parameters:** Explicitly whitelists ports `5173` and `5174`.
+
+---
+
+## SECTION D: DATABASE IMPLEMENTATION
+
+### D1. Django ORM Model Implementation
+- Extensively overrides the built-in user class (`AbstractUser`) in `accounts/models.py`. Standardizing `role` assignment dynamically supporting `PATIENT`, `DOCTOR`, `ADMIN`, etc.
+- Employs override logic on model signals in `patients/models.py` (`def save(...)`) intercepting standard creates to auto-allocate generic UUID `health_id` attributes directly generating embedded QR objects using `qrcode` and `pillow`.
+
+### D2. Database Migrations
+Migrations follow standard Django cascading architecture avoiding explicit recursive queries through normalized ForeignKey linking. Validated using native `manage.py makemigrations`.
+
+---
+
+## SECTION E: API DEVELOPMENT
+
+### E1. API Framework Setup
+- Backed strictly by **Django REST Framework (DRF)** version 3.16.1.
+- Implements stateless JWT integrations scaling without session cookie overhead limits leveraging `djangorestframework_simplejwt`.
+
+### E2. Permission & Authentication Classes
+Employs standard DRF `IsAuthenticated` classes alongside complex custom role verification classes embedded per-view (verifying `request.user.role == User.Role.PATIENT` or verifying Doctor verified state statuses dynamically).
+
+---
+
+## SECTION F: FRONTEND IMPLEMENTATION
+
+### F1. React Component Development
+- **Vite Boilerplate Setup:** Executed cleanly on `@vitejs/plugin-react` guaranteeing HMR speeds.
+- **Global Context Providers:** The primary source of truth relies securely in `AuthContext.jsx`. The service evaluates initial local-storage JWT decode validity via `jwt-decode`.
+- **API Mapping:** All outbound asynchronous calls intercept safely against internal Axios configurations mapping URL backbones explicitly to Vite's root configuration parameters.
+
+### F2. Routing Security
+`App.jsx` evaluates tokens globally assigning React Router protected paths barring users arbitrarily browsing unauthorized domain addresses. The logic intercepts and reroutes inherently to dashboard variants corresponding securely against the decrypted roles mapped natively by the server logic.
+
+### F3. Styling Implementation
+Implements native generic bindings exclusively using **TailwindCSS Version 4.1.18** mapped against custom canonical brand themes dictating canonical system tokens ensuring 1920x1080 responsive translations down structurally to mobile viewports cleanly. Specific components rely natively against standard `lucide-react` implementations ensuring visual aesthetics map seamlessly.
+
+---
+
+## SECTION G: POST-DEPLOYMENT & MAINTENANCE
+### Monitoring & Troubleshooting 
+- Rejections based on simple configuration overrides can quickly drop DB configurations. Port 8000 and 5173 defaults cannot be overlapping.
+- Storage constraints logic dynamically tests constraints directly via Python memory mappings preventing local RAM limits collapsing development builds. Security tokens dictate strict SSL definitions on non-debug states dynamically altering response header bindings.

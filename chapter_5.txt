@@ -1,0 +1,154 @@
+# Chapter 5: Testing Procedures - PulseID System
+
+## Testing Strategy
+
+### A1. Testing Types Implemented
+1. **Unit Testing**
+   - **Framework:** Django's built-in `TestCase` (which relies on Python's native `unittest` structure).
+   - **Components Tested:** Core models (e.g., `Patient` Health ID auto-generation signal testing, `User` role assignments during creation).
+   - **Test Coverage:** Focused on critical path functionality (Authentication, Signal triggers, Record creation).
+   - **File Locations:** Maintained natively within app-level `tests.py` files (e.g., `accounts/tests.py`, `patients/tests.py`).
+
+2. **Integration Testing**
+   - Implemented primarily via API endpoints linking DB operations. For example, registering a Patient and validating the immediate existence of the `Patient` profile, ensuring the Django ORM creates related entities.
+
+3. **API/Endpoint Testing**
+   - **Tools:** Evaluated using `rest_framework.test.APIClient` and custom python requests via `verification_scripts/test_patient_api.py`.
+   - **Tests:** Token retrieval testing (JWT), user authentication rejections (401 Unauthorized returns), and record upload pipelines combining `multipart/form-data` logic.
+
+4. **Frontend Testing**
+   - The React frontend primarily relies on manual End-to-End (E2E) workflow testing and UI consistency checking (outlined in the comprehensive `testing-checklist.md`). No automated Javascript testing frameworks (Jest/Vitest) are currently initialized in `package.json`.
+
+5. **Security & Performance Testing**
+   - Security focus aligns to rate limiting rejection, RBAC limits using Django DRF permission classes, JWT token expiries, and password hashing logic tests. Performance is validated structurally by verifying SQL optimizations rather than strict load-testing outputs.
+
+### A2. Testing Tools & Frameworks
+- **Backend:** `django.test.TestCase`, `APIClient` from Django Rest Framework, and `requests` for remote verification scripts.
+- **Frontend:** Postman/Browser DevTools for direct interface logic inspection. Manual QA checklist testing.
+- **Test Runner:** `python manage.py test`.
+
+---
+
+## Test Cases
+
+### B1. Authentication & Authorization Tests
+1. **User Registration Tests**
+   - Patient registers with valid email and password → Success.
+   - Duplicate email/phone number registration is rejected with an error message → Fail validation.
+   - Doctor registration establishes generic user and holds state as pending.
+
+2. **Login Tests**
+   - Login success via `/api/auth/login/` returning `access` and `refresh` tokens.
+   - Invalid credentials mapped to `401 Unauthorized`.
+   - Admin account role overrides verified correctly regardless of initial payload parameters.
+
+### B2. Patient-Specific Tests
+1. **Health ID & QR Generation**
+   - Health ID auto-generated immediately post registration.
+   - Assert generation logic triggers (starts with `HID-`).
+
+2. **OTP Flow & Access Mapping**
+   - Doctor OTP access tracked via `OTPRequest` metrics (attempt limit max 3).
+   - Rejecting bad access limits gracefully.
+
+### B3. Medical Record Tests
+1. **Creating Records**
+   - Patient successfully uploading a PDF generic medical document testing multipart forms (`test_record_upload`).
+   - Verifying `uploaded_by` accurately syncs to authenticated user.
+
+### B4. Audit Logging Tests
+1. **Access Log Creation**
+   - Verification that `AccessLog` registers major hooks like viewing records, logins, and OTP validations ensuring tracking is functionally intact.
+
+---
+
+## Test Execution
+
+### C1. How to Run Tests
+1. **Backend Tests**
+   - Execute all unit and functional API tests via: `python manage.py test`
+   - Run specific apps: `python manage.py test accounts patients`
+
+### C2. Continuous Integration (CI)
+- Primarily validated via local verification pipelines. Pre-commit structural analysis relies on manual testing standardizations via the testing checklist. Native GH Action deployments execute standard `python manage.py check` systems before allowing merges.
+
+### C3. Test Documentation
+- Organized through strict `testing-checklist.md` standards marking Pass/Fail milestones corresponding precisely to Project Report (Blackbook) required artifacts.
+
+---
+
+## Quality Assurance
+
+### D1. Code Quality Tools
+- Backend operations formatted by Python defaults and strict Django structural logic. Testing enforces 400 Bad Requests limits for unexpected fields. Frontend leverages React Vite compilation flags to catch linting irregularities alongside visual structure matching for 1920x1080 to mobile responsivity.
+
+### D2. Known Issues & Limitations
+- While API flows are comprehensively tested, automated frontend workflow mocking is missing. Test automation operates fundamentally on Django integration layers.
+
+---
+
+## Testing Matrix
+
+| Component | Unit Tests | Integration Tests | API Tests | Frontend Tests | Status |
+|-----------|-----------|------------------|-----------|---------------|--------|
+| User Registration | ✓ | ✓ | ✓ | Manual (UI) | Passing |
+| Authentication | ✓ | ✓ | ✓ | Manual (UI) | Passing |
+| OTP Verification | ✓ | ✓ | ✓ | Manual (UI) | Passing |
+| Medical Records | ✓ | ✓ | ✓ | Manual (UI) | Passing |
+| Audit Logging | ✗ | ✓ | ✓ | Manual (UI) | Passing |
+| QR Generation | ✓ | ✓ | ✗ | Manual (UI) | Passing |
+
+---
+
+## Example Test Cases
+
+1. **Test Case 1: Backend Registration API Flow**
+   - **File Location:** `accounts/tests.py`
+   - **What it tests:** Registration of a new Patient user and verifying subsequent profile extension associations.
+   - **Setup:** Instantiating Django `APIClient()`.
+   - **Expected Result:** Token issues `HTTP_201_CREATED`, specific `Patient` objects created in DB, generic user maps correctly to Role mappings.
+```python
+def test_register_patient(self):
+    data = {
+        'username': 'newpatient',
+        'password': 'password123',
+        'email': 'patient@test.com',
+        'role': 'PATIENT',
+        'first_name': 'New',
+        'last_name': 'Patient'
+    }
+    response = self.client.post('/api/auth/register/', data)
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    self.assertTrue(User.objects.filter(username='newpatient').exists())
+```
+
+2. **Test Case 2: Health ID Pre-save Initialization**
+   - **File Location:** `patients/tests.py`
+   - **What it tests:** Ensuring `Patient` models automatically allocate UUID strings prepended with "HID-" upon instantiation.
+   - **Expected Result:** Patient's Health ID strictly passes "startswith" format validations seamlessly.
+```python
+def test_health_id_generation(self):
+    self.assertTrue(self.patient.health_id.startswith('HID-'))
+```
+
+3. **Test Case 3: Authentication Rejection (Rate Limit / Invalid Data)**
+   - **File Location:** `accounts/tests.py`
+   - **What it tests:** Validation routines barring bad actors submitting wrong authentication combinations.
+   - **Expected Result:** Payload triggers `401 Unauthorized` safely.
+```python
+def test_login_failure(self):
+    data = {
+        'username': 'testuser',
+        'password': 'wrongpassword'
+    }
+    response = self.client.post('/api/auth/login/', data)
+    self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+```
+
+---
+
+## Testing Environment
+
+1. **Test Database:** Native Django mechanisms create an isolated test SQLite3 sandbox during runtime which dissolves per-session to prevent cross-contamination.
+2. **Test Data:** Relies primarily on inline mocking setups (fixture sets built securely in `setUp()` lifecycle routines) guaranteeing clean environments per function.
+3. **Mocking Tools:** Relies on structural `SimpleUploadedFile` from `django.core.files.uploadedfile` to mock complex payload bytes transmissions for File validations.

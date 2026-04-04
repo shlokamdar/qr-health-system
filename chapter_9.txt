@@ -1,0 +1,40 @@
+# Chapter 9: Scope for Future Enhancement
+
+## SECTION A: CURRENT SYSTEM LIMITATIONS
+
+### A1. Identified Limitations
+1. **Database Search Limitations:** The system currently relies inherently on exact queries or standard substring searches. There is no native Full-Text Search (FTS) implementations via Elasticsearch dynamically. 
+2. **Backend Scalability:** The RESTful architecture currently runs synchronously without WebSockets (Django Channels), avoiding push-based event streams dynamically updating frontends. Redis caching is not integrated.
+3. **Frontend Limitations:** No explicit offline-first capabilities (`PWA` mappings) exist. Accessibility rules (WCAG 2.1) are only partially integrated.
+4. **Platform Features:** The system currently acts strictly as an asynchronous ledger. Direct realtime consultations (Telemedicine), insurance claims, or physical booking maps are out of scope.
+
+---
+
+## SECTION B: SHORT-TERM ENHANCEMENTS (3-6 Months)
+
+### B1. Feature Enhancements
+**1. Appointment Scheduling:** Allow the platform to map calendar API modules bounding appointment slots between Doctor and Patient.
+**2. Two-Factor Authentication (2FA):** Integrate `python-qrcode` bindings generating Authenticator (TOTP) constraints enforcing strong login boundaries.
+**3. Redis Caching:** Map standard API endpoints (like profile metrics) to temporary cache states, avoiding slow DB limits.
+**4. UI Expansions:** Introduce dynamic Dark Mode limits storing constraints properly.
+
+---
+
+## SECTION C: MEDIUM-TERM ENHANCEMENTS (6-12 Months)
+
+### C1. Integration Ecosystems
+**1. Video Consultation APIs:** Integrating WebRTC allowing direct video tracking inherently.
+**2. Payment Infrastructure:** Binding endpoints cleanly allowing Consultation fees mapped specifically via Stripe.
+
+### C2. AI-Based Diagnostics
+Implementing generic ML logic parsing historic markers and recommending statistical predictions.
+
+---
+
+## SECTION D: LONG-TERM ENHANCEMENTS (12+ Months)
+
+### D1. Native App Scaling
+Shift towards React Native encapsulating existing endpoints for canonical App Store distributions safely seamlessly securely tracking boundaries.
+
+### D2. Enterprise Integrations & Blockchain
+Implementing Blockchain bindings logging explicit access actions into immutable arrays protecting historical integrity. Expanding to PostgreSQL read-replicas for load balancing securely explicitly.

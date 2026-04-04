@@ -1,0 +1,198 @@
+# Chapter 6: Output Screens
+
+## SECTION A: AUTHENTICATION OUTPUT SCREENS
+
+### A1. Login Success Screen
+**Screen Name:** Dashboard Redirect & Welcome
+**Screenshot:** [Attach Screenshot: Successful login redirect showing Patient/Doctor dashboard with user name and role badge]
+**Description:** Output display smoothly transitioning users to role-specific layouts securely verifying JWT tokens.
+**Data Displayed:**
+- Logged-in user name (fetched via API token context `user.first_name`)
+- User Role visual mappings (e.g., Doctor dashboard vs Patient dashboard colors)
+- Navigation tab states initialized globally.
+**User Action:** Clicking "Login" after providing valid credentials.
+**Styling:** Modern, clean transition rendering dashboard background `#F8FAFB`.
+
+### A2. Login Error Screens
+**Screen Name:** Unified Login Error Display
+**Screenshot:** [Attach Screenshot: Login attempt rejection prominently displaying invalid credentials inline]
+**Description:** Immediate textual feedback stopping unauthorized portal access.
+**Data Displayed:**
+- "Invalid credentials. Please try again." / "Please check connection."
+- Role Mismatch lock: "Access denied. This account is registered as a [ROLE]."
+**User Action:** Form limits block submission; API 401 triggers error state inline.
+**Styling:** Error text rendered inline, fields retained for re-submission.
+
+### A3. Registration Success Screen
+**Screen Name:** Patient/Doctor Onboarding Success
+**Screenshot:** [Attach Screenshot: Doctor pending verification screen showing "Verification Pending"]
+**Description:** Handles successful object creation cleanly. For doctors, provides a strict output limiting UI access until Admin verifies.
+**Data Displayed:**
+- **Patient:** Immediate Health ID generated (e.g., `HID-1234-5678`) and Auto-login triggered.
+- **Doctor:** "Registration is under review," showing License No., Specialization, and "Awaiting Review" badge.
+**Styling:** Amber warning colors `#FEF3C7` for Pending verification, transition to `#D1FAE5` when Approved.
+
+---
+
+## SECTION B: PATIENT DASHBOARD OUTPUT
+
+### B1. Patient Dashboard Screen
+**Screen Name:** Patient Interactive Overview
+**Screenshot:** [Attach Screenshot: Complete patient overview displaying stats, cards, and recent timeline]
+**Description:** Aggregates health summary, dynamic timeline, and clinical records securely mapping data endpoints.
+**Data Displayed:**
+- Patient name (from `patient.user.first_name`), Health ID (`patient.health_id`).
+- Quick Stats: Total Visits (`allMedicalRecords.length`), Active Doctors (`sharingPermissions`), Pending Requests.
+- Medical Ledger: Hybrid collection of Prescriptions, Reports, and Official Uploads.
+**User Action:** Default post-login screen view (`/patient/dashboard`).
+**Styling:** Cards use white `#FFFFFF` shadow wrappers against `#F8FAFB`. Primary `#3B9EE2` accents.
+
+### B2. Patient Health ID Card Output
+**Screen Name:** Exportable Health ID Card 
+**Screenshot:** [Attach Screenshot: Digital ID Card template fully filled with QR code block and download button]
+**Description:** Canonical design token layout embedding HTML2Canvas export functions.
+**Data Displayed:**
+- Encoded QR Code referencing internal `health_id`.
+- Name, Date of Birth, Blood Group, Emergency Contact mappings.
+**User Action:** Clicking the "Download ID Card" triggers PDF/PNG capture.
+**Styling:** Deep navy backdrop `#0D1B2A` with strict contrast layers.
+
+### B3. Medical History Output Screen
+**Screen Name:** Unified Clinical Ledger
+**Screenshot:** [Attach Screenshot: List of sorted records separating personal uploads from official clinic consultations]
+**Description:** List mapping dynamic combinations of documents sorting chronologically.
+**Data Displayed:**
+- Type badges (Official / Personal Doc / Prescription).
+- Doctor name mapping (`r.doctor_details.first_name`).
+**Next Steps:** Clicking individual items to expand details/download files.
+
+### B4. Share Access Screen Output
+**Screen Name:** Active Sharing Metrics
+**Screenshot:** [Attach Screenshot: List of Doctors with Revoke buttons]
+**Description:** Granular consent displays permitting hard-revocations of OTP/QR permissions.
+**Data Displayed:**
+- List of Active Sharing Permissions from DB mapped to doctor names.
+- Revoke Access Trigger (`handleRevokeAccess(id)`).
+
+---
+
+## SECTION C: DOCTOR DASHBOARD OUTPUT
+
+### C1. Doctor Dashboard Screen
+**Screen Name:** Doctor Interactive Portal
+**Screenshot:** [Attach Screenshot: Search lookup, quick metrics and scheduled appointments]
+**Description:** Portal isolating patient lookup operations heavily guarded by authentication constraints.
+**Data Displayed:**
+- Dashboard Stats, Schedule/Pending Appointments counting (`pendingCount`).
+
+### C2. QR Scanning Output
+**Screen Name:** Camera Scanner Interface
+**Screenshot:** [Attach Screenshot: Open camera viewport analyzing barcode format]
+**Description:** Reads RAW QR inputs intercepting `/api/patients/` endpoints natively.
+**Data Displayed:**
+- Scanner Error states (NotReadableError, Camera Permission Denied).
+- Immediate structural routing to Patient Profile upon read.
+
+### C3. Patient Record View (Doctor)
+**Screen Name:** Restricted vs. Unrestricted Profile Overlay
+**Screenshot:** [Attach Screenshot: Restricted yellow locked screen vs. Full historical timeline]
+**Description:** Security feature structurally isolating non-permitted historic queries.
+**Data Displayed:**
+- **Restricted:** Amber alert `Lock` icon, restricted text. Needs OTP.
+- **Unrestricted:** View of previous consultations, "Records Encrypted", Full Clinical History spanning all providers.
+**User Action:** Submitting OTP unlocking constraints (`handleVerifyOTP()`).
+
+### C4. Add Medical Record Output
+**Screen Name:** New Consultation Form
+**Screenshot:** [Attach Screenshot: Detailed data-logging form inserting Chief Complaint and Diagnosis]
+**Description:** Deep Navy `#0D1B2A` embedded form rendering modern UI insertions cleanly.
+**Data Source:** Directly interfaces `DoctorService.createConsultation()`.
+
+---
+
+## SECTION D: ADMIN DASHBOARD OUTPUT
+
+### D1. Admin Dashboard Screen
+**Screen Name:** Administrative Superuser Control
+**Screenshot:** [Attach Screenshot: System statistics, counts of Active Users, Pending approvals]
+**Description:** Aggregates overall database object counts tracking platform health.
+**Data Displayed:**
+- Total Users counting, Doctor registration approval limits.
+
+### D2. Doctor Approval Output
+**Screen Name:** Verification Management Table
+**Screenshot:** [Attach Screenshot: List of doctors rendering Approve/Reject states with License views]
+**Description:** Output providing admin power to review credentials submitted by doctors.
+**Data Displayed:**
+- Action outputs triggering status changes to DB models changing `is_verified` to `True`.
+
+### D3. Support Tickets Output
+**Screen Name:** Helpdesk Queue
+**Screenshot:** [Attach Screenshot: Support tickets mapping Open, Resolved, Pending badges]
+**Description:** Aggregated user complaints mapped directly to ticketing systems.
+**Data Displayed:**
+- Status Badges rendered dynamically: `OPEN` (Amber / `#FEF3C7`), `RESOLVED` (Green / `#D1FAE5`).
+
+---
+
+## SECTION E: ERROR & VALIDATION OUTPUT SCREENS
+
+### E1. Form Validation Error Messages
+**Screen Name:** Realtime Input Rejections
+**Screenshot:** [Attach Screenshot: Error limits stopping registration form steps]
+**Description:** Blocks bad data saving Database from integrity faults.
+**Data Displayed:**
+- Responses map directly via `err.response.data`.
+- Email exists logic / Phone already exists lockout text rendering red text.
+
+### E2. File Upload Errors
+**Screen Name:** File Type Constraint Alerts
+**Screenshot:** [Attach Screenshot: File size exceeds 5MB alert]
+**Description:** Blocks overloading storage logic.
+
+---
+
+## SECTION F: SUCCESS NOTIFICATIONS & MESSAGES
+
+### F1. Action Success Messages (Toasts)
+**Screen Name:** Toast Rendering Array
+**Screenshot:** [Attach Screenshot: Top right green toast confirming save]
+**Description:** Utilizes React-Hot-Toast library emitting non-blocking confirmations.
+**Messages Captured:**
+- `"Record Uploaded Successfully!"`
+- `"Patient registered! Health ID: HID-1234"`
+- `"Consultation Created!"`
+**Styling:** Auto-dismissal standardizations applied globally.
+
+---
+
+## SECTION G: MODAL/DIALOG OUTPUTS
+
+### G1. Confirmation Dialogs
+**Screen Name:** Action Commit Limits
+**Screenshot:** [Attach Screenshot: Revoke Access Warning Modal]
+**Description:** Prevents accidental deletion schemas.
+**Data Displayed:**
+- Delete contacts `window.confirm('Remove this emergency contact?')`.
+- Custom Revocation overlay capturing `handleRevokeAccess(id)` confirming destruction of DB token.
+
+---
+
+## SECTION H: RESPONSIVE DESIGN OUTPUTS
+
+### H1. Mobile View Scaling
+**Screenshot:** [Attach Screenshot: Vertical stacking applied to Patient Dashboard hiding Sidebar in favor of Bottom/Hamburger Nav]
+**Description:** Enforces `useIsMobile()` hooking mechanisms altering viewport mapping completely.
+**Data Displayed:**
+- Floating action buttons inserted for "Profile Edit" ensuring touch targets remain cleanly `50px`.
+
+---
+
+## SECTION I: PRINT/EXPORT OUTPUTS
+
+### I1. Printable Screens Config
+**Screen Name:** PDF / PNG Document Capture
+**Screenshot:** [Attach Screenshot: Downloaded card structure generated by JS renderer]
+**Description:** Bypasses DOM scaling limits enforcing 4X magnification rendering clinical-grade graphics.
+**Data Displayed:**
+- Uses internal `html2canvas` capturing precise layout structures ignoring web navigation wrappers (via `data-html2canvas-ignore="true"`).
