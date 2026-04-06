@@ -1,118 +1,129 @@
-# Multi-VM Deployment Guide (No Docker)
+# Single-VM Deployment Guide (Amazon Linux)
 
-This guide documents a standard bare-metal deployment across **two distinct EC2 instances**:
-1. **Jenkins VM**: Builds the code when changes are pushed to `main` and deploys it over SSH.
-2. **Production VM**: Runs the application natively using Gunicorn, Nginx, and PostgreSQL.
+This guide documents a standard deployment for the PulseID project on **Amazon Linux** using `yum`/`dnf` package managers. Instead of relying on a CI/CD pipeline, this guide covers cloning the repository directly from GitHub to your production server and running it using Gunicorn, Nginx, and PostgreSQL.
 
 ---
 
-## 1. Set Up the Jenkins VM (CI/CD Server)
+## 1. Set Up the Amazon Linux Server
 
-This VM orchestrates the pipeline.
+Launch an **Amazon Linux 2023** (or Amazon Linux 2) EC2 instance:
+- **Specs**: t2.micro or t2.small
+- **Security Group**: Allow Ports `22` (SSH), `80` (HTTP), and `443` (HTTPS)
 
-1. **Launch EC2 Instance**: 
-   - **OS**: Ubuntu 22.04 LTS
-   - **Specs**: t2.micro or t2.small
-   - **Security Group**: Allow Ports `22` (SSH) and `8080` (Jenkins)
-2. **Install Jenkins and Dependencies**:
-   ```bash
-   sudo apt update && sudo apt upgrade -y
-   sudo apt install -y openjdk-17-jdk git curl
-   
-   # Install Jenkins
-   curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
-   echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
-   sudo apt update
-   sudo apt install -y jenkins
-   sudo systemctl enable --now jenkins
-   
-   # Install Node.js (for building the React frontend on the Jenkins server)
-   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-   sudo apt install -y nodejs
-   ```
-3. **Configure Jenkins Plugin**: Log into Jenkins (port 8080). Navigate to **Manage Jenkins > Plugins** and install the **SSH Agent** plugin.
+Connect to the instance via SSH:
+```bash
+ssh -i "your-key.pem" ec2-user@<your-ec2-ip-address>
+```
 
 ---
 
-## 2. Set Up the Production VM (Application Server)
+## 2. Install System Dependencies
 
-This VM runs your database, backend, and serves the frontend.
+Update the system and install required packages including Python 3, PostgreSQL, Nginx, Git, and Node.js (for the React frontend):
 
-1. **Launch EC2 Instance**:
-   - **OS**: Ubuntu 22.04 LTS
-   - **Specs**: t2.micro or t2.small
-   - **Security Group**: Allow Ports `22` (SSH), `80` (HTTP), and `443` (HTTPS).
-2. **Install Nginx, Python, and PostgreSQL**:
-   ```bash
-   sudo apt update && sudo apt upgrade -y
-   sudo apt install -y python3-pip python3-venv nginx postgresql postgresql-contrib
-   ```
-3. **Database Configuration**:
-   Create a database and a user for your Django application.
-   ```bash
-   sudo -u postgres psql
-   ```
-   *In the PostgreSQL prompt:*
-   ```sql
-   CREATE DATABASE qrhealth;
-   CREATE USER dbadmin WITH PASSWORD 'mypassword';
-   ALTER ROLE dbadmin SET client_encoding TO 'utf8';
-   ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';
-   ALTER ROLE dbadmin SET timezone TO 'UTC';
-   GRANT ALL PRIVILEGES ON DATABASE qrhealth TO dbadmin;
-   \q
-   ```
-4. **Setup the Project structure**:
-   ```bash
-   mkdir -p /home/ubuntu/qr-health-system
-   ```
-   Add a `.env` file at `/home/ubuntu/qr-health-system/.env` with your secure production settings:
-   ```text
-   SECRET_KEY=your_django_secret
-   DEBUG=False
-   ALLOWED_HOSTS=*
-   POSTGRES_DB=qrhealth
-   POSTGRES_USER=dbadmin
-   POSTGRES_PASSWORD=mypassword
-   CORS_ALLOWED_ORIGINS=http://<prod-vm-ip>
-   ```
+```bash
+sudo dnf update -y
+sudo dnf install -y python3 python3-pip git nginx postgresql15-server
+
+# Install Node.js
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo dnf install -y nodejs
+```
 
 ---
 
-## 3. Link Jenkins VM to Production VM
+## 3. Database Configuration
 
-Jenkins needs SSH access to push files and run commands on the Production VM.
+Initialize and start the PostgreSQL service:
 
-1. **Generate SSH Key on Jenkins VM**:
-   ```bash
-   sudo su - jenkins
-   ssh-keygen -t rsa -b 4096
-   cat ~/.ssh/id_rsa.pub
-   ```
-2. **Add Key to Production VM**:
-   On the **Production VM**, paste the output of the Jenkins public key into the `authorized_keys` file:
-   ```bash
-   nano ~/.ssh/authorized_keys
-   ```
-   Save and close.
-3. **Add credentials to Jenkins**:
-   - Go to **Manage Jenkins > Credentials > System > Global credentials**.
-   - Add a credential of kind **SSH Username with private key**.
-   - **ID**: `prod-vm-ssh-key` (Must match the `Jenkinsfile`!).
-   - **Username**: `ubuntu` (or the SSH user of your Prod VM).
-   - Paste the **PRIVATE** key (`cat ~/.ssh/id_rsa` on the Jenkins VM) into the private key area.
+```bash
+sudo postgresql-setup --initdb
+sudo systemctl enable --now postgresql
+```
+
+Create a database and a user for your Django application:
+
+```bash
+sudo -u postgres psql
+```
+
+*In the PostgreSQL prompt:*
+```sql
+CREATE DATABASE qrhealth;
+CREATE USER dbadmin WITH PASSWORD 'mypassword';
+ALTER ROLE dbadmin SET client_encoding TO 'utf8';
+ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';
+ALTER ROLE dbadmin SET timezone TO 'UTC';
+GRANT ALL PRIVILEGES ON DATABASE qrhealth TO dbadmin;
+\q
+```
 
 ---
 
-## 4. Production VM: Service Configuration
+## 4. Clone and Setup the Project
+
+Clone the repository from GitHub into the `ec2-user` home directory:
+
+```bash
+cd ~
+git clone https://github.com/your-username/qr-health-system.git
+cd qr-health-system
+```
+
+Add a `.env` file at `~/qr-health-system/.env` with your secure production settings:
+
+```text
+SECRET_KEY=your_django_secret_key_here
+DEBUG=False
+ALLOWED_HOSTS=*
+POSTGRES_DB=qrhealth
+POSTGRES_USER=dbadmin
+POSTGRES_PASSWORD=mypassword
+CORS_ALLOWED_ORIGINS=http://<your-ec2-ip-address>
+FRONTEND_URL=http://<your-ec2-ip-address>
+```
+
+---
+
+## 5. Backend (Django) Setup
+
+Create a virtual environment, install Python dependencies, and apply migrations:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+deactivate
+```
+
+---
+
+## 6. Frontend (React) Setup
+
+Navigate to the `frontend` folder to install NPM packages and build the static assets:
+
+```bash
+cd ~/qr-health-system/frontend
+npm install
+npm run build
+cd ~/qr-health-system
+```
+
+---
+
+## 7. Service Configuration
 
 We need to make `Gunicorn` and `Nginx` run our app as native Linux services.
 
 ### Gunicorn Systemd Service
-Create the service file on the **Production VM**:
+
+Create the service file:
 ```bash
 sudo nano /etc/systemd/system/gunicorn.service
 ```
+
 Insert the following configuration:
 ```ini
 [Unit]
@@ -120,44 +131,48 @@ Description=gunicorn daemon for qr-health-system
 After=network.target
 
 [Service]
-User=ubuntu
-Group=www-data
-WorkingDirectory=/home/ubuntu/qr-health-system
-Environment="PATH=/home/ubuntu/qr-health-system/venv/bin"
-ExecStart=/home/ubuntu/qr-health-system/venv/bin/gunicorn --access-logfile - --workers 3 --bind 127.0.0.1:8000 config.wsgi:application
+User=ec2-user
+Group=nginx
+WorkingDirectory=/home/ec2-user/qr-health-system
+Environment="PATH=/home/ec2-user/qr-health-system/venv/bin"
+ExecStart=/home/ec2-user/qr-health-system/venv/bin/gunicorn --access-logfile - --workers 3 --bind 127.0.0.1:8000 config.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
 ```
+
 Start and enable Gunicorn:
 ```bash
-sudo systemctl enable gunicorn
-sudo systemctl start gunicorn
+sudo systemctl daemon-reload
+sudo systemctl enable --now gunicorn
 ```
 
 ### Nginx Server Block (Frontend + Proxying)
-Configure Nginx on the **Production VM** to serve your React frontend build and reverse proxy requests prefixed with `/api`, `/admin`, `/media`, etc., to Gunicorn.
+
+Configure Nginx to serve your React frontend build and reverse proxy API requests to Gunicorn.
+
 ```bash
-sudo nano /etc/nginx/sites-available/qr-health
+sudo nano /etc/nginx/conf.d/qr-health.conf
 ```
+
 Add server configuration:
 ```nginx
 server {
     listen 80;
-    server_name _; # Or domain name if you have one
+    server_name _; 
 
     # React Frontend build
     location / {
-        root /home/ubuntu/qr-health-system/frontend/dist;
+        root /home/ec2-user/qr-health-system/frontend/dist;
         try_files $uri /index.html;
     }
 
     # Django Static / Media files
     location /static/ {
-        alias /home/ubuntu/qr-health-system/staticfiles/;
+        alias /home/ec2-user/qr-health-system/staticfiles/;
     }
     location /media/ {
-        alias /home/ubuntu/qr-health-system/media/;
+        alias /home/ec2-user/qr-health-system/media/;
     }
 
     # Reverse proxy backend requests to Gunicorn
@@ -170,19 +185,20 @@ server {
     }
 }
 ```
-Enable the site:
+
+Ensure Nginx has permission to access the `ec2-user` home directory for static files:
 ```bash
-sudo ln -s /etc/nginx/sites-available/qr-health /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
-sudo systemctl restart nginx
+sudo chmod +x /home/ec2-user
+```
+
+Start and enable Nginx:
+```bash
+sudo systemctl enable --now nginx
 ```
 
 ---
 
-## 5. Completing the Setup
-1. In Jenkins Console UI, create a new **Pipeline** project.
-2. Link your Git Repository to the Source Code Management section.
-3. Update the `Jenkinsfile` currently in your repo `PROD_IP` variable to point to your Production VM's public IP address.
-4. If you have setup GitHub webhooks, the trigger happens automatically. Alternatively, run **Build Now**.
+## 8. Completion
 
-Jenkins will check out your code, build the React frontend via NPM on the Jenkins VM, sync everything via SSH `rsync` over to the Prod VM, apply your Python dependencies, setup Django schemas, and restart the Nginx & Gunicorn daemons!
+Your deployment is complete! Visit your EC2 instance's public IP address in your browser.
+To pull the latest updates in the future, simply `git pull` from the project root, build the frontend (`npm run build`), apply migrations, and restart the `gunicorn` and `nginx` services.

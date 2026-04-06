@@ -91,6 +91,7 @@ const DoctorDashboard = () => {
     // Scanner State
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isCameraLoading, setIsCameraLoading] = useState(false);
+    const [scannerError, setScannerError] = useState(null);
 
     // Register Patient Form State
     const [newPatient, setNewPatient] = useState({
