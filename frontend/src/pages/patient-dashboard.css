@@ -22,12 +22,18 @@
   --radius-lg: 20px;
 }
 
-.pd-app,
-.pd-app * {
+/* Do not set margin/padding on .pd-app * — it loads after Tailwind and was
+   overriding utility classes (p-*, m-*, px-*, etc.) on inputs and cards. */
+.pd-app {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
   font-family: 'Inter', system-ui, sans-serif;
+}
+
+.pd-app *,
+.pd-app *::before,
+.pd-app *::after {
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 /* ── Layout ─────────────────────────────────────────────────────────── */
@@ -255,6 +261,11 @@
   letter-spacing: -0.5px;
 }
 
+/* Profile tab: form has its own layout; less gap under page title */
+.pd-tab-heading.pd-tab-heading--tight {
+  margin-bottom: 12px;
+}
+
 .pd-empty {
   background: var(--card);
   border: 1px solid var(--border);
@@ -346,6 +357,50 @@
   font-weight: 600;
   font-size: 12px;
   cursor: pointer;
+}
+
+/* Primary / secondary actions (emergency contacts, etc.) */
+.pd-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  background: var(--sky);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.pd-primary-btn:hover {
+  background: #2d8fd4;
+}
+
+.pd-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--body);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.pd-secondary-btn:hover {
+  background: var(--light-blue);
+  border-color: var(--sky);
 }
 
 /* ── Form inputs ─────────────────────────────────────────────────────── */

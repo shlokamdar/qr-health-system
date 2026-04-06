@@ -83,8 +83,21 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
         }
     };
 
-    const inputClasses = "w-full border border-[#dfe3e6] rounded-md px-3.5 py-3 text-[14px] font-normal text-[#0D1B2A] bg-[#fafbfc] placeholder-teal-900/40 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 focus:outline-none focus:border-[#10b981] focus:ring-[3px] focus:ring-[#10b981]/15";
-    const labelClasses = "block text-slate-700 text-[13px] font-medium mb-1.5 tracking-wide";
+    const selectChevron =
+        'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")';
+
+    const inputClasses =
+        'w-full min-h-[46px] border border-[#e5e7eb] rounded-lg bg-white px-4 py-3 text-sm font-normal text-[#0D1B2A] placeholder:text-slate-400/90 transition-colors box-border ' +
+        'hover:border-slate-300 focus:outline-none focus:border-[#3B9EE2] focus:ring-[3px] focus:ring-[#3B9EE2]/18';
+
+    const labelClasses = 'block text-[12px] font-normal text-[#718096] mb-2';
+
+    const textareaClasses = `${inputClasses} min-h-[100px] resize-y leading-relaxed`;
+
+    const cardClass =
+        'bg-white rounded-xl border border-[#e5e7eb] p-8 sm:p-8 shadow-[0_1px_3px_rgba(15,23,42,0.06)]';
+
+    const sectionHeadClass = 'flex items-center gap-3 mb-6 pb-4 border-b border-[#E2E8F0]';
 
     const previewPatient = {
         ...patient,
@@ -96,26 +109,26 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto py-8 animate-in fade-in duration-700 font-inter px-4 sm:px-6">
-            <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-8 items-start">
+        <div className="max-w-7xl mx-auto pt-1 pb-6 sm:pb-8 animate-in fade-in duration-700 font-inter px-4 sm:px-6">
+            <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-6 lg:gap-8 items-start">
                 
                 {/* LEFT COLUMN: Form Area */}
                 <div className="w-full">
                     <form onSubmit={handleSubmit}>
-                        <div className="space-y-8">
+                        <div className="flex flex-col gap-6">
                             {/* PERSONAL INFORMATION CARD */}
-                            <div className="bg-[#F8FAFC] rounded-[12px] p-12 md:p-14 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-14 relative">
-                                <div className="flex items-center gap-4 mb-12 pb-6 border-b border-slate-200/60">
-                                    <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary">
-                                        <User2 size={28} />
+                            <div className={cardClass}>
+                                <div className={sectionHeadClass}>
+                                    <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-[#EFF6FF] text-[#3B9EE2] shrink-0">
+                                        <User2 size={22} />
                                     </div>
                                     <div>
-                                        <h3 className="text-slate-800 text-2xl font-extrabold tracking-tight">Identity & Profile</h3>
-                                        <p className="text-slate-500 text-sm font-medium mt-1">Your official identity and contact records</p>
+                                        <h3 className="text-[#0D1B2A] text-lg font-bold tracking-tight">Identity &amp; Profile</h3>
+                                        <p className="text-[#718096] text-sm font-normal mt-0.5">Your official identity and contact records</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                                     <div>
                                         <label className={labelClasses}>First Name</label>
                                         <input name="first_name" value={formData.first_name} onChange={handleChange} className={inputClasses} placeholder="First Name" />
@@ -134,14 +147,14 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                                     </div>
                                     <div>
                                         <label className={labelClasses}>Blood Group</label>
-                                        <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2310b981\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '1.2em' }}>
+                                        <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: selectChevron, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '1.1em' }}>
                                             <option value="">Select Group</option>
                                             {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(g => <option key={g} value={g}>{g}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className={labelClasses}>Gender</label>
-                                        <select name="gender" value={formData.gender} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2310b981\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '1.2em' }}>
+                                        <select name="gender" value={formData.gender} onChange={handleChange} className={inputClasses} style={{ appearance: 'none', backgroundImage: selectChevron, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '1.1em' }}>
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
                                             <option value="Other">Other</option>
@@ -149,48 +162,48 @@ const ProfileTab = ({ patient, emergencyContacts = [], onUpdate }) => {
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className={labelClasses}>Address</label>
-                                        <textarea name="address" value={formData.address} onChange={handleChange} rows={3} className={inputClasses} placeholder="Full Address" />
+                                        <textarea name="address" value={formData.address} onChange={handleChange} rows={4} className={textareaClasses} placeholder="Full Address" />
                                     </div>
                                 </div>
                             </div>
 
                             {/* MEDICAL INFORMATION CARD */}
-                            <div className="bg-[#F8FAFC] rounded-[12px] p-12 md:p-14 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative mb-14">
-                                <div className="flex items-center gap-4 mb-12 pb-6 border-b border-slate-200/60">
-                                    <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-secondary/10 text-secondary">
-                                        <Activity size={28} />
+                            <div className={cardClass}>
+                                <div className={sectionHeadClass}>
+                                    <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-[#ECFDF5] text-[#2EC4A9] shrink-0">
+                                        <Activity size={22} />
                                     </div>
                                     <div>
-                                        <h3 className="text-slate-800 text-2xl font-extrabold tracking-tight">Clinical Background</h3>
-                                        <p className="text-slate-500 text-sm font-medium mt-1">Essential medical history and parameters</p>
+                                        <h3 className="text-[#0D1B2A] text-lg font-bold tracking-tight">Clinical Background</h3>
+                                        <p className="text-[#718096] text-sm font-normal mt-0.5">Essential medical history and parameters</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                                     <div>
                                         <label className={labelClasses}>Known Allergies</label>
-                                        <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={3} className={inputClasses} placeholder="e.g. Penicillin, Pollen..." />
+                                        <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={4} className={textareaClasses} placeholder="e.g. Penicillin, Pollen..." />
                                     </div>
                                     <div>
                                         <label className={labelClasses}>Chronic Conditions</label>
-                                        <textarea name="chronic_conditions" value={formData.chronic_conditions} onChange={handleChange} rows={3} className={inputClasses} placeholder="e.g. Type 2 Diabetes..." />
+                                        <textarea name="chronic_conditions" value={formData.chronic_conditions} onChange={handleChange} rows={4} className={textareaClasses} placeholder="e.g. Type 2 Diabetes..." />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* ACTION BUTTONS ROW */}
-                            <div className="flex items-center justify-end gap-6 mt-8">
+                            {/* ACTION BUTTONS */}
+                            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-1">
                                 <button 
                                     type="button" 
                                     onClick={handleReset} 
-                                    className="pulse-btn-ghost px-14 py-5 shadow-sm"
+                                    className="w-full sm:w-auto min-h-[46px] px-6 rounded-md border border-[#E2E8F0] bg-white text-[#4A5568] text-sm font-semibold hover:bg-slate-50 transition-colors"
                                 >
                                     Reset Changes
                                 </button>
                                 <button 
                                     type="submit" 
                                     disabled={isUpdating} 
-                                    className="pulse-btn-primary px-16 py-5 shadow-lg shadow-primary/20 disabled:opacity-50"
+                                    className="w-full sm:w-auto sm:min-w-[200px] min-h-[46px] rounded-md bg-[#3B9EE2] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#2d8fd4] disabled:opacity-50 disabled:pointer-events-none transition-colors"
                                 >
                                     {isUpdating ? 'Updating Records...' : 'Save Profile'}
                                 </button>

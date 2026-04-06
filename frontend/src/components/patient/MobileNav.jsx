@@ -107,7 +107,7 @@ const MobileNav = ({ activeTab, setActiveTab, unreadCount, logout }) => {
 
         <div style={{ height: 1, background: '#E2E8F0', margin: '8px 0' }} />
 
-        <button onClick={() => { setActiveTab('overview'); setIsDrawerOpen(false); }} className="pd-drawer-item">
+        <button onClick={() => { setActiveTab('profile'); setIsDrawerOpen(false); }} className="pd-drawer-item">
           <Icon d={ICONS.Settings} size={18} />
           Settings
         </button>

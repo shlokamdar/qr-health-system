@@ -462,7 +462,7 @@ const PatientDashboard = () => {
           ))}
         </div>
         <div className="pd-settings-area">
-          <button className="pd-nav-btn">
+          <button className="pd-nav-btn" onClick={() => setActiveTab('profile')}>
             <Icon d={ICONS.Settings} size={18} /> Settings
           </button>
         </div>
@@ -471,7 +471,13 @@ const PatientDashboard = () => {
       {/* ── MAIN CONTENT ── */}
       <main className="pd-content fade-in">
         {/* Tab Heading (Desktop only typically, but kept for context) */}
-        {!isMobile && <h2 className="pd-tab-heading">{activeTab.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h2>}
+        {!isMobile && (
+          <h2
+            className={`pd-tab-heading${activeTab === 'profile' ? ' pd-tab-heading--tight' : ''}`}
+          >
+            {activeTab.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </h2>
+        )}
 
         <PendingOTPWidget />
 
@@ -651,9 +657,19 @@ const PatientDashboard = () => {
               <h3 style={{ margin: '0 0 8px 0', fontSize: 20 }}>Need Assistance?</h3>
               <p style={{ margin: 0, opacity: 0.9, fontSize: 14 }}>Our support team is here to help you with any technical issues or questions.</p>
               <button
+                type="button"
                 onClick={() => setShowTicketModal(true)}
                 className="pd-primary-btn"
-                style={{ marginTop: 20, background: '#fff', color: '#1A365D', fontWeight: 700 }}
+                style={{
+                  marginTop: 20,
+                  background: '#fff',
+                  color: '#1A365D',
+                  fontWeight: 700,
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '12px 20px',
+                  cursor: 'pointer',
+                }}
               >
                 Create New Support Ticket
               </button>
