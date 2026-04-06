@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-
-const API_URL = 'http://localhost:8000/api/';
-
+const API_URL = import.meta.env.VITE_API_URL || '/api/';
 const api = axios.create({
     baseURL: API_URL,
     headers: {
@@ -31,7 +29,7 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-        
+
         // Bypass global 401 handling for auth endpoints so login pages can show their own error messages
         if (originalRequest.url.includes('auth/login') || originalRequest.url.includes('auth/register')) {
             return Promise.reject(error);
