@@ -384,7 +384,8 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                     return; // Prevent redirect
                 }
 
-                toast.success(`Welcome back, ${result.username || 'User'}!`);
+                const displayName = result.first_name ? result.first_name : (result.username || 'User');
+                toast.success(`Welcome back, ${displayName}!`);
                 if (role === 'PATIENT') navigate('/patient/dashboard');
                 else if (role === 'DOCTOR') navigate('/doctor/dashboard');
                 else if (role === 'LAB_TECH') navigate('/lab/dashboard');

@@ -23,7 +23,8 @@ const AdminLogin = () => {
         try {
             const res = await login(formData.username, formData.password);
             if (res.role === 'ADMIN' || res.is_superuser) {
-                toast.success('Admin login successful!');
+                const displayName = res.first_name ? res.first_name : (res.username || 'Admin');
+                toast.success(`Welcome back, ${displayName}!`);
                 navigate('/admin-dashboard');
             } else {
                 toast.error('Access denied. Admin privileges required.');

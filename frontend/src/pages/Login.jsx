@@ -13,7 +13,8 @@ const Login = () => {
         e.preventDefault();
         const success = await login(username, password);
         if (success) {
-            toast.success('Login successful!');
+            const displayName = success.first_name ? success.first_name : (success.username || 'User');
+            toast.success(`Welcome back, ${displayName}!`);
             navigate('/dashboard');
         } else {
             toast.error('Invalid credentials');

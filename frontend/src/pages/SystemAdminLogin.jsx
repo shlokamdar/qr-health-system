@@ -26,7 +26,8 @@ const SystemAdminLogin = () => {
                 setLoading(false);
                 return;
             }
-            toast.success('System Admin Access Granted');
+            const displayName = user.first_name ? user.first_name : (user.username || 'Admin');
+            toast.success(`Welcome back, ${displayName}!`);
             navigate('/admin-dashboard');
         } catch (err) {
             toast.error('Login failed. Please check your credentials.');

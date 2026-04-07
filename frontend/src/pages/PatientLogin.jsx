@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const PatientLogin = () => {
     const [username, setUsername] = useState('');
@@ -17,6 +18,8 @@ const PatientLogin = () => {
         const result = await login(username, password);
         if (result) {
             if (result.role === 'PATIENT') {
+                const displayName = result.first_name ? result.first_name : (result.username || 'User');
+                toast.success(`Welcome back, ${displayName}!`);
                 navigate('/patient/dashboard');
             } else {
                 setError(`Access denied. This account is registered as a ${result.role}. Please use the correct login portal.`);
