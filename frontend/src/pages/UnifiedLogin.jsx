@@ -637,7 +637,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
             await register(data);
             await login(patientData.username, patientData.password);
-            navigate('/patient/dashboard');
+            setPatientStep(7);
         } catch (err) {
             console.error(err);
             if (err.response && err.response.data) {
@@ -724,13 +724,6 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
             // Move to Step 5 (Under Review)
             setDoctorStep(5);
-
-            try {
-                await login(doctorData.username, doctorData.password);
-                setTimeout(() => navigate('/doctor/dashboard'), 2000);
-            } catch (e) {
-                // If login fails (unverified), stay on Step 5 "Under Review"
-            }
 
         } catch (err) {
             console.error(err);
@@ -1338,6 +1331,55 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                     )}
                                                 </div>
                                             )}
+
+                                            {/* Step 7: Registration Success Screen */}
+                                            {patientStep === 7 && (
+                                                <div className="text-center animate-in zoom-in duration-500">
+                                                    <div className="w-16 h-16 bg-[#2EC4A9]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                        <Check className="w-8 h-8 text-[#2EC4A9]" />
+                                                    </div>
+                                                    <h2 className="text-3xl font-bold text-[#0D1B2A] mb-8 tracking-tight">Welcome to PulseID!</h2>
+                                                    
+                                                    <div className="bg-[#0D1B2A] rounded-2xl p-6 mb-6 shadow-xl relative overflow-hidden group" id="health-id-card-success">
+                                                        {/* Background pattern */}
+                                                        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-5"></div>
+                                                        <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-[#3B9EE2] opacity-10"></div>
+                                                        
+                                                        <p className="text-sm text-slate-400 font-medium mb-1 uppercase tracking-widest text-left relative z-10">Health ID</p>
+                                                        <h3 className="text-2xl font-black text-white tracking-widest mb-6 font-mono text-left relative z-10">{generatedID}</h3>
+                                                        
+                                                        <div className="bg-white p-3 rounded-xl inline-block shadow-inner w-[200px] h-[200px] flex items-center justify-center relative z-10">
+                                                            {/* QR Code for registration success */}
+                                                            <div className="bg-white flex items-center justify-center w-full h-full">
+                                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${generatedID}`} alt="QR Code" className="w-[180px] h-[180px]" />
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center px-2 relative z-10">
+                                                            <div className="text-left">
+                                                                <p className="text-white font-bold">{patientData.firstName} {patientData.lastName}</p>
+                                                                <p className="text-[#3B9EE2] text-xs font-bold pt-1">{patientData.bloodGroup || 'Blood Group N/A'}</p>
+                                                            </div>
+                                                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
+                                                                <Activity className="w-5 h-5 text-white" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+                                                        Your unique Health ID has been generated. Share this with your doctors for quick access.
+                                                    </p>
+                                                    
+                                                    <div className="flex gap-4">
+                                                        <button onClick={handleDownloadPDF} className="flex-1 py-4 bg-[#3B9EE2] hover:bg-[#2d8ac9] text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all">
+                                                            Download ID Card
+                                                        </button>
+                                                        <button onClick={() => navigate('/patient/dashboard')} className="flex-[1.5] py-4 bg-[#2EC4A9] hover:bg-[#25a890] text-white rounded-xl font-bold text-sm shadow-lg shadow-teal-500/20 active:scale-[0.98] transition-all flex items-center justify-center">
+                                                            Go to Dashboard <ArrowRight className="w-5 h-5 ml-2" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -1562,35 +1604,57 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                             </div>
                                     )}
 
-                                    {/* Doctor Step 4: Pending */}
+                                    {/* Doctor Step 5: Pending Verification Screen (Screenshot 6.4) */}
                                     {doctorStep === 5 && (
-                                        <div className="text-center py-12 animate-in zoom-in duration-500">
-                                            <div className="w-24 h-24 bg-[#EFF6FF] rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-white">
-                                                <Clock className="w-12 h-12 text-[#3B9EE2] animate-pulse" />
+                                        <div className="text-center animate-in zoom-in duration-500 border border-amber-100/50 rounded-3xl p-2 bg-gradient-to-b from-amber-50/30 to-transparent">
+                                            <h2 className="text-3xl font-bold text-[#0D1B2A] mb-8 tracking-tight mt-6">Thank you for registering!</h2>
+                                            
+                                            <div className="bg-[#FEF3C7] rounded-2xl p-8 mb-8 shadow-sm border border-amber-200 relative overflow-hidden group">
+                                                {/* Background pattern */}
+                                                <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white opacity-20 group-hover:scale-110 transition-transform duration-700"></div>
+                                                
+                                                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner relative z-10">
+                                                    <Clock className="w-10 h-10 text-amber-600" />
+                                                </div>
+                                                
+                                                <h3 className="text-2xl font-black text-amber-900 tracking-tight mb-2 relative z-10 w-full text-center">Your registration is under review</h3>
+                                                <p className="text-amber-700/80 font-medium relative z-10 pt-2 pb-2">We've received your application.</p>
                                             </div>
-                                            <h2 className="text-3xl font-bold text-[#0D1B2A] mb-4 tracking-tight">Under Review</h2>
-                                            <p className="text-slate-500 text-base mb-10 px-4 leading-relaxed max-w-sm mx-auto font-medium">
-                                                We're verifying your credentials with the medical council. You'll receive an approval email within 24-48 hours.
+                                            
+                                            {/* Details Summary Box */}
+                                            <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 text-left shadow-sm">
+                                                <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
+                                                    <div>
+                                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Applicant Name</p>
+                                                        <p className="font-bold text-[#0D1B2A]">Dr. {doctorData.firstName} {doctorData.lastName}</p>
+                                                    </div>
+                                                    <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold inline-flex items-center shadow-sm">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2 animate-pulse"></div>
+                                                        Awaiting Admin Verification
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">License No.</p>
+                                                        <p className="font-bold text-slate-700">{doctorData.licenseNumber}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Specialization</p>
+                                                        <p className="font-bold text-slate-700">{doctorData.specialization}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <p className="text-slate-500 font-medium mb-10 leading-relaxed px-4">
+                                                An administrator will verify your credentials shortly. You will receive an email notification when approved. <span className="font-bold text-slate-700">Typical verification time: 1-2 business days.</span>
                                             </p>
-
-                                            <div className="space-y-4 mb-10 text-left max-w-[300px] mx-auto bg-white p-6 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50">
-                                                <div className="flex items-center gap-4 text-sm pb-4 border-b border-slate-50">
-                                                    <div className="w-8 h-8 rounded-full bg-[#2EC4A9] flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#2EC4A9]/20"><Check className="w-5 h-5" /></div>
-                                                    <div>
-                                                        <span className="text-[#0D1B2A] font-bold block">Submitted</span>
-                                                        <span className="text-xs text-slate-400">Application received</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-4 text-sm pt-1">
-                                                    <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border-2 border-[#3B9EE2] flex items-center justify-center shrink-0"><div className="w-3 h-3 bg-[#3B9EE2] rounded-full animate-bounce" /></div>
-                                                    <div>
-                                                        <span className="text-[#3B9EE2] font-bold block">In Progress</span>
-                                                        <span className="text-xs text-slate-400">Verifying documents</span>
-                                                    </div>
-                                                </div>
+                                            
+                                            <div className="flex gap-4">
+                                                <button onClick={() => { setDoctorStep(1); setActiveTab('login'); }} className="flex-1 py-4 bg-[#3B9EE2] hover:bg-[#2d8ac9] text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all">
+                                                    Return to Login
+                                                </button>
                                             </div>
-
-                                            <Link to="/" className={btnGhostStyle}>Return to Homepage</Link>
                                         </div>
                                     )}
                                 </div>

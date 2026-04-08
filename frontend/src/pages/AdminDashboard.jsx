@@ -414,51 +414,6 @@ const LabProfileDrawer = ({ lab, onClose, onApprove, onReject, onRevoke }) => {
 };
 
 
-// ─── Support Ticket Resolution Modal ──────────────────────────────────────────
-const SupportTicketResolutionModal = ({ isOpen, onClose, ticket, onConfirm }) => {
-    const [notes, setNotes] = useState('');
-    if (!isOpen || !ticket) return null;
-
-    return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Resolve Ticket</h3>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                        <X className="w-5 h-5 text-gray-500" />
-                    </button>
-                </div>
-                <div className="mb-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Subject</p>
-                    <p className="text-sm font-medium text-gray-800">{ticket.subject}</p>
-                </div>
-                <div className="mb-6">
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Resolution Notes</label>
-                    <textarea
-                        required
-                        value={notes}
-                        onChange={e => setNotes(e.target.value)}
-                        rows={4}
-                        placeholder="Explain how the issue was resolved..."
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none resize-none font-medium"
-                    />
-                </div>
-                <div className="flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all">
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => notes.trim() && onConfirm(notes)}
-                        disabled={!notes.trim()}
-                        className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                    >
-                        Resolve Ticket
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // ─── Assign Modal ─────────────────────────────────────────────────────────────
 const AssignModal = ({ isOpen, onClose, type, institutions, onConfirm }) => {
@@ -768,7 +723,117 @@ const CredentialModal = ({ isOpen, onClose, credentials }) => {
     );
 };
 
+
+// ─── Support Ticket Resolution Modal ──────────────────────────────────────────
+const SupportTicketResolutionModal = ({ isOpen, onClose, ticket, onConfirm }) => {
+    const [notes, setNotes] = React.useState('');
+    if (!isOpen || !ticket) return null;
+
+    const statusColors = {
+        OPEN: 'bg-orange-100 text-orange-600',
+        IN_PROGRESS: 'bg-blue-100 text-blue-600',
+        RESOLVED: 'bg-emerald-100 text-emerald-600',
+        CLOSED: 'bg-gray-100 text-gray-500',
+    };
+    const priorityColors = {
+        URGENT: 'bg-red-100 text-red-600',
+        HIGH: 'bg-orange-100 text-orange-600',
+        MEDIUM: 'bg-yellow-100 text-yellow-700',
+        LOW: 'bg-gray-100 text-gray-500',
+    };
+    const canResolve = ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS';
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/60">
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Support Ticket</p>
+                        <h3 className="text-base font-bold text-gray-900 mt-0.5">
+                            #TK{String(ticket.id).padStart(3, '0')} · {ticket.subject}
+                        </h3>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-5">
+                    {/* Meta */}
+                    <div className="flex flex-wrap gap-2">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[ticket.status] || 'bg-gray-100 text-gray-500'}`}>
+                            {(ticket.status || '').replace('_', ' ')}
+                        </span>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${priorityColors[ticket.priority] || 'bg-gray-100 text-gray-500'}`}>
+                            {ticket.priority}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-50 text-gray-500">
+                            {ticket.full_name || ticket.username || 'Unknown'}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-400">
+                            {ticket.created_at ? new Date(ticket.created_at).toLocaleString() : '—'}
+                        </span>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Description</p>
+                        <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700 leading-relaxed min-h-[80px] whitespace-pre-wrap">
+                            {ticket.description || <span className="text-gray-300 italic">No description provided.</span>}
+                        </div>
+                    </div>
+
+                    {/* Existing admin notes if resolved */}
+                    {ticket.admin_notes && (
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+                            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Previous Resolution Notes</p>
+                            <p className="text-sm text-emerald-800">{ticket.admin_notes}</p>
+                        </div>
+                    )}
+
+                    {/* Resolution notes input (only for unresolved) */}
+                    {canResolve && (
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                Resolution Notes <span className="text-red-400">*</span>
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={notes}
+                                onChange={e => setNotes(e.target.value)}
+                                placeholder="Describe how the issue was resolved..."
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 resize-none"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors"
+                    >
+                        Close
+                    </button>
+                    {canResolve && (
+                        <button
+                            onClick={() => notes.trim() && onConfirm(notes)}
+                            disabled={!notes.trim()}
+                            className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            <CheckCircle className="w-4 h-4" /> Mark Resolved
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ─── Status Badge ──────────────────────────────────────────────────────────────
+
 const StatusBadge = ({ verified, rejected }) => {
     if (rejected) return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
@@ -802,6 +867,10 @@ const AdminDashboard = () => {
     const [search, setSearch] = useState('');
     const [showMobileSearch, setShowMobileSearch] = useState(false);
     const [roleFilter, setRoleFilter] = useState('ALL');
+    const [ticketStatusFilter, setTicketStatusFilter] = useState('ALL');
+    const [ticketSearch, setTicketSearch] = useState('');
+    const [ticketPage, setTicketPage] = useState(1);
+    const TICKETS_PER_PAGE = 10;
 
     // Entity Modal States
     const [rejectTarget, setRejectTarget] = useState(null); // { type: 'doctor'|'hospital'|'lab'|'tech', data: object }
@@ -1357,7 +1426,6 @@ const AdminDashboard = () => {
                                                 <th className="pb-3 pr-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">License / Specialty</th>
                                                 <th className="pb-3 pr-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">Hospital</th>
                                                 <th className="pb-3 pr-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">Status</th>
-                                                <th className="pb-3 pr-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">Auth Level</th>
                                                 <th className="pb-3 font-semibold text-gray-500 text-xs uppercase tracking-wider text-right">Actions</th>
                                             </tr>
                                         </thead>
@@ -1386,17 +1454,7 @@ const AdminDashboard = () => {
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td className="py-3 pr-4">
-                                                        <select
-                                                            value={doc.authorization_level}
-                                                            onChange={e => handleUpdateAuth(doc.id, e.target.value)}
-                                                            className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[#0D1B2A]"
-                                                        >
-                                                            {['BASIC', 'STANDARD', 'FULL'].map(l => (
-                                                                <option key={l} value={l}>{l}</option>
-                                                            ))}
-                                                        </select>
-                                                    </td>
+
                                                     <td className="py-3 text-right">
                                                         <div className="flex items-center justify-end gap-2">
                                                             <button
@@ -1676,85 +1734,221 @@ const AdminDashboard = () => {
 
 
                         {/* TICKETS TAB */}
-                        {activeTab === 'tickets' && (
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold text-gray-900">Support Tickets</h3>
-                                    <div className="flex gap-2">
-                                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-                                            {tickets.filter(t => t.status === 'OPEN').length} Open
-                                        </span>
-                                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
-                                            {tickets.filter(t => t.status === 'RESOLVED').length} Resolved
-                                        </span>
+                        {activeTab === 'tickets' && (() => {
+                            const statusCounts = {
+                                ALL: tickets.length,
+                                OPEN: tickets.filter(t => t.status === 'OPEN').length,
+                                IN_PROGRESS: tickets.filter(t => t.status === 'IN_PROGRESS').length,
+                                RESOLVED: tickets.filter(t => t.status === 'RESOLVED').length,
+                                CLOSED: tickets.filter(t => t.status === 'CLOSED').length,
+                            };
+                            const filtered = tickets.filter(t => {
+                                const matchStatus = ticketStatusFilter === 'ALL' || t.status === ticketStatusFilter;
+                                const q = ticketSearch.toLowerCase();
+                                const matchSearch = !q || (t.subject || '').toLowerCase().includes(q) ||
+                                    (t.full_name || t.username || '').toLowerCase().includes(q) ||
+                                    String(t.id).includes(q);
+                                return matchStatus && matchSearch;
+                            });
+                            const totalPages = Math.max(1, Math.ceil(filtered.length / TICKETS_PER_PAGE));
+                            const safePage = Math.min(ticketPage, totalPages);
+                            const paginated = filtered.slice((safePage - 1) * TICKETS_PER_PAGE, safePage * TICKETS_PER_PAGE);
+
+                            const statusBadge = (status) => {
+                                const map = {
+                                    OPEN: 'bg-orange-100 text-orange-600',
+                                    IN_PROGRESS: 'bg-blue-100 text-blue-600',
+                                    RESOLVED: 'bg-emerald-100 text-emerald-600',
+                                    CLOSED: 'bg-gray-100 text-gray-500',
+                                };
+                                return (
+                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${map[status] || 'bg-gray-100 text-gray-500'}`}>
+                                        {(status || '').replace('_', ' ')}
+                                    </span>
+                                );
+                            };
+                            const priorityBadge = (p) => {
+                                const map = {
+                                    URGENT: 'bg-red-100 text-red-600',
+                                    HIGH: 'bg-orange-100 text-orange-600',
+                                    MEDIUM: 'bg-yellow-100 text-yellow-700',
+                                    LOW: 'bg-gray-100 text-gray-500',
+                                };
+                                return (
+                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${map[p] || 'bg-gray-100 text-gray-500'}`}>
+                                        {p || '—'}
+                                    </span>
+                                );
+                            };
+
+                            return (
+                                <div className="space-y-5">
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-bold text-gray-900">Support Tickets Queue</h3>
+                                        <span className="text-xs text-gray-400 font-medium">{filtered.length} ticket{filtered.length !== 1 ? 's' : ''} found</span>
                                     </div>
-                                </div>
 
-                                {tickets.length === 0 ? (
-                                    <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                                        <LifeBuoy className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                                        <p className="text-gray-500 font-medium">No support tickets found.</p>
+                                    {/* Filter Bar */}
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {/* Status filter pills */}
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                { key: 'ALL', label: 'All' },
+                                                { key: 'OPEN', label: 'Open' },
+                                                { key: 'IN_PROGRESS', label: 'In Progress' },
+                                                { key: 'RESOLVED', label: 'Resolved' },
+                                                { key: 'CLOSED', label: 'Closed' },
+                                            ].map(s => (
+                                                <button
+                                                    key={s.key}
+                                                    onClick={() => { setTicketStatusFilter(s.key); setTicketPage(1); }}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                                        ticketStatusFilter === s.key
+                                                            ? 'bg-[#0D1B2A] text-white shadow-sm'
+                                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                    }`}
+                                                >
+                                                    {s.label}
+                                                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[9px] ${
+                                                        ticketStatusFilter === s.key ? 'bg-white/20 text-white' : 'bg-white text-gray-600'
+                                                    }`}>
+                                                        {statusCounts[s.key]}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Search */}
+                                        <div className="flex-1 min-w-[200px] relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                            <input
+                                                value={ticketSearch}
+                                                onChange={e => { setTicketSearch(e.target.value); setTicketPage(1); }}
+                                                placeholder="Search by ID, user, or subject..."
+                                                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0D1B2A]/10 focus:border-[#0D1B2A]"
+                                            />
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {tickets.map(ticket => (
-                                            <div key={ticket.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${ticket.status === 'OPEN' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'
-                                                            }`}>
-                                                            {ticket.status === 'OPEN' ? <Clock className="w-6 h-6" /> : <CheckCircle className="w-6 h-6" />}
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <h4 className="font-bold text-gray-900">{ticket.subject}</h4>
-                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${ticket.priority === 'URGENT' ? 'bg-red-100 text-red-600' :
-                                                                    ticket.priority === 'HIGH' ? 'bg-orange-100 text-orange-600' :
-                                                                        'bg-blue-100 text-blue-600'
-                                                                    }`}>
-                                                                    {ticket.priority}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-xs text-gray-400 mt-1">
-                                                                #{ticket.id} • From: <span className="text-gray-600 font-medium">{ticket.full_name || ticket.username}</span> • {new Date(ticket.created_at).toLocaleString()}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        {ticket.status === 'OPEN' && (
-                                                            <button
-                                                                onClick={() => setTicketTarget(ticket)}
-                                                                className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
-                                                            >
-                                                                Resolve
-                                                            </button>
-                                                        )}
-                                                        <button className="p-2 bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-100 transition-colors">
-                                                            <MoreVertical className="w-5 h-5" />
-                                                        </button>
-                                                    </div>
-                                                </div>
 
-                                                <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 leading-relaxed mb-4">
-                                                    {ticket.description}
-                                                </div>
-
-                                                {ticket.admin_notes && (
-                                                    <div className="flex items-start gap-3 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50">
-                                                        <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                                        <div>
-                                                            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1">Resolution Notes</p>
-                                                            <p className="text-sm text-emerald-900">{ticket.admin_notes}</p>
-                                                            <p className="text-[10px] text-emerald-600 mt-2 font-medium">By {ticket.resolved_by_name} on {new Date(ticket.resolved_at).toLocaleString()}</p>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                    {/* Table */}
+                                    {tickets.length === 0 ? (
+                                        <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                                            <LifeBuoy className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                                            <p className="text-gray-500 font-medium">No support tickets found.</p>
+                                        </div>
+                                    ) : filtered.length === 0 ? (
+                                        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                            <p className="text-gray-400 text-sm">No tickets match your filters.</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="overflow-x-auto rounded-2xl border border-gray-100">
+                                                <table className="min-w-full text-left text-sm bg-white">
+                                                    <thead>
+                                                        <tr className="border-b border-gray-100 bg-gray-50/70">
+                                                            {['ID', 'User', 'Subject', 'Priority', 'Status', 'Created', 'Actions'].map(h => (
+                                                                <th key={h} className="px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider whitespace-nowrap">{h}</th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-50">
+                                                        {paginated.map(ticket => (
+                                                            <tr key={ticket.id} className="hover:bg-gray-50/60 transition-colors">
+                                                                <td className="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                                                    #TK{String(ticket.id).padStart(3, '0')}
+                                                                </td>
+                                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                                    <div className="font-semibold text-gray-800 text-xs">{ticket.full_name || ticket.username || '—'}</div>
+                                                                </td>
+                                                                <td className="px-4 py-3 max-w-[260px]">
+                                                                    <p className="text-gray-800 font-medium text-xs truncate">{ticket.subject}</p>
+                                                                    <p className="text-gray-500 text-[10px] truncate mt-0.5 not-italic">
+                                                                        {ticket.description || <span className="text-gray-300">No description provided</span>}
+                                                                    </p>
+                                                                </td>
+                                                                <td className="px-4 py-3 whitespace-nowrap">{priorityBadge(ticket.priority)}</td>
+                                                                <td className="px-4 py-3 whitespace-nowrap">{statusBadge(ticket.status)}</td>
+                                                                <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                                                                    {ticket.created_at
+                                                                        ? new Date(ticket.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                                                        + ' ' + new Date(ticket.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                                        : '—'}
+                                                                </td>
+                                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <button
+                                                                            onClick={() => setTicketTarget(ticket)}
+                                                                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                                                                        >
+                                                                            <Eye className="w-3.5 h-3.5" /> View
+                                                                        </button>
+                                                                        {(ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS') && (
+                                                                            <button
+                                                                                onClick={() => setTicketTarget(ticket)}
+                                                                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white text-xs font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
+                                                                            >
+                                                                                <CheckCircle className="w-3.5 h-3.5" /> Resolve
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+
+                                            {/* Pagination */}
+                                            <div className="flex items-center justify-between pt-2">
+                                                <p className="text-xs text-gray-400 font-medium">
+                                                    Page {safePage} of {totalPages}
+                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        disabled={safePage <= 1}
+                                                        onClick={() => setTicketPage(p => Math.max(1, p - 1))}
+                                                        className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        ← Prev
+                                                    </button>
+                                                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                                        .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                                                        .reduce((acc, p, idx, arr) => {
+                                                            if (idx > 0 && arr[idx - 1] !== p - 1) acc.push('...');
+                                                            acc.push(p);
+                                                            return acc;
+                                                        }, [])
+                                                        .map((p, i) => p === '...' ? (
+                                                            <span key={`ellipsis-${i}`} className="px-2 text-gray-400 text-xs">…</span>
+                                                        ) : (
+                                                            <button
+                                                                key={p}
+                                                                onClick={() => setTicketPage(p)}
+                                                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                                                                    safePage === p
+                                                                        ? 'bg-[#0D1B2A] text-white shadow-sm'
+                                                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                                }`}
+                                                            >
+                                                                {p}
+                                                            </button>
+                                                        ))
+                                                    }
+                                                    <button
+                                                        disabled={safePage >= totalPages}
+                                                        onClick={() => setTicketPage(p => Math.min(totalPages, p + 1))}
+                                                        className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        Next →
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })()}
 
                         {/* USERS TAB */}
                         {activeTab === 'users' && (

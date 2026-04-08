@@ -130,7 +130,33 @@ const LabDashboard = () => {
             formData.append('file', file);
             formData.append('comments', comments);
             await labService.uploadReport(formData);
-            toast.success('Report uploaded successfully!');
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-[#4CAF50] shadow-lg rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+                    <div className="flex-1 w-0 p-4">
+                        <div className="flex items-start">
+                            <div className="flex-shrink-0 pt-0.5">
+                                <CheckCircle className="h-10 w-10 text-white" />
+                            </div>
+                            <div className="ml-3 flex-1">
+                                <p className="text-sm font-bold text-white">
+                                    Medical Report Uploaded Successfully!
+                                </p>
+                                <p className="mt-1 text-xs text-white opacity-80">
+                                    The laboratory results have been securely added to the patient's record.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex border-l border-white/20">
+                        <button
+                            onClick={() => toast.dismiss(t.id)}
+                            className="w-full border border-transparent rounded-none rounded-r-2xl p-4 flex items-center justify-center text-sm font-medium text-white hover:bg-black/10 focus:outline-none"
+                        >
+                            <XCircle className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+            ), { position: 'top-right', duration: 4000 });
             setPatientHealthId(''); setPatientInfo(null); setPatientVerified(false);
             setFile(null); setComments(''); setSelectedTest('');
             fetchRecentUploads();

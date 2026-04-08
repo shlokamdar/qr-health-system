@@ -70,10 +70,11 @@ const DoctorDashboard = () => {
         license_number: ''
     });
 
-    // Upload Form State
     const [newRecord, setNewRecord] = useState({
         title: '',
         description: '',
+        notes: '',
+        medicines: [],
         record_type: 'PRESCRIPTION',
         file: null
     });
@@ -337,19 +338,50 @@ const DoctorDashboard = () => {
         formData.append('patient', patientResult.id);
         formData.append('title', newRecord.title);
         formData.append('description', newRecord.description || '');
+        formData.append('notes', newRecord.notes || '');
         formData.append('record_type', newRecord.record_type);
+        if (newRecord.medicines?.length > 0) {
+            formData.append('medicines', JSON.stringify(newRecord.medicines));
+        }
         if (newRecord.file) {
             formData.append('file', newRecord.file);
         }
 
         try {
             await PatientService.uploadRecord(formData);
-            toast.success('Record Uploaded Successfully!');
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-[#4CAF50] shadow-lg rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+                    <div className="flex-1 w-0 p-4">
+                        <div className="flex items-start">
+                            <div className="flex-shrink-0 pt-0.5">
+                                <CheckCircle className="h-10 w-10 text-white" />
+                            </div>
+                            <div className="ml-3 flex-1">
+                                <p className="text-sm font-bold text-white">
+                                    Medical Record Uploaded Successfully!
+                                </p>
+                                <p className="mt-1 text-xs text-white opacity-80">
+                                    The record has been securely added to the patient's history.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex border-l border-white/20">
+                        <button
+                            onClick={() => toast.dismiss(t.id)}
+                            className="w-full border border-transparent rounded-none rounded-r-2xl p-4 flex items-center justify-center text-sm font-medium text-white hover:bg-black/10 focus:outline-none"
+                        >
+                            <XCircle className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+            ), { position: 'top-right', duration: 4000 });
+            
             if (searchId === patientResult.health_id) {
                 const recData = await PatientService.getRecords(searchId);
                 setRecords(recData);
             }
-            setNewRecord({ title: '', description: '', record_type: 'PRESCRIPTION', file: null });
+            setNewRecord({ title: '', description: '', notes: '', medicines: [], record_type: 'PRESCRIPTION', file: null });
         } catch (err) {
             console.error("Upload Error Details:", err.response?.data || err.message);
             toast.error('Upload failed. Please check file format.');
@@ -685,118 +717,124 @@ const DoctorDashboard = () => {
                             {activeTab === 'search' && (
                                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="max-w-3xl mx-auto">
-                                        <div className="text-center mb-8">
+                                        <div className="text-center mb-6">
                                             <h3 className="text-3xl font-black text-[#0D1B2A] tracking-tight mb-2">Patient Lookup</h3>
                                             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Import digital health profile via ID or Scan</p>
                                         </div>
-                                        <PatientSearch
-                                            searchId={searchId}
-                                            setSearchId={setSearchId}
-                                            handleSearch={(e) => handleSearch(e)}
-                                            openScanner={openScanner}
-                                        />
+                                    </div>
+
+                                    <div className="sticky top-[104px] z-30 pb-8 pt-2 -mx-4 px-4 sm:-mx-8 sm:px-8 bg-gradient-to-b from-[#F8FAFB] via-[#F8FAFB]/95 to-[#F8FAFB]/0 backdrop-blur-sm">
+                                        <div className="max-w-3xl mx-auto shadow-2xl shadow-[#3B9EE2]/5 rounded-[12px] ring-1 ring-slate-100/50">
+                                            <PatientSearch
+                                                searchId={searchId}
+                                                setSearchId={setSearchId}
+                                                handleSearch={(e) => handleSearch(e)}
+                                                openScanner={openScanner}
+                                            />
+                                        </div>
                                     </div>
 
                                     {patientResult ? (
-                                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                                            {/* Left Column: Profile & Quick Actions */}
-                                            <div className="lg:col-span-4 space-y-8">
-                                                <PatientProfile
-                                                    patient={patientResult}
-                                                    handleRequestOTP={handleRequestOTP}
-                                                />
-                                                {patientResult.has_full_access && (
+                                        <div className="relative">
+                                            {/* Blurred layout wrapper */}
+                                            <div className={`grid grid-cols-1 lg:grid-cols-12 gap-12 transition-all duration-500 ${!patientResult.has_full_access ? 'blur-[8px] opacity-40 pointer-events-none select-none grayscale-[0.5]' : ''}`}>
+                                                {/* Left Column: Profile & Quick Actions */}
+                                                <div className="lg:col-span-4 space-y-8">
+                                                    <PatientProfile
+                                                        patient={patientResult}
+                                                        handleRequestOTP={handleRequestOTP}
+                                                    />
                                                     <UploadRecordForm
                                                         newRecord={newRecord}
                                                         setNewRecord={setNewRecord}
                                                         handleUpload={handleUpload}
+                                                        patientHealthId={patientResult.health_id}
                                                     />
-                                                )}
-                                                {!patientResult.has_full_access && (
-                                                    <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 flex flex-col items-center text-center">
-                                                        <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-4">
-                                                            <Lock size={24} />
-                                                        </div>
-                                                        <h4 className="text-amber-900 font-bold text-sm mb-2">Restricted Access</h4>
-                                                        <p className="text-amber-700 text-xs leading-relaxed">
-                                                            Detailed medical records and upload features are locked. Request full access to view history or add new records.
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                </div>
 
-                                            {/* Right Column: History & Forms */}
-                                            <div className="lg:col-span-8 space-y-12">
-                                                {patientResult.has_full_access ? (
-                                                    <>
-                                                        <div className="space-y-6">
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="p-2.5 bg-[#3B9EE2]/10 rounded-2xl text-[#3B9EE2]">
-                                                                        <History className="w-6 h-6" />
-                                                                    </div>
-                                                                    <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Clinical History</h3>
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-                                                                    <Activity className="w-3 h-3 text-[#2EC4A9]" />
-                                                                    <span>{consultations.length} Visits Traceable</span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
-                                                                <div className="max-h-[500px] overflow-y-auto custom-scrollbar p-2">
-                                                                    <ConsultationHistory consultations={consultations} />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-6">
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="p-2.5 bg-[#2EC4A9]/10 rounded-2xl text-[#2EC4A9]">
-                                                                        <FileText className="w-6 h-6" />
-                                                                    </div>
-                                                                    <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Medical Ledger</h3>
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-                                                                    <span>{records.length} Documents Encrypted</span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
-                                                                <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
-                                                                    <MedicalRecordList records={records} />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-6">
+                                                {/* Right Column: History & Forms */}
+                                                <div className="lg:col-span-8 space-y-8">
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="p-2.5 bg-[#0D1B2A] rounded-2xl text-white">
-                                                                    <Stethoscope className="w-6 h-6" />
+                                                                <div className="p-2.5 bg-[#3B9EE2]/10 rounded-2xl text-[#3B9EE2]">
+                                                                    <History className="w-6 h-6" />
                                                                 </div>
-                                                                <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">New Consultation</h3>
+                                                                <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Clinical History</h3>
                                                             </div>
-                                                            <div className="bg-[#0D1B2A] rounded-[2.5rem] p-10 text-white shadow-2xl shadow-[#0D1B2A]/20 relative overflow-hidden group">
-                                                                <div className="absolute top-0 right-0 w-64 h-64 bg-[#3B9EE2]/10 rounded-full blur-[80px] -mr-32 -mt-32" />
-                                                                <ConsultationForm
-                                                                    newConsultation={newConsultation}
-                                                                    setNewConsultation={setNewConsultation}
-                                                                    handleSubmit={handleCreateConsultation}
-                                                                />
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
+                                                                <Activity className="w-3 h-3 text-[#2EC4A9]" />
+                                                                <span>{consultations?.length || 0} Visits Traceable</span>
                                                             </div>
                                                         </div>
-                                                    </>
-                                                ) : (
-                                                    <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-100 p-20 flex flex-col items-center justify-center text-center">
-                                                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-6">
-                                                            <Shield size={40} />
+                                                        <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
+                                                            <div className="max-h-[500px] overflow-y-auto custom-scrollbar p-2">
+                                                                <ConsultationHistory consultations={consultations || []} />
+                                                            </div>
                                                         </div>
-                                                        <h3 className="text-xl font-black text-slate-300 tracking-tight uppercase">Medical History Locked</h3>
-                                                        <p className="max-w-xs text-xs text-slate-400 font-bold uppercase tracking-widest mt-3 leading-relaxed">
-                                                            Please verify OTP to decrypt clinical history and unlock medical record management for this patient.
-                                                        </p>
                                                     </div>
-                                                )}
+
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2.5 bg-[#2EC4A9]/10 rounded-2xl text-[#2EC4A9]">
+                                                                    <FileText className="w-6 h-6" />
+                                                                </div>
+                                                                <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Medical Ledger</h3>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
+                                                                <span>{records?.length || 0} Documents Encrypted</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 p-2">
+                                                            <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
+                                                                <MedicalRecordList records={records || []} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2.5 bg-[#0D1B2A] rounded-2xl text-white">
+                                                                <Stethoscope className="w-6 h-6" />
+                                                            </div>
+                                                            <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">New Consultation</h3>
+                                                        </div>
+                                                        <div className="bg-[#0D1B2A] rounded-[2.5rem] p-10 text-white shadow-2xl shadow-[#0D1B2A]/20 relative overflow-hidden group">
+                                                            <div className="absolute top-0 right-0 w-64 h-64 bg-[#3B9EE2]/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+                                                            <ConsultationForm
+                                                                newConsultation={newConsultation}
+                                                                setNewConsultation={setNewConsultation}
+                                                                handleSubmit={handleCreateConsultation}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
+
+                                            {/* Restricted Access Overlay */}
+                                            {!patientResult.has_full_access && (
+                                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center animate-in zoom-in duration-500 pointer-events-auto">
+                                                    <div className="bg-white/95 backdrop-blur-xl rounded-[40px] border border-slate-200 p-12 max-w-lg shadow-[0_20px_50px_rgb(0,0,0,0.1)] flex flex-col items-center">
+                                                        <div className="w-24 h-24 bg-amber-50 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner ring-4 ring-white">
+                                                            <Lock className="w-10 h-10 text-amber-500" />
+                                                        </div>
+                                                        <h2 className="text-3xl font-black text-[#0D1B2A] tracking-tight mb-3">Access Restricted</h2>
+                                                        <p className="text-slate-500 font-bold mb-8 leading-relaxed text-sm">
+                                                            Patient records are private and require explicit permission to view.
+                                                        </p>
+                                                        
+                                                        <div className="flex gap-4 w-full">
+                                                            <button onClick={handleRequestOTP} className="flex-[1.5] py-4 bg-[#3B9EE2] hover:bg-[#2d8ac9] text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                                                <Shield className="w-4 h-4" /> Request OTP Access
+                                                            </button>
+                                                            <button onClick={openScanner} className="flex-1 py-4 bg-[#2EC4A9] hover:bg-[#25a890] text-white rounded-xl font-bold text-sm shadow-lg shadow-teal-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                                                <QrCode className="w-4 h-4" /> Scan QR Code
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="text-center py-32 animate-in fade-in duration-700">

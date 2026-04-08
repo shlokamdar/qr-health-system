@@ -6,6 +6,8 @@ import {
     CheckCircle2, ArrowRight, UserCircle2
 } from 'lucide-react';
 import DoctorService from '../services/doctor.service';
+import { useFieldValidation } from '../hooks/useFieldValidation';
+import { Loader2 } from 'lucide-react';
 
 const DoctorRegister = () => {
     const [step, setStep] = useState(1);
@@ -20,6 +22,33 @@ const DoctorRegister = () => {
         specialization: '',
         hospital: ''
     });
+
+    const validationRules = {
+        username: (val) => {
+            if (!val) return 'Username is required';
+            if (val.length < 3) return 'Username must be at least 3 characters';
+            if (!/^[a-zA-Z0-9_]+$/.test(val)) return 'Only letters, numbers and underscores allowed';
+            return '';
+        },
+        email: (val) => {
+            if (!val) return 'Email is required';
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return 'Email address is invalid';
+            return '';
+        },
+        password: (val) => {
+            if (!val) return 'Password is required';
+            if (val.length < 8) return 'Password must be at least 8 characters';
+            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])/.test(val)) 
+                return 'Password must contain uppercase, lowercase, number, and special character';
+            return '';
+        }
+    };
+
+    const { errors, valid, isValidating, validateField, formIsValid } = useFieldValidation(
+        validationRules,
+        ['username', 'email']
+    );
+
     const [hospitals, setHospitals] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -32,17 +61,18 @@ const DoctorRegister = () => {
     }, []);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        const updatedData = { ...formData, [name]: value };
+        setFormData(updatedData);
+        if (['username', 'email', 'password', 'confirmPassword'].includes(name)) {
+            validateField(name, value, updatedData);
+        }
     };
 
     const nextStep = () => {
         if (step === 1) {
-            if (!formData.username || !formData.email || !formData.password) {
-                setError('Please fill in all account details');
-                return;
-            }
-            if (formData.password !== formData.confirmPassword) {
-                setError('Passwords do not match');
+            if (!formIsValid(['username', 'email', 'password', 'confirmPassword'])) {
+                setError('Please fix the errors in Step 1 before continuing');
                 return;
             }
         }
@@ -68,7 +98,7 @@ const DoctorRegister = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setError('');
         setLoading(true);
         try {
@@ -141,36 +171,94 @@ const DoctorRegister = () => {
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                                 {step === 1 && (
                                     <div className="space-y-5">
-                                        <div className="space-y-2">
+                                        <div className="space-y-1">
                                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Username</label>
                                             <div className="relative group">
-                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={18} />
-                                                <input name="username" type="text" value={formData.username} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50 transition-all font-semibold" placeholder="johndoe_md" />
+                                                <User className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.username ? 'text-red-400' : valid.username ? 'text-emerald-400' : 'text-slate-500 group-focus-within:text-purple-400'}`} size={18} />
+                                                <input 
+                                                    name="username" 
+                                                    type="text" 
+                                                    value={formData.username} 
+                                                    onChange={handleChange} 
+                                                    className={`w-full pl-12 pr-12 py-4 bg-slate-800/50 border rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-semibold ${
+                                                        errors.username ? 'border-red-500/50' : 
+                                                        valid.username ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                                    }`} 
+                                                    placeholder="johndoe_md" 
+                                                />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                                    {isValidating.username && <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />}
+                                                    {!isValidating.username && valid.username && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                                    {!isValidating.username && errors.username && <XCircle className="w-4 h-4 text-red-400" />}
+                                                </div>
                                             </div>
+                                            {errors.username && <p className="text-[10px] text-red-400 font-bold ml-1 animate-in fade-in slide-in-from-top-1">{errors.username}</p>}
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-1">
                                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Official Email</label>
                                             <div className="relative group">
-                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={18} />
-                                                <input name="email" type="email" value={formData.email} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50 transition-all font-semibold" placeholder="dr.john@pulseid.com" />
+                                                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.email ? 'text-red-400' : valid.email ? 'text-emerald-400' : 'text-slate-500 group-focus-within:text-purple-400'}`} size={18} />
+                                                <input 
+                                                    name="email" 
+                                                    type="email" 
+                                                    value={formData.email} 
+                                                    onChange={handleChange} 
+                                                    className={`w-full pl-12 pr-12 py-4 bg-slate-800/50 border rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-semibold ${
+                                                        errors.email ? 'border-red-500/50' : 
+                                                        valid.email ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                                    }`} 
+                                                    placeholder="dr.john@pulseid.com" 
+                                                />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                                    {isValidating.email && <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />}
+                                                    {!isValidating.email && valid.email && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                                    {!isValidating.email && errors.email && <XCircle className="w-4 h-4 text-red-400" />}
+                                                </div>
                                             </div>
+                                            {errors.email && <p className="text-[10px] text-red-400 font-bold ml-1 animate-in fade-in slide-in-from-top-1">{errors.email}</p>}
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
+                                            <div className="space-y-1">
                                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
                                                 <div className="relative group">
-                                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={18} />
-                                                    <input name="password" type="password" value={formData.password} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50 transition-all font-semibold" placeholder="••••••••" />
+                                                    <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.password ? 'text-red-400' : valid.password ? 'text-emerald-400' : 'text-slate-500 group-focus-within:text-purple-400'}`} size={18} />
+                                                    <input 
+                                                        name="password" 
+                                                        type="password" 
+                                                        value={formData.password} 
+                                                        onChange={handleChange} 
+                                                        className={`w-full pl-12 pr-6 py-4 bg-slate-800/50 border rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-semibold ${
+                                                            errors.password ? 'border-red-500/50' : 
+                                                            valid.password ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                                        }`} 
+                                                        placeholder="••••••••" 
+                                                    />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="space-y-1">
                                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Verify</label>
                                                 <div className="relative group">
-                                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={18} />
-                                                    <input name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50 transition-all font-semibold" placeholder="••••••••" />
+                                                    <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.confirmPassword ? 'text-red-400' : valid.confirmPassword ? 'text-emerald-400' : 'text-slate-500 group-focus-within:text-purple-400'}`} size={18} />
+                                                    <input 
+                                                        name="confirmPassword" 
+                                                        type="password" 
+                                                        value={formData.confirmPassword} 
+                                                        onChange={handleChange} 
+                                                        className={`w-full pl-12 pr-6 py-4 bg-slate-800/50 border rounded-2xl text-white outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-semibold ${
+                                                            errors.confirmPassword ? 'border-red-500/50' : 
+                                                            valid.confirmPassword ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                                        }`} 
+                                                        placeholder="••••••••" 
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
+                                        {(errors.password || errors.confirmPassword) && (
+                                            <p className="text-[10px] text-red-400 font-bold ml-1 leading-tight animate-in fade-in slide-in-from-top-1">
+                                                {errors.password || errors.confirmPassword}
+                                            </p>
+                                        )}
+
                                     </div>
                                 )}
 
@@ -245,11 +333,11 @@ const DoctorRegister = () => {
                                 )}
                                 <button
                                     onClick={step === 4 ? handleSubmit : nextStep}
-                                    disabled={loading}
-                                    className="flex-[2] py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-indigo-500/20 transition-all transform active:scale-95 disabled:opacity-50"
+                                    disabled={loading || (step === 1 && !formIsValid(['username', 'email', 'password', 'confirmPassword']))}
+                                    className="flex-[2] py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-indigo-500/20 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {loading ? 'Processing...' : step === 4 ? 'Complete Registration' : 'Continue'}
-                                    <ChevronRight size={18} />
+                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : step === 4 ? 'Complete Registration' : 'Continue'}
+                                    {!loading && <ChevronRight size={18} />}
                                 </button>
                             </div>
                         </>

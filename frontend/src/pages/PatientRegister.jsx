@@ -2,6 +2,8 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useFieldValidation } from '../hooks/useFieldValidation';
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 const PatientRegister = () => {
     const [formData, setFormData] = useState({
@@ -10,21 +12,49 @@ const PatientRegister = () => {
         password: '',
         confirmPassword: ''
     });
-    const [error, setError] = useState('');
+
+    const validationRules = {
+        username: (val) => {
+            if (!val) return 'Username is required';
+            if (val.length < 3) return 'Username must be at least 3 characters';
+            if (!/^[a-zA-Z0-9_]+$/.test(val)) return 'Only letters, numbers and underscores allowed';
+            return '';
+        },
+        email: (val) => {
+            if (!val) return 'Email is required';
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return 'Email address is invalid';
+            return '';
+        },
+        password: (val) => {
+            if (!val) return 'Password is required';
+            if (val.length < 8) return 'Password must be at least 8 characters';
+            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])/.test(val)) 
+                return 'Password must contain uppercase, lowercase, number, and special character';
+            return '';
+        }
+    };
+
+    const { errors, valid, isValidating, validateField, formIsValid } = useFieldValidation(
+        validationRules,
+        ['username', 'email']
+    );
+
     const [loading, setLoading] = useState(false);
     const { register } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        const updatedData = { ...formData, [name]: value };
+        setFormData(updatedData);
+        validateField(name, value, updatedData);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-
-        if (formData.password !== formData.confirmPassword) {
-            toast.error('Passwords do not match');
+        
+        if (!formIsValid(['username', 'email', 'password', 'confirmPassword'])) {
+            toast.error('Please fix the errors in the form before submitting.');
             return;
         }
 
@@ -39,7 +69,7 @@ const PatientRegister = () => {
             toast.success('Registration successful!');
             navigate('/');
         } catch (error) {
-            toast.error('Registration failed. Please try again.');
+            toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
         }
         setLoading(false);
     };
@@ -78,61 +108,108 @@ const PatientRegister = () => {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
-                            <input
-                                name="username"
-                                type="text"
-                                required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                                placeholder="Choose a username"
-                                onChange={handleChange}
-                            />
+                        {/* Username */}
+                        <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Username</label>
+                            <div className="relative group">
+                                <input
+                                    name="username"
+                                    type="text"
+                                    required
+                                    className={`w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all font-semibold ${
+                                        errors.username ? 'border-red-500/50 pt-3 pb-3' : 
+                                        valid.username ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                    }`}
+                                    placeholder="Choose a username"
+                                    onChange={handleChange}
+                                />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                    {isValidating.username && <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />}
+                                    {!isValidating.username && valid.username && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                    {!isValidating.username && errors.username && <XCircle className="w-4 h-4 text-red-400" />}
+                                </div>
+                            </div>
+                            {errors.username && <p className="text-[10px] text-red-400 font-bold ml-1 animate-in fade-in slide-in-from-top-1">{errors.username}</p>}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                            <input
-                                name="email"
-                                type="email"
-                                required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                                placeholder="Enter your email"
-                                onChange={handleChange}
-                            />
+
+                        {/* Email */}
+                        <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                            <div className="relative group">
+                                <input
+                                    name="email"
+                                    type="email"
+                                    required
+                                    className={`w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all font-semibold ${
+                                        errors.email ? 'border-red-500/50' : 
+                                        valid.email ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                    }`}
+                                    placeholder="Enter your email"
+                                    onChange={handleChange}
+                                />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                    {isValidating.email && <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />}
+                                    {!isValidating.email && valid.email && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                    {!isValidating.email && errors.email && <XCircle className="w-4 h-4 text-red-400" />}
+                                </div>
+                            </div>
+                            {errors.email && <p className="text-[10px] text-red-400 font-bold ml-1 animate-in fade-in slide-in-from-top-1">{errors.email}</p>}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                            <input
-                                name="password"
-                                type="password"
-                                required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                                placeholder="Create a password"
-                                onChange={handleChange}
-                            />
+
+                        {/* Password */}
+                        <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                            <div className="relative group">
+                                <input
+                                    name="password"
+                                    type="password"
+                                    required
+                                    className={`w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all font-semibold ${
+                                        errors.password ? 'border-red-500/50' : 
+                                        valid.password ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                    }`}
+                                    placeholder="Create a password"
+                                    onChange={handleChange}
+                                />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                    {valid.password && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                    {errors.password && <XCircle className="w-4 h-4 text-red-400" />}
+                                </div>
+                            </div>
+                            {errors.password && <p className="text-[10px] text-red-400 font-bold ml-1 leading-tight animate-in fade-in slide-in-from-top-1">{errors.password}</p>}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
-                            <input
-                                name="confirmPassword"
-                                type="password"
-                                required
-                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                                placeholder="Confirm your password"
-                                onChange={handleChange}
-                            />
+
+                        {/* Confirm Password */}
+                        <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Confirm Password</label>
+                            <div className="relative group">
+                                <input
+                                    name="confirmPassword"
+                                    type="password"
+                                    required
+                                    className={`w-full px-4 py-3 bg-slate-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all font-semibold ${
+                                        errors.confirmPassword ? 'border-red-500/50' : 
+                                        valid.confirmPassword ? 'border-emerald-500/50' : 'border-slate-700/50'
+                                    }`}
+                                    placeholder="Confirm your password"
+                                    onChange={handleChange}
+                                />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                    {valid.confirmPassword && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                                    {errors.confirmPassword && <XCircle className="w-4 h-4 text-red-400" />}
+                                </div>
+                            </div>
+                            {errors.confirmPassword && <p className="text-[10px] text-red-400 font-bold ml-1 animate-in fade-in slide-in-from-top-1">{errors.confirmPassword}</p>}
                         </div>
+
                         <button
                             type="submit"
-                            disabled={loading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-500/30"
+                            disabled={loading || !formIsValid(['username', 'email', 'password', 'confirmPassword'])}
+                            className="w-full py-4 px-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-xl hover:from-teal-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-500/20 mt-4 active:scale-95 transform"
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
-                                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
                                     Creating account...
                                 </span>
                             ) : 'Create Account'}
