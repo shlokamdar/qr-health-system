@@ -156,7 +156,7 @@ class LabVerificationView(generics.UpdateAPIView):
                 print(f"LAB APPROVED: {lab.name}")
                 print(f"Admin Username: {admin_tech.user.username}")
                 print(f"Admin Email:    {admin_tech.user.email}")
-                print(f"Login at: http://localhost:5173/login (select Lab Tech role)")
+                print(f"Login at: {getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')}/login (select Lab Tech role)")
                 print(f"{'='*60}\n")
                 return Response({
                     "message": "Lab approved successfully.",

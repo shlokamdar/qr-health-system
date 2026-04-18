@@ -97,7 +97,8 @@ class PasswordResetRequestView(APIView):
         if user:
             token = signing.dumps({'user_id': user.pk}, salt=RESET_SALT)
             url_safe_token = quote(token, safe='')
-            reset_link = f"http://localhost:5173/reset-password/{url_safe_token}"
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+            reset_link = f"{frontend_url}/reset-password/{url_safe_token}"
             send_mail(
                 subject='Password Reset Request - PulseID',
                 message=f'Use the following link to reset your password:\n\n{reset_link}\n\nThis link expires in 24 hours.\n\nIf you did not request this, ignore this email.',

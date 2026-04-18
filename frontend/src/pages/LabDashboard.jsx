@@ -9,7 +9,9 @@ import {
     Activity, LogOut, AlertTriangle, ExternalLink
 } from 'lucide-react';
 
-const MEDIA_BASE = 'http://localhost:8000';
+const MEDIA_BASE = import.meta.env.VITE_API_URL 
+    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') 
+    : '';
 
 const StatCard = ({ label, value, icon: Icon, color }) => (
     <div className={`bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-white/60 shadow-sm flex items-center gap-4`}>

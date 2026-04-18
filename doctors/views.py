@@ -196,7 +196,7 @@ class HospitalVerificationView(generics.UpdateAPIView):
                     print(f"HOSPITAL APPROVED: {hospital.name}")
                     print(f"Admin Username: {admin_profile.user.username}")
                     print(f"Admin Email:    {admin_profile.user.email}")
-                    print(f"Login at: http://localhost:5173/login (select Hospital role)")
+                    print(f"Login at: {getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')}/login (select Hospital role)")
                     print(f"{'='*60}\n")
                     return Response({
                         'message': 'Hospital approved successfully.',
