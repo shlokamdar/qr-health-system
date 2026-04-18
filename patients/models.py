@@ -1,3 +1,4 @@
+import os
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -62,25 +63,33 @@ class Patient(models.Model):
             # Generate a unique Health ID (Simple version: UUID prefix)
             self.health_id = f"HID-{uuid.uuid4().hex[:8].upper()}"
         
-        # Generate QR Code if it doesn't exist
-        if not self.qr_code:
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
-            )
-            # Encode the frontend landing page URL
-            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
-            qr_data = f"{frontend_url}/patients/{self.health_id}"
-            qr.add_data(qr_data)
-            qr.make(fit=True)
+        # Generate QR Code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        # Encode the frontend landing page URL
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pusleid.online')
+        qr_data = f"{frontend_url}/patients/{self.health_id}"
+        qr.add_data(qr_data)
+        qr.make(fit=True)
 
-            img = qr.make_image(fill_color="black", back_color="white")
-            buffer = BytesIO()
-            img.save(buffer, format='PNG')
-            file_name = f"qr_{self.health_id}.png"
-            self.qr_code.save(file_name, File(buffer), save=False)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        
+        # Cleanup old file if it exists to avoid orphans
+        if self.qr_code:
+            try:
+                if os.path.exists(self.qr_code.path):
+                    os.remove(self.qr_code.path)
+            except:
+                pass
+
+        file_name = f"qr_{self.health_id}.png"
+        self.qr_code.save(file_name, File(buffer), save=False)
 
         super().save(*args, **kwargs)
 
