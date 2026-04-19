@@ -17,7 +17,7 @@ def regenerate_qr_codes():
     patients = Patient.objects.all()
     print(f"Starting QR code regeneration for {patients.count()} patients...")
     
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pulseid.online')
     print(f"Using FRONTEND_URL: {frontend_url}")
 
     for patient in patients:

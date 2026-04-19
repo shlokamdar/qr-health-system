@@ -36,7 +36,7 @@ def verify_qr_codes():
 
     if data:
         print(f"Decoded QR data: {data}")
-        expected_url = f"https://pusleid.online/patients/{patient.health_id}"
+        expected_url = f"https://pulseid.online/patients/{patient.health_id}"
         if data == expected_url:
             print("SUCCESS: QR data matches expected URL.")
         else:

@@ -71,7 +71,7 @@ class Patient(models.Model):
             border=4,
         )
         # Encode the frontend landing page URL
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pusleid.online')
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pulseid.online')
         qr_data = f"{frontend_url}/patients/{self.health_id}"
         qr.add_data(qr_data)
         qr.make(fit=True)
