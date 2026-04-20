@@ -14,14 +14,12 @@ import MedicalRecordList from '../components/patient/MedicalRecordList';
 import AppointmentList from '../components/patient/AppointmentList';
 import PrescriptionsList from '../components/patient/PrescriptionsList';
 import LabReportsList from '../components/patient/LabReportsList';
-import DocumentsList from '../components/patient/DocumentsList';
 import SharingPermissionsList from '../components/patient/SharingPermissionsList';
 import AccessHistoryList from '../components/patient/AccessHistoryList';
 import EmergencyContactsList from '../components/patient/EmergencyContactsList';
 
 // Forms/Modals
 import AppointmentBooking from '../components/patient/AppointmentBooking';
-import UploadDocumentForm from '../components/patient/UploadDocumentForm';
 import UploadPrescriptionForm from '../components/patient/UploadPrescriptionForm';
 import AddEmergencyContactForm from '../components/patient/AddEmergencyContactForm';
 import ProfileEditModal from '../components/patient/ProfileEditModal';
@@ -45,7 +43,6 @@ const ICONS = {
   FlaskConical: ['M10 2v7.31', 'M14 9.3V1.99', 'M8.5 2h7', 'M14 9.3a6.5 6.5 0 11-4 0', 'M5.52 16h12.96'],
   Shield: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
   History: ['M3 3v5h5', 'M3.05 13A9 9 0 106 5.3L3 8'],
-  FolderOpen: 'M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z',
   Users: ['M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2', 'M9 7a4 4 0 100 8 4 4 0 000-8z', 'M23 21v-2a4 4 0 00-3-3.87', 'M16 3.13a4 4 0 010 7.75'],
   Bell: ['M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9', 'M13.73 21a2 2 0 01-3.46 0'],
   LogOut: ['M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4', 'M16 17l5-5-5-5', 'M21 12H9'],
@@ -80,7 +77,6 @@ const PatientDashboard = () => {
   const [recentRecords, setRecentRecords] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
-  const [documents, setDocuments] = useState([]);
   const [labReports, setLabReports] = useState([]);
   const [accessHistory, setAccessHistory] = useState([]);
   const [sharingPermissions, setSharingPermissions] = useState([]);
@@ -98,7 +94,6 @@ const PatientDashboard = () => {
   const [editForm, setEditForm] = useState({});
   const [doctorsList, setDoctorsList] = useState([]);
   const [newAppointment, setNewAppointment] = useState({ doctor: '', appointment_date: '', reason: '' });
-  const [newDocument, setNewDocument] = useState({ title: '', document_type: 'REPORT', description: '', file: null });
   const [newPrescription, setNewPrescription] = useState({ prescription_date: '', doctor_name: '', hospital_name: '', symptoms: '', diagnosis: '', medicines: '', insights: '', file: null });
   const [newContact, setNewContact] = useState({ name: '', relationship: '', phone: '', email: '', can_grant_access: false });
   const [editContactId, setEditContactId] = useState(null);
@@ -114,11 +109,10 @@ const PatientDashboard = () => {
         console.error(`API call failed [${label}]:`, e); 
         return []; 
       });
-      const [pData, rData, aData, dData, lData, hData, sData, eData, odData, docData, tData, notificationsData] = await Promise.all([
+      const [pData, rData, aData, lData, hData, sData, eData, odData, docData, tData, notificationsData] = await Promise.all([
         PatientService.getProfile().catch(e => { console.error('Profile failed:', e); return null; }),
         safe(PatientService.getRecords(), 'records'),
         safe(PatientService.getMyAppointments(), 'appointments'),
-        safe(PatientService.getDocuments(), 'documents'),
         safe(PatientService.getLabReports(), 'labReports'),
         safe(PatientService.getAccessHistory(), 'accessHistory'),
         safe(PatientService.getSharingPermissions(), 'sharing'),
@@ -132,7 +126,6 @@ const PatientDashboard = () => {
       if (pData) setPatient(pData);
       setRecentRecords(Array.isArray(rData) ? rData : []);
       setAppointments(Array.isArray(aData) ? aData : []);
-      setDocuments(Array.isArray(dData) ? dData : []);
       setLabReports(Array.isArray(lData) ? lData : []);
       setAccessHistory(Array.isArray(hData) ? hData : []);
       setSharingPermissions(Array.isArray(sData) ? sData : []);
@@ -180,18 +173,6 @@ const PatientDashboard = () => {
       setNewAppointment({ doctor: '', appointment_date: '', reason: '' });
       fetchAllData();
     } catch (err) { toast.error('Failed to book appointment.'); }
-  };
-
-  const handleUploadDocument = async (e) => {
-    e.preventDefault();
-    const fd = new FormData();
-    Object.keys(newDocument).forEach(k => fd.append(k, newDocument[k]));
-    try {
-      await PatientService.uploadDocument(fd);
-      toast.success('Document uploaded successfully!');
-      setNewDocument({ title: '', document_type: 'REPORT', description: '', file: null });
-      fetchAllData();
-    } catch (err) { toast.error('Upload failed. Please try again.'); }
   };
 
   const handleUploadPrescription = async (e) => {
@@ -323,12 +304,6 @@ const PatientDashboard = () => {
       date: r.created_at,
       doctor_name: r.doctor_details?.first_name ? `Dr. ${r.doctor_details.first_name} ${r.doctor_details.last_name || ''}` : r.doctor_name
     })),
-    ...documents.filter(d => d.document_type === 'REPORT').map(d => ({
-      ...d,
-      type: 'PERSONAL_DOC',
-      date: d.uploaded_at,
-      doctor_name: null // This will trigger the "Personal" badge
-    })),
     ...prescriptions.map(p => ({
       ...p,
       type: 'PERSONAL_PRE',
@@ -448,7 +423,6 @@ const PatientDashboard = () => {
             { id: 'records', label: 'Medical Records', icon: 'ClipboardList' },
             { id: 'prescriptions', label: 'Prescriptions', icon: 'Pill' },
             { id: 'lab_reports', label: 'Lab Reports', icon: 'FlaskConical' },
-            { id: 'documents', label: 'Documents', icon: 'FolderOpen' },
             { id: 'sharing', label: 'Sharing & Access', icon: 'Shield', dot: stats.pendingRequests > 0 ? '#F97316' : null },
             { id: 'history', label: 'Full History', icon: 'History' },
             { id: 'emergency_contacts', label: 'Emergency Contacts', icon: 'Users', dot: emergencyContacts.length === 0 ? '#3B9EE2' : null },
@@ -521,15 +495,6 @@ const PatientDashboard = () => {
           </div>
         )}
 
-        {activeTab === 'documents' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <UploadDocumentForm newDocument={newDocument} setNewDocument={setNewDocument} handleUpload={handleUploadDocument} />
-            <div className="pd-card">
-              <div className="pd-section-heading"><Icon d={ICONS.FolderOpen} /> My Documents</div>
-              <DocumentsList documents={documents} />
-            </div>
-          </div>
-        )}
 
         {activeTab === 'prescriptions' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

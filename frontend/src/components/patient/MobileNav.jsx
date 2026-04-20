@@ -58,7 +58,6 @@ const MobileNav = ({ activeTab, setActiveTab, unreadCount, logout }) => {
     { id: 'overview', label: 'Overview', icon: 'LayoutDashboard' },
     { id: 'records', label: 'Records', icon: 'ClipboardList' },
     { id: 'sharing', label: 'Sharing', icon: 'Shield' },
-    { id: 'documents', label: 'Documents', icon: 'FolderOpen' },
   ];
 
   return (
