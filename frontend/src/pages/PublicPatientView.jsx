@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
     Heart, ShieldAlert, Phone, User, Activity, 
     AlertCircle, ChevronRight, Lock, MapPin,
-    Droplets, Info
+    Droplets, Info, Mail
 } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
