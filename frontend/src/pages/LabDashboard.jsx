@@ -75,8 +75,11 @@ const LabDashboard = () => {
     const fetchTests = async () => {
         try {
             const data = await labService.getTests();
-            setLabTests(Array.isArray(data) ? data : data.results || []);
-        } catch {
+            const tests = Array.isArray(data) ? data : data.results || [];
+            if (tests.length === 0) throw new Error('No tests returned');
+            setLabTests(tests);
+        } catch (err) {
+            console.warn('Falling back to hardcoded lab tests', err);
             setLabTests([
                 { id: 1, name: 'Complete Blood Count (CBC)' },
                 { id: 2, name: 'Lipid Profile' },
@@ -110,7 +113,7 @@ const LabDashboard = () => {
             const p = res.data;
             setPatientInfo(p);
             setPatientVerified(true);
-            const name = p.first_name || p.user?.first_name || p.user?.username || 'Patient';
+            const name = p.full_name || p.username || (p.first_name ? `${p.first_name} ${p.last_name || ''}` : '') || 'Patient';
             toast.success(`Patient found: ${name}`);
         } catch {
             toast.error('Patient not found. Check Health ID.');
@@ -355,9 +358,7 @@ const LabDashboard = () => {
                                                     <CheckCircle className="w-5 h-5 text-[#2EC4A9] shrink-0" />
                                                     <div>
                                                         <p className="font-black text-[#0D1B2A] text-sm">
-                                                            {(patientInfo.first_name || patientInfo.user?.first_name) ? 
-                                                                `${patientInfo.first_name || patientInfo.user?.first_name} ${patientInfo.last_name || patientInfo.user?.last_name || ''}` : 
-                                                                'Anonymous Patient'}
+                                                            {patientInfo.full_name || patientInfo.username || (patientInfo.first_name ? `${patientInfo.first_name} ${patientInfo.last_name || ''}` : 'Anonymous Patient')}
                                                         </p>
                                                         <p className="text-xs text-slate-500 font-bold">{patientInfo.health_id}</p>
                                                     </div>

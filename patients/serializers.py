@@ -52,17 +52,22 @@ class PatientPublicSerializer(serializers.ModelSerializer):
     """Public basic patient info for QR scan view (no login required)."""
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    full_name = serializers.SerializerMethodField()
     age = serializers.ReadOnlyField()
     emergency_contacts = EmergencyContactSerializer(many=True, read_only=True)
     
     class Meta:
         model = Patient
         fields = [
-            'id', 'health_id', 'first_name', 'last_name', 'age', 'gender', 
-            'blood_group', 'allergies', 'chronic_conditions',
+            'id', 'health_id', 'username', 'first_name', 'last_name', 'full_name', 
+            'age', 'gender', 'blood_group', 'allergies', 'chronic_conditions',
             'emergency_contacts'
         ]
         read_only_fields = fields
+
+    def get_full_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
 
 
 class PatientBasicSerializer(serializers.ModelSerializer):
