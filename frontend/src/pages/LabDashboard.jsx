@@ -31,7 +31,13 @@ const LabDashboard = () => {
     // Core state
     const [activeTab, setActiveTab] = useState('upload');
     const [profile, setProfile] = useState(null);
-    const [labTests, setLabTests] = useState([]);
+    const [labTests, setLabTests] = useState([
+        { id: 1, name: 'Complete Blood Count (CBC)' },
+        { id: 2, name: 'Lipid Profile' },
+        { id: 3, name: 'Thyroid Function Test' },
+        { id: 4, name: 'Urinalysis' },
+        { id: 5, name: 'COVID-19 RT-PCR' },
+    ]);
     const [recentUploads, setRecentUploads] = useState([]);
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [loadingRecent, setLoadingRecent] = useState(true);
@@ -110,10 +116,11 @@ const LabDashboard = () => {
         setPatientVerified(false);
         try {
             const res = await labService.searchPatient(patientHealthId.trim());
-            const p = res.data;
+            let p = res.data;
+            if (Array.isArray(p) && p.length > 0) p = p[0];
             setPatientInfo(p);
             setPatientVerified(true);
-            const name = p.full_name || p.username || (p.first_name ? `${p.first_name} ${p.last_name || ''}` : '') || 'Patient';
+            const name = p.full_name || p.username || (p.first_name ? `${p.first_name} ${p.last_name || ''}` : '') || p.health_id || 'Patient';
             toast.success(`Patient found: ${name}`);
         } catch {
             toast.error('Patient not found. Check Health ID.');
@@ -358,9 +365,9 @@ const LabDashboard = () => {
                                                     <CheckCircle className="w-5 h-5 text-[#2EC4A9] shrink-0" />
                                                     <div>
                                                         <p className="font-black text-[#0D1B2A] text-sm">
-                                                            {patientInfo.full_name || patientInfo.username || (patientInfo.first_name ? `${patientInfo.first_name} ${patientInfo.last_name || ''}` : 'Anonymous Patient')}
+                                                            {patientInfo.full_name || patientInfo.username || (patientInfo.first_name ? `${patientInfo.first_name} ${patientInfo.last_name || ''}` : '') || 'Record Found'}
                                                         </p>
-                                                        <p className="text-xs text-slate-500 font-bold">{patientInfo.health_id}</p>
+                                                        <p className="text-xs text-slate-500 font-bold">{patientInfo.health_id || patientHealthId}</p>
                                                     </div>
                                                 </div>
                                             )}
