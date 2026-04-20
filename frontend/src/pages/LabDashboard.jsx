@@ -110,7 +110,8 @@ const LabDashboard = () => {
             const p = res.data;
             setPatientInfo(p);
             setPatientVerified(true);
-            toast.success(`Patient found: ${p.user?.first_name || p.user?.username}`);
+            const name = p.first_name || p.user?.first_name || p.user?.username || 'Patient';
+            toast.success(`Patient found: ${name}`);
         } catch {
             toast.error('Patient not found. Check Health ID.');
         } finally {
@@ -353,7 +354,11 @@ const LabDashboard = () => {
                                                 <div className="mt-3 flex items-center gap-3 bg-[#2EC4A9]/10 border border-[#2EC4A9]/20 rounded-xl px-4 py-3">
                                                     <CheckCircle className="w-5 h-5 text-[#2EC4A9] shrink-0" />
                                                     <div>
-                                                        <p className="font-black text-[#0D1B2A] text-sm">{patientInfo.user?.first_name} {patientInfo.user?.last_name || ''}</p>
+                                                        <p className="font-black text-[#0D1B2A] text-sm">
+                                                            {(patientInfo.first_name || patientInfo.user?.first_name) ? 
+                                                                `${patientInfo.first_name || patientInfo.user?.first_name} ${patientInfo.last_name || patientInfo.user?.last_name || ''}` : 
+                                                                'Anonymous Patient'}
+                                                        </p>
                                                         <p className="text-xs text-slate-500 font-bold">{patientInfo.health_id}</p>
                                                     </div>
                                                 </div>
