@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
     UserPlus, Mail, Phone, MapPin, Search, Filter,
-    LayoutGrid, ClipboardList, Trash2, Plus, LogOut, Users, AlertCircle, Beaker, BarChart3, Building2, CheckCircle2
+    LayoutGrid, ClipboardList, Trash2, Plus, LogOut, Users, AlertCircle, Beaker, BarChart3, Building2, CheckCircle2,
+    Copy, Link as LinkIcon, ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import HospitalService from '../services/hospital.service';
@@ -21,6 +22,8 @@ const HospitalDashboard = () => {
     const [showCreateDeptModal, setShowCreateDeptModal] = useState(false);
     const [showAssignDeptModal, setShowAssignDeptModal] = useState(false);
     const [selectedDoctor, setSelectedDoctor] = useState(null);
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteLink, setInviteLink] = useState('');
     const [techForm, setTechForm] = useState({
         username: '',
         email: '',
@@ -110,6 +113,18 @@ const HospitalDashboard = () => {
     const handleLogout = () => {
         localStorage.clear();
         window.location.href = '/login';
+    };
+
+    const handleGenerateInvite = () => {
+        const baseUrl = window.location.origin;
+        const link = `${baseUrl}/doctor/register?hospital=${hospitalInfo?.id}`;
+        setInviteLink(link);
+        setShowInviteModal(true);
+    };
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(inviteLink);
+        toast.success("Invite link copied to clipboard!");
     };
 
     if (loading) {
@@ -237,7 +252,10 @@ const HospitalDashboard = () => {
                                         <p className="text-slate-500 max-w-xs text-sm leading-relaxed">
                                             Invite new practitioners to join your facility's digital health network on PulseID.
                                         </p>
-                                        <button className="px-8 py-3 bg-[#3B9EE2] text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-[#2E8BCC] transition-all">
+                                        <button
+                                            onClick={handleGenerateInvite}
+                                            className="px-8 py-3 bg-[#3B9EE2] text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-[#2E8BCC] transition-all"
+                                        >
                                             Generate Invite Link
                                         </button>
                                     </div>
@@ -618,6 +636,65 @@ const HospitalDashboard = () => {
 
             {/* Bottom padding for mobile */}
             <div className="h-20 md:hidden" />
+
+            {/* Invitation Modal */}
+            {showInviteModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowInviteModal(false)} />
+                    <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800">Practitioner Invitation</h3>
+                                <p className="text-slate-500 text-sm">Share this link with doctors to join your hospital network.</p>
+                            </div>
+                            <div className="p-3 bg-blue-50 rounded-2xl text-[#3B9EE2]">
+                                <LinkIcon size={24} />
+                            </div>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Invitation Link</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        readOnly
+                                        type="text"
+                                        value={inviteLink}
+                                        className="flex-1 px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-xs text-slate-600 outline-none"
+                                    />
+                                    <button
+                                        onClick={copyToClipboard}
+                                        className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center"
+                                        title="Copy to Clipboard"
+                                    >
+                                        <Copy size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex gap-4">
+                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center shrink-0">
+                                    <ExternalLink size={20} className="text-[#3B9EE2]" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-bold text-slate-800">Auto-Affiliation Enabled</p>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        Practitioners using this link will have <strong>{hospitalInfo?.name}</strong> pre-selected in their registration form.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <button
+                                    onClick={() => setShowInviteModal(false)}
+                                    className="w-full py-4 bg-[#0D1B2A] text-white rounded-2xl font-bold hover:bg-[#1B263B] transition-all shadow-xl shadow-slate-900/20"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

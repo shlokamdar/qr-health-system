@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
     Activity, User, Stethoscope, Microscope, ShieldCheck,
     Check, ArrowRight, ArrowLeft, Loader2, Download, Smartphone,
@@ -24,8 +24,23 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     const [showLoginPassword, setShowLoginPassword] = useState(false);
     const { login, register } = useContext(AuthContext); // Destructure both here
     const navigate = useNavigate();
+    const location = useLocation();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Support for invitation links (pre-filling hospital/lab)
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const hospitalId = params.get('hospital');
+        const labId = params.get('lab');
+        
+        if (hospitalId) {
+            setDoctorData(prev => ({ ...prev, hospital: hospitalId }));
+        }
+        if (labId) {
+            setLabTechData(prev => ({ ...prev, lab: labId }));
+        }
+    }, [location.search]);
 
     // Sync state with props when navigation occurs (deep link support)
     useEffect(() => {
