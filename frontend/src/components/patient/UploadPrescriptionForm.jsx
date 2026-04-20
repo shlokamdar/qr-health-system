@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Calendar, User2, Building2, Stethoscope, ClipboardList, Pill, FileText, UploadCloud, Plus } from 'lucide-react';
 
 const UploadPrescriptionForm = ({ newPrescription, setNewPrescription, handleUpload }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
   const up = (field, val) => setNewPrescription({ ...newPrescription, [field]: val });
 
   const handleFileChange = (e) => {
@@ -11,27 +10,7 @@ const UploadPrescriptionForm = ({ newPrescription, setNewPrescription, handleUpl
 
     up('file', file);
 
-    if (file.type.startsWith('image/')) {
-        setIsProcessing(true);
-        // Simulate AI OCR Extraction
-        setTimeout(() => {
-            const mockExtracted = {
-                doctor_name: "Dr. Arvind Kumar",
-                hospital_name: "Apollo Hospitals",
-                symptoms: "Persistent cough, mild fever for 3 days",
-                diagnosis: "Acute Bronchitis",
-                medicines: "1. Azithromycin 500mg - 1 tab OD x 3 days\n2. Levocetirizine 5mg - 1 tab HS x 5 days\n3. Syrup Ascoril LS - 10ml TID",
-                insights: "Strict bed rest recommended. Plenty of fluids."
-            };
-            
-            setNewPrescription(prev => ({
-                ...prev,
-                ...mockExtracted,
-                file: file
-            }));
-            setIsProcessing(false);
-        }, 2500);
-    }
+    up('file', file);
   };
 
   const inputClasses = "w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] transition-all focus:outline-none focus:border-[#3B9EE2] text-[#0D1B2A] placeholder-[#9CA3AF] bg-white font-medium";
@@ -140,29 +119,17 @@ const UploadPrescriptionForm = ({ newPrescription, setNewPrescription, handleUpl
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className={`border-2 border-dashed border-[#E2E8F0] rounded-xl p-6 flex flex-col items-center justify-center gap-2 bg-[#F8FAFB] group-hover:border-[#3B9EE2]/50 group-hover:bg-[#3B9EE2]/5 transition-all ${isProcessing ? 'animate-pulse bg-[#3B9EE2]/5 border-[#3B9EE2]/30' : ''}`}>
-                    <UploadCloud className={`${isProcessing ? 'text-primary' : 'text-muted'} group-hover:text-primary transition-colors`} size={28} />
+                <div className={`border-2 border-dashed border-[#E2E8F0] rounded-xl p-6 flex flex-col items-center justify-center gap-2 bg-[#F8FAFB] group-hover:border-[#3B9EE2]/50 group-hover:bg-[#3B9EE2]/5 transition-all`}>
+                    <UploadCloud className={`text-muted group-hover:text-primary transition-colors`} size={28} />
                     <div className="text-center">
                         <span className="text-xs font-bold text-muted group-hover:text-primary uppercase tracking-widest block">
-                            {isProcessing ? "Extracting Data with AI..." : (newPrescription.file ? newPrescription.file.name : "Select Prescription Image")}
+                            {newPrescription.file ? newPrescription.file.name : "Select Prescription Image"}
                         </span>
-                        {!isProcessing && !newPrescription.file && <span className="text-[10px] text-muted opacity-60">High quality images work best</span>}
+                        {!newPrescription.file && <span className="text-[10px] text-muted opacity-60">High quality images work best</span>}
                     </div>
                 </div>
             </div>
             
-            {/* AI WARNING */}
-            <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-xl flex gap-3">
-                <div className="p-1.5 bg-amber-100 rounded-lg text-amber-600 shrink-0 h-fit">
-                    <Pill size={16} />
-                </div>
-                <div>
-                    <p className="text-[11px] font-bold text-amber-900 uppercase tracking-tight mb-1">AI-Powered Extraction</p>
-                    <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                        Text is automatically extracted using AI. <strong>Please verify all medicines and dosages</strong> against the original image before saving.
-                    </p>
-                </div>
-            </div>
         </div>
 
         <button 
