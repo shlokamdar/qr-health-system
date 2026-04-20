@@ -19,7 +19,8 @@ from accounts.models import Notification
 
 from utils.notifications import (
     send_access_granted_email, send_access_revoked_email,
-    send_otp_email
+    send_otp_email, send_access_request_notification,
+    send_profile_accessed_notification
 )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -72,6 +73,10 @@ class PatientViewSet(viewsets.ModelViewSet):
                 
                 data = PatientSerializer(instance).data if has_full_access else PatientPublicSerializer(instance).data
                 data['has_full_access'] = has_full_access
+                
+                # Notify patient that a doctor viewed their profile
+                send_profile_accessed_notification(instance, user)
+                
                 return Response(data)
 
         # For lab techs or any other authenticated users returning public view
@@ -334,6 +339,9 @@ class OTPRequestView(APIView):
             title="Medical Access Request",
             message=message
         )
+
+        # Notify Patient via Email about the access request
+        send_access_request_notification(patient, doctor)
 
         # Send Email if method is EMAIL
         if delivery_method == 'EMAIL':

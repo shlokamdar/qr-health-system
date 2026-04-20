@@ -5,6 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import AuthenticationFailed
 from .models import Notification
+from utils.notifications import send_registration_welcome_email
 
 User = get_user_model()
 
@@ -144,6 +145,9 @@ class RegisterSerializer(serializers.ModelSerializer):
                 license_number=profile_data.get('license_number') or profile_data.get('licenseNumber') or f"TEMP-{user.id}",
                 is_verified=False  # Requires admin approval
             )
+        
+        # Send Welcome Email
+        send_registration_welcome_email(user)
         
         return user
 

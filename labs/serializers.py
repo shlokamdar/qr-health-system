@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import DiagnosticLab, LabTechnician, LabTest, LabReport
 from doctors.serializers import HospitalSerializer
 from accounts.serializers import UserSerializer
+from utils.notifications import send_registration_welcome_email
 
 User = get_user_model()
 
@@ -62,6 +63,9 @@ class DiagnosticLabRegisterSerializer(serializers.ModelSerializer):
             is_verified=False # Needs admin approval
         )
         
+        # Send Welcome Email
+        send_registration_welcome_email(user)
+        
         return lab
 
 
@@ -111,6 +115,10 @@ class LabTechnicianRegisterSerializer(serializers.ModelSerializer):
         
         user = User.objects.create_user(**user_data)
         lab_tech = LabTechnician.objects.create(user=user, **validated_data)
+        
+        # Send Welcome Email
+        send_registration_welcome_email(user)
+        
         return lab_tech
 
 

@@ -114,6 +114,9 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
             details=f"Doctor registered patient with Health ID: {patient.health_id}"
         )
         
+        # Send Welcome Email
+        send_registration_welcome_email(user)
+        
         serializer = PatientSerializer(patient)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -213,7 +216,7 @@ class HospitalVerificationView(generics.UpdateAPIView):
         return super().update(request, *args, **kwargs)
 
 
-from utils.notifications import send_record_uploaded_email
+from utils.notifications import send_record_uploaded_email, send_registration_welcome_email
 
 class ConsultationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsDoctor]

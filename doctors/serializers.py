@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import Hospital, Department, Doctor, Consultation, Appointment
 from accounts.serializers import UserSerializer
 from django.db import transaction
+from utils.notifications import send_registration_welcome_email
 
 User = get_user_model()
 
@@ -87,6 +88,9 @@ class HospitalRegisterSerializer(serializers.ModelSerializer):
         # Create HospitalAdmin profile
         from .models import HospitalAdmin
         HospitalAdmin.objects.create(user=user, hospital=hospital)
+        
+        # Send Welcome Email
+        send_registration_welcome_email(user)
         
         return hospital
 
@@ -185,6 +189,10 @@ class DoctorRegisterSerializer(serializers.ModelSerializer):
         
         # Create doctor profile
         doctor = Doctor.objects.create(user=user, **validated_data)
+        
+        # Send Welcome Email
+        send_registration_welcome_email(user)
+        
         return doctor
 
 

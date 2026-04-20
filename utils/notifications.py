@@ -2,8 +2,23 @@ from django.core.mail import send_mail
 from django.conf import settings
 import threading
 
+def format_email_message(name, content):
+    """Generic formatter to add PulseID signature and link."""
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pulseid.online')
+    return f"""
+    Hello {name},
+
+    {content}
+
+    Regards,
+    PulseID Health System
+    {frontend_url}
+    """
+
 def send_email_async(subject, message, recipient_list):
     """Send email in a separate thread to avoid blocking the main request."""
+    # Ensure message is formatted with PulseID link if not already done manually
+    # (Actually we'll call format_email_message in specific functions)
     try:
         email_thread = threading.Thread(
             target=send_mail,
@@ -17,19 +32,15 @@ def send_email_async(subject, message, recipient_list):
 def send_access_granted_email(patient, doctor, access_type):
     """Notify patient that a doctor has been granted access."""
     subject = f"Access Granted: Dr. {doctor.user.get_full_name() or doctor.user.username}"
-    message = f"""
-    Hello {patient.user.get_full_name() or patient.user.username},
-
+    content = f"""
     Access to your health records has been granted to Dr. {doctor.user.get_full_name() or doctor.user.username}.
     
     Access Type: {access_type}
-    Hospital: {doctor.hospital.name}
+    Hospital: {doctor.hospital.name if doctor.hospital else 'Independent Practice'}
     
     If you did not authorize this, please log in to your dashboard and revoke access immediately.
-    
-    Regards,
-    QR Health System
     """
+    message = format_email_message(patient.user.get_full_name() or patient.user.username, content)
     if patient.user.email:
         send_email_async(subject, message, [patient.user.email])
 
@@ -157,17 +168,54 @@ def send_doctor_approved_email(doctor):
 def send_otp_email(recipient_name, recipient_email, doctor_name, otp_code):
     """Send OTP email to patient or emergency contact."""
     subject = f"Medical Access OTP: {otp_code}"
-    message = f"""
-    Hello {recipient_name},
-
+    content = f"""
     Dr. {doctor_name} is requesting full access to the medical records of a patient you are associated with.
 
     Your One-Time Password (OTP) is: {otp_code}
 
     This code is valid for 10 minutes. If you did not expect this request, please ignore this email.
-
-    Regards,
-    QR Health System
     """
+    message = format_email_message(recipient_name, content)
     if recipient_email:
         send_email_async(subject, message, [recipient_email])
+
+def send_registration_welcome_email(user):
+    """Send welcome email to newly registered users."""
+    subject = "Welcome to PulseID Health System"
+    role_display = user.role.replace('_', ' ').title()
+    content = f"""
+    Welcome to PulseID! Your account as a {role_display} has been successfully created.
+    
+    Username: {user.username}
+    Email: {user.email}
+    
+    You can now log in to your dashboard to manage your health records and permissions.
+    """
+    message = format_email_message(user.get_full_name() or user.username, content)
+    if user.email:
+        send_email_async(subject, message, [user.email])
+
+def send_access_request_notification(patient, doctor):
+    """Notify patient that a doctor has requested access to their records."""
+    subject = "New Medical Access Request"
+    content = f"""
+    Dr. {doctor.user.get_full_name() or doctor.user.username} has requested access to your medical records.
+    
+    Please log in to your dashboard to view the request and provide authorization if appropriate.
+    """
+    message = format_email_message(patient.user.get_full_name() or patient.user.username, content)
+    if patient.user.email:
+        send_email_async(subject, message, [patient.user.email])
+
+def send_profile_accessed_notification(patient, actor):
+    """Notify patient that their profile was viewed."""
+    subject = "Your Medical Profile was Accessed"
+    actor_name = actor.get_full_name() or actor.username
+    content = f"""
+    Your medical profile was recently viewed by {actor_name}.
+    
+    This is an automated security notification. If you have questions about this access, please contact the administrator.
+    """
+    message = format_email_message(patient.user.get_full_name() or patient.user.username, content)
+    if patient.user.email:
+        send_email_async(subject, message, [patient.user.email])
