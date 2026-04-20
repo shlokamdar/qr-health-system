@@ -25,5 +25,5 @@ urlpatterns = [
     path('admin/list/', LabListView.as_view(), name='admin-lab-list'),
     path('admin/verify/<int:pk>/', LabVerificationView.as_view(), name='admin-lab-verify'),
     path('admin/technicians/', TechnicianListView.as_view(), name='admin-tech-list'),
-    path('admin/technicians/verify/<int:pk>/', TechnicianVerificationView.as_view(), name='admin-tech-verify'),
+    path('admin/technicians/<int:pk>/verify/', TechnicianVerificationView.as_view(), name='admin-tech-verify'),
 ]

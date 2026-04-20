@@ -976,7 +976,7 @@ const AdminDashboard = () => {
 
     const handleVerifyTech = async (id) => {
         try {
-            await api.patch(`labs/admin/technicians/verify/${id}/`, { verify: true });
+            await api.patch(`labs/admin/technicians/${id}/verify/`, { verify: true });
             toast.success('Technician verified successfully!');
             fetchTechs(); fetchStats();
         } catch { toast.error('Failed to verify technician'); }
@@ -984,7 +984,7 @@ const AdminDashboard = () => {
 
     const handleRejectTech = async (id, reason) => {
         try {
-            await api.patch(`labs/admin/technicians/verify/${id}/`, { verify: false, rejection_reason: reason });
+            await api.patch(`labs/admin/technicians/${id}/verify/`, { verify: false, rejection_reason: reason });
             toast.success('Technician registration rejected.');
             setRejectTarget(null);
             fetchTechs(); fetchStats();
