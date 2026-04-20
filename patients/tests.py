@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from .models import Patient, Record
+from .models import Patient
+from records.models import MedicalRecord as Record
 from doctors.models import Doctor
 from rest_framework.test import APIClient
 from rest_framework import status
@@ -10,12 +11,12 @@ User = get_user_model()
 
 class PatientModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='pat', password='pw', role='PATIENT')
-        self.patient = Patient.objects.create(
-            user=self.user,
-            date_of_birth='2000-01-01',
-            contact_number='1234567890'
-        )
+        self.user = User.objects.create_user(username='pat', password='pw', role='PATIENT', email='pat@model.com')
+        # Patient profile is created via signals
+        self.patient = self.user.patient_profile
+        self.patient.date_of_birth = '2000-01-01'
+        self.patient.contact_number = '1234567890'
+        self.patient.save()
 
     def test_health_id_generation(self):
         self.assertTrue(self.patient.health_id.startswith('HID-'))
@@ -28,11 +29,15 @@ class RecordAPITest(TestCase):
         self.client = APIClient()
         
         # Patient
-        self.pat_user = User.objects.create_user(username='patentRecord', password='pw', role='PATIENT')
-        self.patient = Patient.objects.create(user=self.pat_user, date_of_birth='1990-01-01', contact_number='123')
+        self.pat_user = User.objects.create_user(username='patentRecord', password='pw', role='PATIENT', email='p@record.com')
+        self.patient = self.pat_user.patient_profile
+        self.patient.date_of_birth = '1990-01-01'
+        self.patient.contact_number = '123'
+        self.patient.save()
         
         # Doctor
-        self.doc_user = User.objects.create_user(username='docRecord', password='pw', role='DOCTOR')
+        self.doc_user = User.objects.create_user(username='docRecord', password='pw', role='DOCTOR', email='d@record.com')
+        # Doctor profile is NOT created via signals automatically based on my check of doctors/signals.py
         self.doctor = Doctor.objects.create(user=self.doc_user, license_number='LIC', specialization='Gen')
 
     def test_record_upload(self):
@@ -42,8 +47,9 @@ class RecordAPITest(TestCase):
         file = SimpleUploadedFile("test_report.pdf", b"file_content", content_type="application/pdf")
         
         data = {
+            'patient': self.patient.id,
             'title': 'Blood Test',
-            'record_type': 'REPORT',
+            'record_type': 'LAB_REPORT',
             'file': file,
             'description': 'Annual Checkup'
         }
@@ -56,5 +62,5 @@ class RecordAPITest(TestCase):
         self.assertEqual(Record.objects.count(), 1)
         
         record = Record.objects.first()
-        self.assertEqual(record.uploaded_by, self.pat_user)
+        self.assertEqual(record.doctor, self.pat_user)
         self.assertEqual(record.patient, self.patient)

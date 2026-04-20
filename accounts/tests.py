@@ -48,7 +48,7 @@ class UserRegistrationTest(TestCase):
 class UserLoginTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username='testuser', password='password123', role='PATIENT')
+        self.user = User.objects.create_user(username='testuser', password='password123', role='PATIENT', email='test@user.com')
 
     def test_login_success(self):
         data = {

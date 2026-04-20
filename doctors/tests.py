@@ -23,17 +23,22 @@ class DoctorModelTest(TestCase):
         )
 
     def test_doctor_str(self):
-        self.assertEqual(str(self.doctor), f"Dr. {self.user.get_full_name()} - Cardiology")
+        hospital_name = self.doctor.hospital.name if self.doctor.hospital else "Independent"
+        expected = f"Dr. {self.user.get_full_name() or self.user.username} ({hospital_name})"
+        self.assertEqual(str(self.doctor), expected)
 
 class AppointmentModelTest(TestCase):
     def setUp(self):
         # Create Doctor
-        self.doc_user = User.objects.create_user(username='doc', password='pw', role='DOCTOR')
+        self.doc_user = User.objects.create_user(username='doc', password='pw', role='DOCTOR', email='doc@apt.com')
         self.doctor = Doctor.objects.create(user=self.doc_user, license_number='D1', specialization='Gen')
         
         # Create Patient
-        self.pat_user = User.objects.create_user(username='pat', password='pw', role='PATIENT')
-        self.patient = Patient.objects.create(user=self.pat_user, date_of_birth='2000-01-01', contact_number='123')
+        self.pat_user = User.objects.create_user(username='pat', password='pw', role='PATIENT', email='pat@apt.com')
+        self.patient = self.pat_user.patient_profile
+        self.patient.date_of_birth = '2000-01-01'
+        self.patient.contact_number = '123'
+        self.patient.save()
 
         self.appointment = Appointment.objects.create(
             doctor=self.doctor,
@@ -55,15 +60,18 @@ class AppointmentAPITest(TestCase):
         self.client = APIClient()
         
         # Doctor
-        self.doc_user = User.objects.create_user(username='docapi', password='pw', role='DOCTOR', first_name='Doc', last_name='Tor')
+        self.doc_user = User.objects.create_user(username='docapi', password='pw', role='DOCTOR', first_name='Doc', last_name='Tor', email='doc@api.com')
         self.doctor = Doctor.objects.create(user=self.doc_user, license_number='DAPI', specialization='Ortho', is_verified=True)
         
         # Patient
-        self.pat_user = User.objects.create_user(username='patapi', password='pw', role='PATIENT', first_name='Pat', last_name='Ient')
-        self.patient = Patient.objects.create(user=self.pat_user, date_of_birth='2000-01-01', contact_number='123')
+        self.pat_user = User.objects.create_user(username='patapi', password='pw', role='PATIENT', first_name='Pat', last_name='Ient', email='pat@api.com')
+        self.patient = self.pat_user.patient_profile
+        self.patient.date_of_birth = '2000-01-01'
+        self.patient.contact_number = '123'
+        self.patient.save()
         
         # Another user
-        self.other_user = User.objects.create_user(username='other', password='pw')
+        self.other_user = User.objects.create_user(username='other', password='pw', email='other@api.com')
 
     def test_book_appointment(self):
         self.client.force_authenticate(user=self.pat_user)

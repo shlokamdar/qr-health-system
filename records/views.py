@@ -24,14 +24,14 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         
         # If Doctor/Lab requests all without filter, maybe return none or ones they created?
         # For prototype, return empty to prevent data leak, force filtering
-        if user.role in ['DOCTOR', 'LAB']:
+        if user.role in ['DOCTOR', 'LAB_TECH']:
              return queryset.none() # Must specify patient
 
         return queryset.none()
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [(IsDoctor | IsLab)()]
+            return [(IsDoctor | IsLabTech | IsPatient)()]
 
         return [permissions.IsAuthenticated()]
 
