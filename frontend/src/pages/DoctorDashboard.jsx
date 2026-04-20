@@ -231,11 +231,19 @@ const DoctorDashboard = () => {
                 if (rawValue.includes('/api/patients/')) {
                     const parts = rawValue.split('/api/patients/');
                     if (parts.length > 1) {
-                        healthId = parts[1].replace('/', '');
+                        healthId = parts[1].split('/')[0];
+                    }
+                } else if (rawValue.includes('/patients/')) {
+                    const parts = rawValue.split('/patients/');
+                    if (parts.length > 1) {
+                        healthId = parts[1].split('/')[0];
                     }
                 }
 
-                if (!healthId || healthId.trim() === '') {
+                // Remove any trailing parameters or slashes if still present
+                healthId = healthId.split('?')[0].split('#')[0].replace(/\/$/, "");
+
+                if (!healthId || healthId.trim() === '' || healthId.includes('://')) {
                     toast.error('Invalid QR code scanned');
                     return;
                 }
