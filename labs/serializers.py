@@ -132,6 +132,7 @@ class LabReportSerializer(serializers.ModelSerializer):
     test_type_details = LabTestSerializer(source='test_type', read_only=True)
     patient_health_id = serializers.CharField(source='patient.health_id', read_only=True)
     patient_name = serializers.SerializerMethodField()
+    result_data = serializers.JSONField(required=False, default=dict)
     
     class Meta:
         model = LabReport

@@ -29,14 +29,14 @@ urlpatterns = [
     path('api/patients/', include('patients.urls')),
     path('api/records/', include('records.urls')),
     
+    path('api/labs/', include('labs.urls')),
+    path('api/audit/', include('audit.urls')),
+    path('api/support/', include('support.urls')),
+    
     # Mount doctor and hospital routes specifically
     path('api/doctors/', include((doctor_urlpatterns, 'doctors'), namespace='doctors-api')),
     path('api/hospitals/', include((hospital_urlpatterns, 'hospitals'), namespace='hospitals-api')),
     path('api/', include((hospital_urlpatterns, 'hospitals'))), # For /api/departments/ etc
-    
-    path('api/labs/', include('labs.urls')),
-    path('api/audit/', include('audit.urls')),
-    path('api/support/', include('support.urls')),
 
     # Admin Dashboard API
     path('api/admin/stats/', AdminDashboardStatsView.as_view(), name='admin-stats'),

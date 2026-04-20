@@ -179,16 +179,16 @@ const LabDashboard = () => {
             let errorMessage = 'Upload failed. Please try again.';
             
             if (errorData) {
-                if (typeof errorData === 'string') errorMessage = errorData;
-                else if (errorData.detail) errorMessage = errorData.detail;
-                else {
-                    // Collect all validation errors
-                    const fields = Object.keys(errorData);
-                    if (fields.length > 0) {
-                        const firstField = fields[0];
-                        const fieldError = Array.isArray(errorData[firstField]) ? errorData[firstField][0] : errorData[firstField];
-                        errorMessage = `${firstField}: ${fieldError}`;
-                    }
+                if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else if (typeof errorData === 'object') {
+                    // Try to extract specific field errors (e.g., { "test_type": ["Not found"] })
+                    const fieldErrors = Object.entries(errorData)
+                        .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors[0] : errors}`)
+                        .join(' | ');
+                    if (fieldErrors) errorMessage = fieldErrors;
                 }
             }
             toast.error(errorMessage);

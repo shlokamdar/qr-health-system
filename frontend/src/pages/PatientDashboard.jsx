@@ -471,11 +471,6 @@ const PatientDashboard = () => {
         {/* ── OTHER TABS (Simplified for brevity as they just wrap components) ── */}
         {activeTab === 'records' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <UploadDocumentForm 
-              newDocument={newDocument} 
-              setNewDocument={setNewDocument} 
-              handleUpload={handleUploadDocument} 
-            />
             <div className="pd-card">
               <div className="pd-section-heading">
                 <Icon d={ICONS.ClipboardList} /> Official & Personal Records
