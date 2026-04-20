@@ -9,24 +9,41 @@ from .views import (
     DepartmentViewSet, HospitalVisitationLogsView
 )
 
-router = SimpleRouter()
-router.register(r'hospitals', HospitalViewSet)
-router.register(r'consultations', ConsultationViewSet, basename='consultation')
-router.register(r'appointments', AppointmentViewSet, basename='appointment')
-router.register(r'departments', DepartmentViewSet, basename='department')
+# Separate routers for better organization
+doctor_router = SimpleRouter()
+doctor_router.register(r'consultations', ConsultationViewSet, basename='consultation')
+doctor_router.register(r'appointments', AppointmentViewSet, basename='appointment')
 
-urlpatterns = [
-    path('hospitals/me/', HospitalMeView.as_view(), name='hospital-me'),
-    path('hospitals/doctors/', HospitalDoctorListView.as_view(), name='hospital-doctors'),
-    path('hospitals/labs/', HospitalLabListView.as_view(), name='hospital-labs'),
-    path('hospitals/technicians/', HospitalTechnicianListView.as_view(), name='hospital-technicians'),
-    path('hospitals/technicians/create/', HospitalTechnicianCreateView.as_view(), name='hospital-technician-create'),
-    path('hospitals/stats/', HospitalStatsView.as_view(), name='hospital-stats'),
-    path('hospitals/visit-logs/', HospitalVisitationLogsView.as_view(), name='hospital-visit-logs'),
-    path('', include(router.urls)),
+hospital_router = SimpleRouter()
+hospital_router.register(r'hospitals', HospitalViewSet)
+hospital_router.register(r'departments', DepartmentViewSet, basename='department')
+
+# Hospital-facing patterns (will be mounted at /api/hospitals/ and /api/departments/)
+hospital_urlpatterns = [
+    path('me/', HospitalMeView.as_view(), name='hospital-me'),
+    path('doctors/', HospitalDoctorListView.as_view(), name='hospital-doctors'),
+    path('labs/', HospitalLabListView.as_view(), name='hospital-labs'),
+    path('technicians/', HospitalTechnicianListView.as_view(), name='hospital-technicians'),
+    path('technicians/create/', HospitalTechnicianCreateView.as_view(), name='hospital-technician-create'),
+    path('stats/', HospitalStatsView.as_view(), name='hospital-stats'),
+    path('visit-logs/', HospitalVisitationLogsView.as_view(), name='hospital-visit-logs'),
+    path('', include(hospital_router.urls)),
+]
+
+# Doctor-facing patterns (will be mounted at /api/doctors/)
+doctor_urlpatterns = [
     path('register/', DoctorRegisterView.as_view(), name='doctor-register'),
     path('me/', DoctorProfileView.as_view(), name='doctor-profile'),
     path('verified/', VerifiedDoctorListView.as_view(), name='verified-doctors'),
     path('register-patient/', DoctorRegisterPatientView.as_view(), name='doctor-register-patient'),
     path('patient-history/<str:health_id>/', PatientHistoryView.as_view(), name='patient-history'),
+    path('hospitals/', include(hospital_router.urls)), # Keep for DoctorService.getHospitals()
+    path('', include(doctor_router.urls)),
+]
+
+# Base urlpatterns for compatibility
+urlpatterns = [
+    path('hospitals/', include(hospital_urlpatterns)),
+    path('doctors/', include(doctor_urlpatterns)),
+    path('', include(doctor_urlpatterns)),
 ]

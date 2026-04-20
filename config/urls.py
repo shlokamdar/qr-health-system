@@ -8,6 +8,7 @@ from drf_yasg import openapi
 from audit.views import AdminDashboardStatsView
 from doctors.views import DoctorListView, DoctorVerificationView, HospitalListView, HospitalVerificationView
 from labs.views import LabListView, LabVerificationView
+from doctors.urls import doctor_urlpatterns, hospital_urlpatterns
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -27,7 +28,12 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/patients/', include('patients.urls')),
     path('api/records/', include('records.urls')),
-    path('api/doctors/', include('doctors.urls')),
+    
+    # Mount doctor and hospital routes specifically
+    path('api/doctors/', include((doctor_urlpatterns, 'doctors'), namespace='doctors-api')),
+    path('api/hospitals/', include((hospital_urlpatterns, 'hospitals'), namespace='hospitals-api')),
+    path('api/', include((hospital_urlpatterns, 'hospitals'))), # For /api/departments/ etc
+    
     path('api/labs/', include('labs.urls')),
     path('api/audit/', include('audit.urls')),
     path('api/support/', include('support.urls')),
