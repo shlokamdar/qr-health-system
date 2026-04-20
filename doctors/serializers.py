@@ -170,7 +170,8 @@ class DoctorRegisterSerializer(serializers.ModelSerializer):
         model = Doctor
         fields = [
             'username', 'password', 'email', 'first_name', 'last_name',
-            'hospital', 'license_number', 'specialization'
+            'hospital', 'license_number', 'specialization',
+            'license_document', 'degree_certificate', 'identity_proof'
         ]
     
     def create(self, validated_data):

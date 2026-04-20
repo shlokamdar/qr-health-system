@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import viewsets, generics, permissions, status, decorators
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -193,7 +194,12 @@ class HospitalVerificationView(generics.UpdateAPIView):
             if is_verified:
                 # Find the admin user linked to this hospital
                 from .models import HospitalAdmin
-                admin_profile = HospitalAdmin.objects.filter(hospital=hospital).first()
+                admin_profiles = HospitalAdmin.objects.filter(hospital=hospital)
+                admin_profile = admin_profiles.first()
+                
+                # Verify all admins for this hospital
+                admin_profiles.update(is_verified=True)
+
                 if admin_profile:
                     print(f"\n{'='*60}")
                     print(f"HOSPITAL APPROVED: {hospital.name}")
