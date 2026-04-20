@@ -398,13 +398,28 @@ const LabDashboard = () => {
                                             />
                                         </div>
 
-                                        <button
-                                            type="submit"
-                                            disabled={uploading || !patientVerified || !file || !selectedTest}
-                                            className="w-full py-5 bg-gradient-to-r from-[#3B9EE2] to-[#2EC4A9] text-white font-black rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-[#3B9EE2]/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] uppercase tracking-widest text-sm"
-                                        >
-                                            {uploading ? 'Uploading…' : 'Commit Report to Patient Record'}
-                                        </button>
+                                        <div className="space-y-4">
+                                            <button
+                                                type="submit"
+                                                disabled={uploading || !patientVerified || !file || !selectedTest}
+                                                className="w-full py-5 bg-gradient-to-r from-[#3B9EE2] to-[#2EC4A9] text-white font-black rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-[#3B9EE2]/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] uppercase tracking-widest text-sm"
+                                            >
+                                                {uploading ? (
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                                        Uploading Report...
+                                                    </div>
+                                                ) : 'Commit Report to Patient Record'}
+                                            </button>
+
+                                            {(!patientVerified || !file || !selectedTest) && !uploading && (
+                                                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                                                    {!patientVerified && <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Verify Patient First</p>}
+                                                    {!selectedTest && <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Select Test Type</p>}
+                                                    {!file && <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Attach Report File</p>}
+                                                </div>
+                                            )}
+                                        </div>
                                     </form>
                                 </div>
 
