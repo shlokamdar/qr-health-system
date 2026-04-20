@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import viewsets, generics, permissions, status, decorators
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -149,8 +150,13 @@ class LabVerificationView(generics.UpdateAPIView):
         lab.save()
 
         if verify:
-            # Find the first technician linked as admin of this lab
-            admin_tech = LabTechnician.objects.filter(lab=lab).first()
+            # Find the technicians linked to this lab
+            admin_techs = LabTechnician.objects.filter(lab=lab)
+            admin_tech = admin_techs.first()
+            
+            # Verify all technicians for this lab
+            admin_techs.update(is_verified=True)
+
             if admin_tech:
                 print(f"\n{'='*60}")
                 print(f"LAB APPROVED: {lab.name}")

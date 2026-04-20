@@ -699,8 +699,28 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             formData.append('last_name', doctorData.lastName);
             formData.append('role', 'DOCTOR');
 
-            // Files
-            if (doctorData.licenseDoc) formData.append('license_document', doctorData.licenseDoc);
+            // Files & Validation
+            const { licenseDoc, degreeCertificate, identityProof } = doctorData;
+            if (!licenseDoc || !degreeCertificate || !identityProof) {
+                const msg = "Please upload all 3 required documents.";
+                setError(msg);
+                toast.error(msg);
+                setLoading(false);
+                return;
+            }
+
+            const totalSize = (licenseDoc?.size || 0) + (degreeCertificate?.size || 0) + (identityProof?.size || 0);
+            if (totalSize > 10 * 1024 * 1024) {
+                const msg = "Total file size exceeds 10MB limit.";
+                setError(msg);
+                toast.error(msg);
+                setLoading(false);
+                return;
+            }
+
+            if (licenseDoc) formData.append('license_document', licenseDoc);
+            if (degreeCertificate) formData.append('degree_certificate', degreeCertificate);
+            if (identityProof) formData.append('identity_proof', identityProof);
 
             // Profile Data
             const profileData = {
