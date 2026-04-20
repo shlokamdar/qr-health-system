@@ -30,7 +30,7 @@ const AddEmergencyContactForm = ({ newContact, setNewContact, handleAddContact }
         onChange={e => setNewContact({ ...newContact, phone: e.target.value })}
         style={inputStyle} />
       <input
-        type="email" placeholder="Email Address (Optional)"
+        type="email" placeholder="Email Address *" required
         value={newContact.email || ''}
         onChange={e => setNewContact({ ...newContact, email: e.target.value })}
         style={inputStyle} />

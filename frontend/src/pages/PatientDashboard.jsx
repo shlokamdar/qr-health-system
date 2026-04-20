@@ -623,14 +623,18 @@ const PatientDashboard = () => {
               <div className="pd-card">
                 <div className="pd-section-heading" style={{ marginBottom: 14 }}><Icon d={ICONS.Users} /> Add Emergency Contact</div>
                 <form onSubmit={handleAddContact} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <input required className="pd-input" value={newContact.name} onChange={e => setNewContact(f => ({ ...f, name: e.target.value }))} placeholder="Full name" />
-                    <input required className="pd-input" value={newContact.relationship} onChange={e => setNewContact(f => ({ ...f, relationship: e.target.value }))} placeholder="Relationship (e.g. Spouse)" />
-                    <input required className="pd-input" value={newContact.phone} onChange={e => setNewContact(f => ({ ...f, phone: e.target.value }))} placeholder="Phone number" />
-                    <input className="pd-input" value={newContact.email || ''} onChange={e => setNewContact(f => ({ ...f, email: e.target.value }))} placeholder="Email (Optional)" />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <input required className="pd-input" value={newContact.name} onChange={e => setNewContact(f => ({ ...f, name: e.target.value }))} placeholder="Full name" />
+                      <input required className="pd-input" value={newContact.relationship} onChange={e => setNewContact(f => ({ ...f, relationship: e.target.value }))} placeholder="Relationship (e.g. Spouse)" />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <input required className="pd-input" value={newContact.phone} onChange={e => setNewContact(f => ({ ...f, phone: e.target.value }))} placeholder="Phone number" />
+                      <input required type="email" className="pd-input" value={newContact.email || ''} onChange={e => setNewContact(f => ({ ...f, email: e.target.value }))} placeholder="Email address" />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
                       <input type="checkbox" id="can_grant" checked={newContact.can_grant_access} onChange={e => setNewContact(f => ({ ...f, can_grant_access: e.target.checked }))} />
-                      <label htmlFor="can_grant" style={{ fontSize: 13, color: '#4A5568' }}>Can grant OTP access</label>
+                      <label htmlFor="can_grant" style={{ fontSize: 13, color: '#4A5568', fontWeight: 600 }}>Enable this contact to grant access using OTP</label>
                     </div>
                   </div>
                   <button type="submit" className="pd-primary-btn">Add Contact</button>

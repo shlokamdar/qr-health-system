@@ -33,9 +33,12 @@ const EmergencyContactsList = ({ emergencyContacts }) => {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, color: '#0D1B2A', fontSize: 14 }}>{contact.name}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 4 }}>
               <span style={{ background: '#EFF6FF', color: '#3B9EE2', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20 }}>{contact.relationship}</span>
               <span style={{ fontSize: 13, color: '#4A5568' }}>{contact.phone}</span>
+              {contact.email && (
+                <span style={{ fontSize: 13, color: '#718096', borderLeft: '1px solid #E2E8F0', paddingLeft: 8 }}>{contact.email}</span>
+              )}
             </div>
             {contact.can_grant_access && (
               <div style={{ fontSize: 11, color: '#2EC4A9', marginTop: 4, fontWeight: 500 }}>Can grant emergency access</div>
