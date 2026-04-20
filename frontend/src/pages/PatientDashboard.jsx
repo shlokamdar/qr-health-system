@@ -627,6 +627,7 @@ const PatientDashboard = () => {
                     <input required className="pd-input" value={newContact.name} onChange={e => setNewContact(f => ({ ...f, name: e.target.value }))} placeholder="Full name" />
                     <input required className="pd-input" value={newContact.relationship} onChange={e => setNewContact(f => ({ ...f, relationship: e.target.value }))} placeholder="Relationship (e.g. Spouse)" />
                     <input required className="pd-input" value={newContact.phone} onChange={e => setNewContact(f => ({ ...f, phone: e.target.value }))} placeholder="Phone number" />
+                    <input className="pd-input" value={newContact.email || ''} onChange={e => setNewContact(f => ({ ...f, email: e.target.value }))} placeholder="Email (Optional)" />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <input type="checkbox" id="can_grant" checked={newContact.can_grant_access} onChange={e => setNewContact(f => ({ ...f, can_grant_access: e.target.checked }))} />
                       <label htmlFor="can_grant" style={{ fontSize: 13, color: '#4A5568' }}>Can grant OTP access</label>
