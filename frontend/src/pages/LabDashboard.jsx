@@ -174,7 +174,24 @@ const LabDashboard = () => {
             setFile(null); setComments(''); setSelectedTest('');
             fetchRecentUploads();
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Upload failed. Please try again.');
+            console.error('Upload Error:', err.response?.data);
+            const errorData = err.response?.data;
+            let errorMessage = 'Upload failed. Please try again.';
+            
+            if (errorData) {
+                if (typeof errorData === 'string') errorMessage = errorData;
+                else if (errorData.detail) errorMessage = errorData.detail;
+                else {
+                    // Collect all validation errors
+                    const fields = Object.keys(errorData);
+                    if (fields.length > 0) {
+                        const firstField = fields[0];
+                        const fieldError = Array.isArray(errorData[firstField]) ? errorData[firstField][0] : errorData[firstField];
+                        errorMessage = `${firstField}: ${fieldError}`;
+                    }
+                }
+            }
+            toast.error(errorMessage);
         } finally {
             setUploading(false);
         }
