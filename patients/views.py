@@ -17,7 +17,10 @@ from audit.models import AccessLog
 from accounts.models import Notification
 
 
-from utils.notifications import send_access_granted_email, send_access_revoked_email
+from utils.notifications import (
+    send_access_granted_email, send_access_revoked_email,
+    send_otp_email
+)
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -331,6 +334,23 @@ class OTPRequestView(APIView):
             title="Medical Access Request",
             message=message
         )
+
+        # Send Email if method is EMAIL
+        if delivery_method == 'EMAIL':
+            recipient_name = ""
+            recipient_email = ""
+            
+            if verifier_type == 'PATIENT':
+                recipient_name = patient.user.get_full_name() or patient.user.username
+                recipient_email = patient.user.email
+            elif verifier_type == 'EMERGENCY_CONTACT' and verifier_contact:
+                recipient_name = verifier_contact.name
+                recipient_email = verifier_contact.email
+            
+            if recipient_email:
+                send_otp_email(recipient_name, recipient_email, doctor.user.get_full_name() or doctor.user.username, otp_code)
+            else:
+                return Response({"error": "Recipient email not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "message": "OTP request sent successfully.",

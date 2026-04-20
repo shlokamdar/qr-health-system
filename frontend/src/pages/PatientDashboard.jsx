@@ -100,7 +100,7 @@ const PatientDashboard = () => {
   const [newAppointment, setNewAppointment] = useState({ doctor: '', appointment_date: '', reason: '' });
   const [newDocument, setNewDocument] = useState({ title: '', document_type: 'REPORT', description: '', file: null });
   const [newPrescription, setNewPrescription] = useState({ prescription_date: '', doctor_name: '', hospital_name: '', symptoms: '', diagnosis: '', medicines: '', insights: '', file: null });
-  const [newContact, setNewContact] = useState({ name: '', relationship: '', phone: '', can_grant_access: false });
+  const [newContact, setNewContact] = useState({ name: '', relationship: '', phone: '', email: '', can_grant_access: false });
   const [editContactId, setEditContactId] = useState(null);
   const [editContactForm, setEditContactForm] = useState({});
   const [ticketForm, setTicketForm] = useState({ subject: '', description: '', priority: 'MEDIUM' });
@@ -211,7 +211,7 @@ const PatientDashboard = () => {
     try {
       await PatientService.addEmergencyContact(newContact);
       toast.success('Emergency contact added!');
-      setNewContact({ name: '', relationship: '', phone: '', can_grant_access: false });
+      setNewContact({ name: '', relationship: '', phone: '', email: '', can_grant_access: false });
       fetchAllData();
     } catch (err) { toast.error('Failed to add contact.'); }
   };
@@ -593,6 +593,7 @@ const PatientDashboard = () => {
                           <input className="pd-input" value={editContactForm.name ?? ''} onChange={e => setEditContactForm(f => ({ ...f, name: e.target.value }))} placeholder="Name" />
                           <input className="pd-input" value={editContactForm.relationship ?? ''} onChange={e => setEditContactForm(f => ({ ...f, relationship: e.target.value }))} placeholder="Relationship" />
                           <input className="pd-input" value={editContactForm.phone ?? ''} onChange={e => setEditContactForm(f => ({ ...f, phone: e.target.value }))} placeholder="Phone" />
+                          <input className="pd-input" value={editContactForm.email ?? ''} onChange={e => setEditContactForm(f => ({ ...f, email: e.target.value }))} placeholder="Email" />
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button onClick={() => handleUpdateContact(c.id)} className="pd-primary-btn" style={{ flex: 1, fontSize: 13, padding: '8px' }}>Save</button>
@@ -603,11 +604,11 @@ const PatientDashboard = () => {
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                         <div>
                           <p style={{ fontWeight: 700, color: '#1A202C', fontSize: 15 }}>{c.name}</p>
-                          <p style={{ fontSize: 13, color: '#718096', marginTop: 2 }}>{c.relationship} · {c.phone}</p>
+                          <p style={{ fontSize: 13, color: '#718096', marginTop: 2 }}>{c.relationship} · {c.phone} {c.email ? `· ${c.email}` : ''}</p>
                           {c.can_grant_access && <span style={{ fontSize: 11, background: '#EBF8FF', color: '#2B6CB0', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>Can grant access</span>}
                         </div>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => { setEditContactId(c.id); setEditContactForm({ name: c.name, relationship: c.relationship, phone: c.phone, can_grant_access: c.can_grant_access }); }} style={{ background: '#EBF8FF', color: '#2B6CB0', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Edit</button>
+                          <button onClick={() => { setEditContactId(c.id); setEditContactForm({ name: c.name, relationship: c.relationship, phone: c.phone, email: c.email, can_grant_access: c.can_grant_access }); }} style={{ background: '#EBF8FF', color: '#2B6CB0', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Edit</button>
                           <button onClick={() => handleDeleteContact(c.id)} style={{ background: '#FFF5F5', color: '#E53E3E', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Remove</button>
                         </div>
                       </div>

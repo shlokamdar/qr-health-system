@@ -153,3 +153,21 @@ def send_doctor_approved_email(doctor):
     """
     if doctor.user.email:
         send_email_async(subject, message, [doctor.user.email])
+
+def send_otp_email(recipient_name, recipient_email, doctor_name, otp_code):
+    """Send OTP email to patient or emergency contact."""
+    subject = f"Medical Access OTP: {otp_code}"
+    message = f"""
+    Hello {recipient_name},
+
+    Dr. {doctor_name} is requesting full access to the medical records of a patient you are associated with.
+
+    Your One-Time Password (OTP) is: {otp_code}
+
+    This code is valid for 10 minutes. If you did not expect this request, please ignore this email.
+
+    Regards,
+    QR Health System
+    """
+    if recipient_email:
+        send_email_async(subject, message, [recipient_email])

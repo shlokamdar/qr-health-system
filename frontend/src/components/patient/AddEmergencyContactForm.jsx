@@ -29,6 +29,11 @@ const AddEmergencyContactForm = ({ newContact, setNewContact, handleAddContact }
         value={newContact.phone}
         onChange={e => setNewContact({ ...newContact, phone: e.target.value })}
         style={inputStyle} />
+      <input
+        type="email" placeholder="Email Address (Optional)"
+        value={newContact.email || ''}
+        onChange={e => setNewContact({ ...newContact, email: e.target.value })}
+        style={inputStyle} />
       <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#4A5568', cursor: 'pointer' }}>
         <input
           type="checkbox" checked={newContact.can_grant_access}

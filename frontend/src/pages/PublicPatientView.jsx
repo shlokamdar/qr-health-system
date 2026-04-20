@@ -136,20 +136,37 @@ const PublicPatientView = () => {
                     <div>
                         <h3 className="text-[11px] font-black text-[#0D1B2A] uppercase tracking-[0.15em] mb-5">Emergency Contacts</h3>
                         <div className="space-y-4">
-                            {patient?.emergency_contacts?.map((contact, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-4 bg-[#F8FAFC] rounded-2xl border border-[#F1F5F9]">
-                                    <div>
-                                        <p className="text-sm font-bold text-[#0D1B2A]">{contact.name}</p>
-                                        <p className="text-[11px] text-[#718096] font-medium">{contact.relationship}</p>
+                            {patient?.emergency_contacts?.length > 0 ? (
+                                patient.emergency_contacts.map((contact, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-4 bg-[#F8FAFC] rounded-2xl border border-[#F1F5F9]">
+                                        <div>
+                                            <p className="text-sm font-bold text-[#0D1B2A]">{contact.name}</p>
+                                            <p className="text-[11px] text-[#718096] font-medium">{contact.relationship}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {contact.email && (
+                                                <a 
+                                                    href={`mailto:${contact.email}`}
+                                                    className="h-10 w-10 bg-white border border-[#E2E8F0] text-slate-500 rounded-full flex items-center justify-center shadow-sm hover:bg-white hover:scale-105 active:scale-95 transition-all outline-none"
+                                                    title={contact.email}
+                                                >
+                                                    <Mail size={16} />
+                                                </a>
+                                            )}
+                                            <a 
+                                                href={`tel:${contact.phone}`}
+                                                className="h-10 w-10 bg-white border border-[#E2E8F0] text-[#3B9EE2] rounded-full flex items-center justify-center shadow-sm hover:bg-white hover:scale-105 active:scale-95 transition-all outline-none"
+                                            >
+                                                <Phone size={18} fill="currentColor" stroke="none" />
+                                            </a>
+                                        </div>
                                     </div>
-                                    <a 
-                                        href={`tel:${contact.phone}`}
-                                        className="h-10 w-10 bg-white border border-[#E2E8F0] text-[#3B9EE2] rounded-full flex items-center justify-center shadow-sm hover:bg-white hover:scale-105 active:scale-95 transition-all"
-                                    >
-                                        <Phone size={18} fill="currentColor" stroke="none" />
-                                    </a>
+                                ))
+                            ) : (
+                                <div className="p-8 text-center bg-[#F8FAFC] rounded-2xl border border-dashed border-[#E2E8F0]">
+                                    <p className="text-sm text-[#94A3B8] font-medium">There are no emergency contacts listed for this patient.</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
 

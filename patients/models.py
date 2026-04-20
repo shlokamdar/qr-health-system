@@ -105,6 +105,7 @@ class EmergencyContact(models.Model):
     name = models.CharField(max_length=100)
     relationship = models.CharField(max_length=50)
     phone = models.CharField(max_length=15)
+    email = models.EmailField(blank=True, null=True)
     can_grant_access = models.BooleanField(
         default=True, 
         help_text=_("Can share OTP on behalf of patient in emergencies")
@@ -269,7 +270,6 @@ class OTPRequest(models.Model):
     """Temporary storage for OTPs requested by doctors."""
     
     class DeliveryMethod(models.TextChoices):
-        SMS = 'SMS', _('SMS')
         EMAIL = 'EMAIL', _('Email')
         DASHBOARD = 'DASHBOARD', _('Dashboard')
         

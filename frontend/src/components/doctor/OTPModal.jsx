@@ -23,7 +23,7 @@ const OTPModal = ({ isOpen, onClose, otpCode, setOtpCode, handleVerifyOTP }) => 
 
                     <h3 className="text-2xl font-black mb-2 text-[#0D1B2A] tracking-tight">Security Check</h3>
                     <p className="text-sm text-slate-400 font-bold mb-8 leading-relaxed">
-                        Enter the 6-digit authorization code sent to the patient's mobile device.
+                        Enter the 6-digit authorization code sent to the patient's portal or email.
                     </p>
 
                     <form onSubmit={handleVerifyOTP} className="space-y-6">

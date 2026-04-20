@@ -111,7 +111,6 @@ const OTPRequestModal = ({ patient, onClose, onSuccess }) => {
                             <div className="space-y-2">
                                 {[
                                     { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Dashboard Notification', detail: 'Sent to patient\'s PulseID portal' },
-                                    { id: 'SMS', icon: Phone, label: 'Text Message (SMS)', detail: 'Instant code via mobile' },
                                     { id: 'EMAIL', icon: Mail, label: 'Email', detail: 'Secure delivery to inbox' }
                                 ].map((method) => (
                                     <label key={method.id} className={`flex items-start p-3.5 rounded-xl border-2 cursor-pointer transition-all ${deliveryMethod === method.id ? 'border-[#3B9EE2] bg-white ring-4 ring-[#3B9EE2]/10' : 'border-transparent bg-white hover:border-slate-200'}`}>

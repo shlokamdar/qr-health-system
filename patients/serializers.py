@@ -13,7 +13,7 @@ class EmergencyContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmergencyContact
         fields = [
-            'id', 'name', 'relationship', 'phone', 
+            'id', 'name', 'relationship', 'phone', 'email',
             'can_grant_access', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']

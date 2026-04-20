@@ -122,25 +122,36 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
                 </div>
 
                 {/* Emergency Contacts (full access only) */}
-                {hasFullAccess && patient.emergency_contacts?.length > 0 && (
+                {hasFullAccess && (
                     <>
                         <div className="h-[1px] bg-[#F1F5F9] w-full" />
                         <div className="px-5 py-4">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Emergency Contacts</p>
-                            <div className="space-y-2">
-                                {patient.emergency_contacts.map((ec, i) => (
-                                    <div key={i} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
-                                        <div>
-                                            <p className="text-[13px] font-bold text-[#0D1B2A]">{ec.name}</p>
-                                            <p className="text-[11px] text-[#9CA3AF]">{ec.relationship}</p>
+                            {patient.emergency_contacts?.length > 0 ? (
+                                <div className="space-y-2">
+                                    {patient.emergency_contacts.map((ec, i) => (
+                                        <div key={i} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
+                                            <div>
+                                                <p className="text-[13px] font-bold text-[#0D1B2A]">{ec.name}</p>
+                                                <p className="text-[11px] text-[#9CA3AF]">{ec.relationship}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {ec.email && (
+                                                    <a href={`mailto:${ec.email}`} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                                        <Mail className="w-3.5 h-3.5" />
+                                                    </a>
+                                                )}
+                                                <div className="flex items-center gap-1.5 text-[#3B9EE2]">
+                                                    <Phone className="w-3.5 h-3.5" />
+                                                    <span className="text-[12px] font-bold">{ec.phone}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-[#3B9EE2]">
-                                            <Phone className="w-3.5 h-3.5" />
-                                            <span className="text-[12px] font-bold">{ec.phone}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-[12px] text-slate-400 font-medium py-2">No emergency contacts listed for this patient.</p>
+                            )}
                         </div>
                     </>
                 )}
