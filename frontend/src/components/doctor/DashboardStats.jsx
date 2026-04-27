@@ -62,14 +62,14 @@ const DashboardStats = ({ doctorProfile, appointments, myConsultations }) => {
                     </div>
 
                     {/* Real Stats Row */}
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="grid grid-cols-1 xs:grid-cols-3 gap-4 w-full md:w-auto">
                         {stats.map((stat, idx) => (
-                            <div key={idx} className="bg-white/5 border border-white/10 rounded-lg p-3.5 px-4.5 min-w-[160px] flex flex-col gap-1">
+                            <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                     <stat.icon className="w-4 h-4 text-[#3B9EE2]" />
-                                    <span className="text-[#9CA3AF] text-[12px]">{stat.label}</span>
+                                    <span className="text-[#9CA3AF] text-[11px] font-bold uppercase tracking-wider">{stat.label}</span>
                                 </div>
-                                <span className="text-white text-[24px] font-bold">{stat.value}</span>
+                                <span className="text-white text-[28px] font-black">{stat.value}</span>
                             </div>
                         ))}
                     </div>

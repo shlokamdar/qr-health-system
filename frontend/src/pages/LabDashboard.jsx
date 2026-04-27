@@ -280,8 +280,7 @@ const LabDashboard = () => {
             </div>
 
             <Header />
-
-            <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
+            <main className="relative z-10 max-w-7xl mx-auto px-4 xs:px-6 md:px-8 py-6 md:py-10 pb-24">
                 {/* Header Row */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                     <div>
@@ -297,7 +296,7 @@ const LabDashboard = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <StatCard label="Total Uploads" value={recentUploads.length} icon={Upload} color="bg-[#3B9EE2]/10 text-[#3B9EE2]" />
                     <StatCard label="Unique Patients" value={new Set(recentUploads.map(r => r.patient)).size} icon={User} color="bg-[#2EC4A9]/10 text-[#2EC4A9]" />
                     <StatCard label="Today" value={recentUploads.filter(r => new Date(r.created_at).toDateString() === new Date().toDateString()).length} icon={Activity} color="bg-violet-100 text-violet-500" />
