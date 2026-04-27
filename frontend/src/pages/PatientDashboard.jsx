@@ -430,14 +430,14 @@ const PatientDashboard = () => {
           ].map(item => (
             <button key={item.id} onClick={() => setActiveTab(item.id)} className={`pd-nav-btn ${activeTab === item.id ? 'active' : ''}`}>
               <Icon d={ICONS[item.icon]} size={18} />
-              {item.label}
+              <span>{item.label}</span>
               {item.dot && <div className="pd-nav-dot" style={{ background: item.dot }} />}
             </button>
           ))}
         </div>
         <div className="pd-settings-area">
           <button className="pd-nav-btn" onClick={() => setActiveTab('profile')}>
-            <Icon d={ICONS.Settings} size={18} /> Settings
+            <Icon d={ICONS.Settings} size={18} /> <span>Settings</span>
           </button>
         </div>
       </nav>
@@ -549,7 +549,7 @@ const PatientDashboard = () => {
                   <div key={c.id} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: '14px 16px', background: '#FAFBFC' }}>
                     {editContactId === c.id ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div className="pd-grid-2" style={{ gap: 10 }}>
                           <input className="pd-input" value={editContactForm.name ?? ''} onChange={e => setEditContactForm(f => ({ ...f, name: e.target.value }))} placeholder="Name" />
                           <input className="pd-input" value={editContactForm.relationship ?? ''} onChange={e => setEditContactForm(f => ({ ...f, relationship: e.target.value }))} placeholder="Relationship" />
                           <input className="pd-input" value={editContactForm.phone ?? ''} onChange={e => setEditContactForm(f => ({ ...f, phone: e.target.value }))} placeholder="Phone" />
@@ -583,12 +583,12 @@ const PatientDashboard = () => {
               <div className="pd-card">
                 <div className="pd-section-heading" style={{ marginBottom: 14 }}><Icon d={ICONS.Users} /> Add Emergency Contact</div>
                 <form onSubmit={handleAddContact} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="pd-grid" style={{ gap: 12 }}>
+                    <div className="pd-grid-2" style={{ gap: 12 }}>
                       <input required className="pd-input" value={newContact.name} onChange={e => setNewContact(f => ({ ...f, name: e.target.value }))} placeholder="Full name" />
                       <input required className="pd-input" value={newContact.relationship} onChange={e => setNewContact(f => ({ ...f, relationship: e.target.value }))} placeholder="Relationship (e.g. Spouse)" />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="pd-grid-2" style={{ gap: 12 }}>
                       <input required className="pd-input" value={newContact.phone} onChange={e => setNewContact(f => ({ ...f, phone: e.target.value }))} placeholder="Phone number" />
                       <input required type="email" className="pd-input" value={newContact.email || ''} onChange={e => setNewContact(f => ({ ...f, email: e.target.value }))} placeholder="Email address" />
                     </div>

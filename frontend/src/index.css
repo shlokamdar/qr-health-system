@@ -17,6 +17,7 @@
   --color-warning: #F59E0B;
 
   --font-inter: "Inter", sans-serif;
+  --breakpoint-xs: 480px;
 }
 
 @layer base {

@@ -107,7 +107,7 @@ const MedicalRecordList = ({ records }) => {
                   <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px', color: '#4A5568', fontSize: 14 }}>{selectedRecord.description}</div>
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="pd-grid-2" style={{ gap: 16 }}>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Date</div>
                   <div style={{ color: '#4A5568', fontSize: 14 }}>{new Date(selectedRecord.date || selectedRecord.created_at).toLocaleDateString()}</div>

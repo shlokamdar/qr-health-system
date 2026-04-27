@@ -58,7 +58,7 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
                 <div className="h-[1px] bg-[#F1F5F9] w-full" />
 
                 {/* Stats Grid */}
-                <div className="px-5 py-4 grid grid-cols-2 gap-y-4">
+                <div className="px-5 py-4 grid grid-cols-1 xs:grid-cols-2 gap-y-4 gap-x-4">
                     <div>
                         <label className="text-[#9CA3AF] text-[10px] font-bold uppercase tracking-wider block mb-0.5">Age</label>
                         <span className="text-[#0D1B2A] font-bold text-[14px]">{age} yrs</span>
@@ -130,7 +130,7 @@ const PatientProfile = ({ patient, handleRequestOTP }) => {
                             {patient.emergency_contacts?.length > 0 ? (
                                 <div className="space-y-2">
                                     {patient.emergency_contacts.map((ec, i) => (
-                                        <div key={i} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
+                                        <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5 gap-2">
                                             <div>
                                                 <p className="text-[13px] font-bold text-[#0D1B2A]">{ec.name}</p>
                                                 <p className="text-[11px] text-[#9CA3AF]">{ec.relationship}</p>

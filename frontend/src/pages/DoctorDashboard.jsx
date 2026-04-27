@@ -667,7 +667,7 @@ const DoctorDashboard = () => {
                     {activeTab === 'search' && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 lg:pb-0">
                             {/* Sticky Search Header */}
-                            <div className="sticky top-[104px] z-30 pb-8 pt-2 -mx-4 px-4 sm:-mx-8 sm:px-8 bg-gradient-to-b from-[#F8FAFB] via-[#F8FAFB]/95 to-[#F8FAFB]/0 backdrop-blur-sm">
+                            <div className="sticky top-[104px] z-30 pb-4 pt-2 -mx-4 px-4 sm:-mx-8 sm:px-8 bg-gradient-to-b from-[#F8FAFB] via-[#F8FAFB]/95 to-[#F8FAFB]/0 backdrop-blur-sm">
                                 <div className="max-w-3xl mx-auto shadow-2xl shadow-[#3B9EE2]/5 rounded-[12px] ring-1 ring-slate-100/50">
                                     <PatientSearch
                                         searchId={searchId}
@@ -731,7 +731,7 @@ const DoctorDashboard = () => {
                                                 <div className="lg:w-[70%] space-y-6 lg:min-h-[calc(100vh-220px)] lg:pb-12">
                                                     
                                                     {/* Desktop Header Tabs (Hidden on Mobile) */}
-                                                    <div className="hidden lg:flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-3xl shadow-sm sticky top-[180px] z-20">
+                                                    <div className="hidden lg:flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-3xl shadow-sm sticky top-[180px] z-20 overflow-x-auto no-scrollbar">
                                                         {[
                                                             { id: 'history', label: 'Clinical History', icon: History, color: 'text-[#3B9EE2]', bg: 'bg-[#3B9EE2]/5' },
                                                             { id: 'records', label: 'Medical Ledger', icon: FileText, color: 'text-[#2EC4A9]', bg: 'bg-[#2EC4A9]/5' },
@@ -743,7 +743,7 @@ const DoctorDashboard = () => {
                                                                 <button
                                                                     key={tab.id}
                                                                     onClick={() => setPatientSubTab(tab.id)}
-                                                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-black text-xs transition-all uppercase tracking-widest ${
+                                                                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-black text-xs transition-all uppercase tracking-widest whitespace-nowrap ${
                                                                         isActive 
                                                                         ? `${tab.bg} ${tab.id === 'consultation' ? 'text-white' : tab.color} shadow-sm ring-1 ring-slate-100` 
                                                                         : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'

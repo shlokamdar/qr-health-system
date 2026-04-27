@@ -95,12 +95,13 @@ const OverviewTab = ({
   const pendingRequests = sharingPermissions.filter(p => !p.is_active && !p.revoked_at); // Assuming logic for pending
   const activeDoctors = sharingPermissions.filter(p => p.is_active);
 
-  // ── DESKTOP VIEW ─────────────────────────────────────────────────────────
-  if (!isMobile) {
-    return (
-      <div className="pd-fade-in">
-        <ProfileCompletionBanner patient={patient} setActiveTab={setActiveTab} />
-        <div className="pd-overview-top">
+  return (
+    <div className="pd-fade-in">
+      <ProfileCompletionBanner patient={patient} setActiveTab={setActiveTab} />
+      
+      {/* ── DESKTOP & TABLET VIEW ───────────────────────────────────────── */}
+      <div className="hidden md:block">
+        <div className="pd-overview-top" style={{ gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
           {/* Health ID Card */}
           <HealthIdCard
             patient={patient}
@@ -118,7 +119,7 @@ const OverviewTab = ({
           </div>
         </div>
 
-        <div className="pd-overview-bottom">
+        <div className="pd-overview-bottom" style={{ gridTemplateColumns: isMobile ? '1fr' : '60% 1fr' }}>
           {/* Recent Activity */}
           <div className="pd-card">
             <div className="pd-section-heading">
@@ -139,131 +140,128 @@ const OverviewTab = ({
           </div>
         </div>
       </div>
-    );
-  }
 
-  // ── MOBILE VIEW ──────────────────────────────────────────────────────────
-  return (
-    <div className="pd-fade-in">
-      <ProfileCompletionBanner patient={patient} setActiveTab={setActiveTab} />
-      {/* 1. Compact Identity Row */}
-      <div className="pd-identity-row">
-        {/* Left: Mini Health ID Card */}
-        <div className="pd-hid-mini">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.9 }}>
-              <div style={{ width: 14, height: 14, background: '#fff', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: '#0D1B2A', fontSize: 10, fontWeight: 800 }}>P</span>
+      {/* ── MOBILE VIEW ────────────────────────────────────────────────── */}
+      <div className="md:hidden">
+        {/* 1. Compact Identity Row */}
+        <div className="pd-identity-row">
+          {/* Left: Mini Health ID Card */}
+          <div className="pd-hid-mini">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.9 }}>
+                <div style={{ width: 14, height: 14, background: '#fff', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: '#0D1B2A', fontSize: 10, fontWeight: 800 }}>P</span>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '-0.3px' }}>PulseID</span>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '-0.3px' }}>PulseID</span>
             </div>
-          </div>
-          <div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.5px' }}>HEALTH ID</div>
-            <div style={{ fontSize: 13, color: '#fff', fontWeight: 700, letterSpacing: '0.5px', marginTop: 2 }}>
-              {patient?.health_id?.replace('HID-', '') || '...'}
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
-              <div style={{ fontSize: 11, color: '#fff', fontWeight: 600 }}>{patient?.user?.first_name} {patient?.user?.last_name}</div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{patient?.blood_group} • Active Profile</div>
-            </div>
-            {patient?.qr_code && (
-              <img src={patient.qr_code} alt="QR" style={{ width: 44, height: 44, borderRadius: 4, background: '#fff', padding: 2 }} />
-            )}
-          </div>
-        </div>
-
-        {/* Right: Stats Stack */}
-        <div className="pd-stats-stack">
-          <div className="pd-stat-row">
-            <div className="pd-stat-icon" style={{ width: 20, height: 20 }}><Icon d={ICONS.Activity} size={12} /></div>
-            <div><div className="pd-stat-val">{stats.totalVisits}</div><div className="pd-stat-lbl">Visits</div></div>
-          </div>
-          <div className="pd-stat-row">
-            <div className="pd-stat-icon" style={{ width: 20, height: 20 }}><Icon d={ICONS.Calendar} size={12} /></div>
-            <div><div className="pd-stat-val">{stats.lastVisit?.split(',')[0]}</div><div className="pd-stat-lbl">Last</div></div>
-          </div>
-          <div className="pd-stat-row">
-            <div className="pd-stat-icon" style={{ width: 20, height: 20 }}><Icon d={ICONS.Users} size={12} /></div>
-            <div><div className="pd-stat-val">{stats.activeDoctors}</div><div className="pd-stat-lbl">Active</div></div>
-          </div>
-          <div className="pd-stat-row">
-            <div className="pd-stat-icon" style={{ width: 20, height: 20, color: stats.pendingRequests > 0 ? '#2EC4A9' : '#9CA3AF', background: stats.pendingRequests > 0 ? '#D1FAE5' : '#F3F4F6' }}>
-              <Icon d={ICONS.Bell} size={12} />
-            </div>
-            <div><div className="pd-stat-val" style={{ color: stats.pendingRequests > 0 ? '#2EC4A9' : '#9CA3AF' }}>{stats.pendingRequests}</div><div className="pd-stat-lbl">Requests</div></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="pd-action-row">
-        <button onClick={handleDownloadCard} className="btn-sky-outline" style={{ justifyContent: 'center' }}>
-          <Icon d={ICONS.Download} size={14} /> Card
-        </button>
-        <button onClick={handleDownloadQR} className="btn-sky-outline" style={{ justifyContent: 'center' }}>
-          <Icon d={ICONS.QrCode} size={14} /> QR Code
-        </button>
-      </div>
-
-      {/* 2. Pending Requests Strip (if any) */}
-      {pendingRequests.length > 0 && (
-        <div className="pd-pending-strip">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#9A3412' }}>{pendingRequests.length} Pending Request{pendingRequests.length > 1 ? 's' : ''}</div>
-            <div style={{ fontSize: 11, color: '#C2410C' }}>Doctors requesting access</div>
-          </div>
-          <button onClick={() => window.location.hash = '#sharing'} className="btn-ghost-red" style={{ color: '#EA580C', fontSize: 12 }}>Review</button>
-        </div>
-      )}
-
-      {/* 3. Who Has Access Now */}
-      <div style={{ padding: '0 16px', background: '#fff', marginBottom: 12, paddingBottom: 16 }}>
-        <div className="pd-section-heading" style={{ paddingLeft: 0 }}>
-          Who Has Access Now <span className="badge badge-sky">{activeDoctors.length}</span>
-        </div>
-        {activeDoctors.length === 0 ? (
-          <div style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', padding: '10px 0' }}>No active doctors</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {activeDoctors.slice(0, 3).map(perm => (
-              <div key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #F1F5F9', paddingBottom: 10 }}>
-                <div className="pd-avatar" style={{ width: 32, height: 32, fontSize: 11 }}>{(perm.doctor_name || 'D').charAt(0)}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A' }}>{perm.doctor_name}</div>
-                  <div style={{ fontSize: 11, color: '#64748B' }}>Expires in {Math.max(0, Math.ceil((new Date(perm.expires_at) - new Date()) / (1000 * 60 * 60)))}h</div>
-                </div>
-                <button onClick={() => handleRevokeAccess(perm.id)} className="btn-ghost-red">Revoke</button>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.5px' }}>HEALTH ID</div>
+              <div style={{ fontSize: 13, color: '#fff', fontWeight: 700, letterSpacing: '0.5px', marginTop: 2 }}>
+                {patient?.health_id?.replace('HID-', '') || '...'}
               </div>
-            ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#fff', fontWeight: 600 }}>{patient?.user?.first_name} {patient?.user?.last_name}</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{patient?.blood_group} • Active Profile</div>
+              </div>
+              {patient?.qr_code && (
+                <img src={patient.qr_code} alt="QR" style={{ width: 44, height: 44, borderRadius: 4, background: '#fff', padding: 2 }} />
+              )}
+            </div>
+          </div>
+
+          {/* Right: Stats Stack */}
+          <div className="pd-stats-stack">
+            <div className="pd-stat-row">
+              <div className="pd-stat-icon" style={{ width: 20, height: 20 }}><Icon d={ICONS.Activity} size={12} /></div>
+              <div><div className="pd-stat-val">{stats.totalVisits}</div><div className="pd-stat-lbl">Visits</div></div>
+            </div>
+            <div className="pd-stat-row">
+              <div className="pd-stat-icon" style={{ width: 20, height: 20 }}><Icon d={ICONS.Calendar} size={12} /></div>
+              <div><div className="pd-stat-val">{stats.lastVisit?.split(',')[0]}</div><div className="pd-stat-lbl">Last</div></div>
+            </div>
+            <div className="pd-stat-row">
+              <div className="pd-stat-icon" style={{ width: 20, height: 20 }}><Icon d={ICONS.Users} size={12} /></div>
+              <div><div className="pd-stat-val">{stats.activeDoctors}</div><div className="pd-stat-lbl">Active</div></div>
+            </div>
+            <div className="pd-stat-row">
+              <div className="pd-stat-icon" style={{ width: 20, height: 20, color: stats.pendingRequests > 0 ? '#2EC4A9' : '#9CA3AF', background: stats.pendingRequests > 0 ? '#D1FAE5' : '#F3F4F6' }}>
+                <Icon d={ICONS.Bell} size={12} />
+              </div>
+              <div><div className="pd-stat-val" style={{ color: stats.pendingRequests > 0 ? '#2EC4A9' : '#9CA3AF' }}>{stats.pendingRequests}</div><div className="pd-stat-lbl">Requests</div></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="pd-action-row">
+          <button onClick={handleDownloadCard} className="btn-sky-outline" style={{ justifyContent: 'center' }}>
+            <Icon d={ICONS.Download} size={14} /> Card
+          </button>
+          <button onClick={handleDownloadQR} className="btn-sky-outline" style={{ justifyContent: 'center' }}>
+            <Icon d={ICONS.QrCode} size={14} /> QR Code
+          </button>
+        </div>
+
+        {/* 2. Pending Requests Strip (if any) */}
+        {pendingRequests.length > 0 && (
+          <div className="pd-pending-strip">
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#9A3412' }}>{pendingRequests.length} Pending Request{pendingRequests.length > 1 ? 's' : ''}</div>
+              <div style={{ fontSize: 11, color: '#C2410C' }}>Doctors requesting access</div>
+            </div>
+            <button onClick={() => setActiveTab('sharing')} className="btn-ghost-red" style={{ color: '#EA580C', fontSize: 12 }}>Review</button>
           </div>
         )}
-      </div>
 
-      {/* 4. Recent Activity */}
-      <div style={{ padding: '0 16px', background: '#fff', paddingBottom: 16 }}>
-        <div className="pd-section-heading" style={{ paddingLeft: 0, justifyContent: 'space-between' }}>
-          <span>Recent Activity</span>
-          <button style={{ fontSize: 11, color: '#3B9EE2', background: 'none', border: 'none', fontWeight: 600 }}>View All →</button>
-        </div>
-        {recentRecords.length === 0 ? (
-          <div style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', padding: '10px 0' }}>No recent activity</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {recentRecords.slice(0, 3).map((rec, i) => (
-              <div key={rec.id} className="pd-compact-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
-                <div className={rec.record_type === 'PRESCRIPTION' ? 'pd-dot-orange' : rec.record_type === 'LAB_REPORT' ? 'pd-dot-blue' : 'pd-dot-mint'} />
-                <div style={{ width: 60, fontSize: 11, color: '#9CA3AF' }}>{new Date(rec.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A' }}>Dr. {rec.doctor_name || 'System'}</div>
-                  <div style={{ fontSize: 12, color: '#64748B' }}>{rec.title}</div>
-                </div>
-              </div>
-            ))}
+        {/* 3. Who Has Access Now */}
+        <div style={{ padding: '16px', background: '#fff', marginBottom: 12 }}>
+          <div className="pd-section-heading" style={{ padding: 0 }}>
+            Who Has Access Now <span className="badge badge-sky" style={{ marginLeft: 8 }}>{activeDoctors.length}</span>
           </div>
-        )}
+          {activeDoctors.length === 0 ? (
+            <div style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', padding: '10px 0' }}>No active doctors</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {activeDoctors.slice(0, 3).map(perm => (
+                <div key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #F1F5F9', paddingBottom: 10 }}>
+                  <div className="pd-avatar" style={{ width: 32, height: 32, fontSize: 11 }}>{(perm.doctor_name || 'D').charAt(0)}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A' }}>{perm.doctor_name}</div>
+                    <div style={{ fontSize: 11, color: '#64748B' }}>Expires in {Math.max(0, Math.ceil((new Date(perm.expires_at) - new Date()) / (1000 * 60 * 60)))}h</div>
+                  </div>
+                  <button onClick={() => handleRevokeAccess(perm.id)} className="btn-ghost-red">Revoke</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 4. Recent Activity */}
+        <div style={{ padding: '16px', background: '#fff' }}>
+          <div className="pd-section-heading" style={{ padding: 0, justifyContent: 'space-between' }}>
+            <span>Recent Activity</span>
+            <button onClick={() => setActiveTab('records')} style={{ fontSize: 11, color: '#3B9EE2', background: 'none', border: 'none', fontWeight: 600 }}>View All →</button>
+          </div>
+          {recentRecords.length === 0 ? (
+            <div style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', padding: '10px 0' }}>No recent activity</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {recentRecords.slice(0, 3).map((rec, i) => (
+                <div key={rec.id} className="pd-compact-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
+                  <div className={rec.record_type === 'PRESCRIPTION' ? 'pd-dot-orange' : rec.record_type === 'LAB_REPORT' ? 'pd-dot-blue' : 'pd-dot-mint'} />
+                  <div style={{ width: 60, fontSize: 11, color: '#9CA3AF' }}>{new Date(rec.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A' }}>Dr. {rec.doctor_name || 'System'}</div>
+                    <div style={{ fontSize: 12, color: '#64748B' }}>{rec.title}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

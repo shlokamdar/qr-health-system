@@ -266,6 +266,42 @@
   margin-bottom: 12px;
 }
 
+/* Responsive Grid Utilities */
+.pd-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.pd-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .pd-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pd-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .pd-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .pd-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .pd-empty {
   background: var(--card);
   border: 1px solid var(--border);
@@ -868,8 +904,8 @@
   .pd-content {
     margin-left: 0;
     margin-top: 52px;
-    padding: 0;
-    padding-bottom: 72px;
+    padding: 16px;
+    padding-bottom: 88px;
   }
 
   .pd-mobile-header {
@@ -925,6 +961,41 @@
 
   .pd-stats-grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── TABLET BREAKPOINT ──────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pd-sidebar {
+    width: 80px !important;
+  }
+  
+  .pd-sidebar-name, 
+  .pd-sidebar-hid, 
+  .pd-nav-btn span {
+    display: none !important;
+  }
+  
+  .pd-nav-btn {
+    justify-content: center !important;
+    padding: 12px !important;
+    width: 50px !important;
+    margin: 8px auto !important;
+    border-radius: 12px !important;
+  }
+
+  .pd-nav-dot {
+    right: 8px !important;
+    top: 8px !important;
+  }
+  
+  .pd-content {
+    margin-left: 80px !important;
+    padding: 24px 32px !important;
+  }
+  
+  .pd-overview-top, .pd-overview-bottom {
+    grid-template-columns: 1fr !important;
   }
 }
 
