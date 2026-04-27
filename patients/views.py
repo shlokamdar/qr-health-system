@@ -175,14 +175,14 @@ class OldPrescriptionViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         patient = get_object_or_404(Patient, user=self.request.user)
-        serializer.save(patient=patient, uploaded_by=self.request.user)
+        instance = serializer.save(patient=patient, uploaded_by=self.request.user)
         
         # Log the action
         AccessLog.objects.create(
             actor=self.request.user,
             patient=patient,
             action=AccessLog.Action.UPLOAD_DOCUMENT,
-            details=f"Uploaded old prescription from {serializer.validated_data.get('prescription_date')}"
+            details=f"Uploaded old prescription from {instance.prescription_date}"
         )
 
 

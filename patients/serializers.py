@@ -101,10 +101,8 @@ class PatientDocumentSerializer(serializers.ModelSerializer):
 
 class OldPrescriptionSerializer(serializers.ModelSerializer):
     """Serializer for OldPrescription with detailed medicine info."""
-    uploaded_by_username = serializers.CharField(
-        source='uploaded_by.username', 
-        read_only=True
-    )
+    uploaded_by_username = serializers.ReadOnlyField(source='uploaded_by.username')
+
     
     class Meta:
         model = OldPrescription

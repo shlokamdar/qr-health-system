@@ -29,6 +29,10 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
     return '#F59E0B';
   };
 
+  // In "live preview" contexts we often render the card without actions.
+  // Hiding the utility area prevents footer cropping within the fixed aspect ratio.
+  const showUtilityArea = !!setActiveTab || !!onDownloadCard || !!onDownloadQR;
+
   return (
     <div 
       className="pd-card-canonical"
@@ -38,7 +42,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         aspectRatio: '85/54',
         background: 'linear-gradient(135deg, #0D1B2A 0%, #0B1A29 55%, #091523 100%)',
         borderRadius: 'clamp(16px, 2.15cqw, 26px)',
-        padding: 'clamp(14px, 3.2cqw, 24px) clamp(16px, 4cqw, 30px)',
+        padding: 'clamp(12px, 2.7cqw, 20px) clamp(16px, 4cqw, 30px)',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
@@ -126,7 +130,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
             boxShadow: '0 16px 40px rgba(2, 6, 23, 0.28)',
             border: '1px solid rgba(15, 23, 42, 0.10)'
           }}>
-            <img src={patient.qr_code} alt="QR" style={{ width: 'clamp(84px, 19.5cqw, 120px)', height: 'clamp(84px, 19.5cqw, 120px)', display: 'block' }} />
+            <img src={patient.qr_code} alt="QR" style={{ width: 'clamp(80px, 18.2cqw, 112px)', height: 'clamp(80px, 18.2cqw, 112px)', display: 'block' }} />
           </div>
         )}
       </div>
@@ -179,64 +183,67 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
             )}
           </div>
         </div>
-        {/* Utility & Action Area */}
-        <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
-          data-html2canvas-ignore="true"
-        >
-          {/* Functional Link */}
-          <button 
-            onClick={() => setActiveTab?.('sharing')}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              padding: 0, 
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1cqw',
-              color: 'rgba(255,255,255,0.4)',
-              fontSize: '2.4cqw',
-              fontWeight: 700,
-              transition: 'color 0.2s'
-            }}
-            onMouseOver={e => e.currentTarget.style.color = '#3B9EE2'}
-            onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+        {showUtilityArea && (
+          <div 
+            style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+            data-html2canvas-ignore="true"
           >
-            Valid across all providers <Icon d={ICONS.ExternalLink} size="2.4cqw" />
-          </button>
-
-          {/* Download Group */}
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {onDownloadCard && (
+            {!!setActiveTab && (
               <button 
-                onClick={(e) => { e.stopPropagation(); onDownloadCard(); }}
-                style={{
-                  padding: '1cqw 2.5cqw',
-                  background: 'rgba(255,255,255,0.06)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '3cqw',
-                  color: 'rgba(255,255,255,0.8)',
-                  fontSize: '2.2cqw',
-                  fontWeight: '800',
+                onClick={() => setActiveTab?.('sharing')}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  padding: 0, 
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '1cqw',
-                  transition: 'all 0.2s',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05cqw'
+                  gap: 'clamp(4px, 1cqw, 8px)',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: 'clamp(10px, 2.1cqw, 12px)',
+                  fontWeight: 750,
+                  transition: 'color 0.2s'
                 }}
-                onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = '#3B9EE2'; e.currentTarget.style.color = '#fff'; }}
-                onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; }}
-                title="Download Full Card"
+                onMouseOver={e => e.currentTarget.style.color = '#3B9EE2'}
+                onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
               >
-                <Icon d={ICONS.Download} size="2.2cqw" /> Card
+                Valid across all providers <Icon d={ICONS.ExternalLink} size="clamp(12px, 2.1cqw, 14px)" />
               </button>
             )}
+
+            {(onDownloadCard || onDownloadQR) && (
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {onDownloadCard && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onDownloadCard(); }}
+                    style={{
+                      padding: 'clamp(6px, 1cqw, 10px) clamp(10px, 2.2cqw, 14px)',
+                      background: 'rgba(255,255,255,0.06)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 'clamp(14px, 3cqw, 18px)',
+                      color: 'rgba(255,255,255,0.85)',
+                      fontSize: 'clamp(10px, 2cqw, 12px)',
+                      fontWeight: '850',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'clamp(4px, 1cqw, 8px)',
+                      transition: 'all 0.2s',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em'
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = '#3B9EE2'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+                    title="Download Full Card"
+                  >
+                    <Icon d={ICONS.Download} size="clamp(12px, 2cqw, 14px)" /> Card
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
