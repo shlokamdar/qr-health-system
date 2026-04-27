@@ -380,6 +380,97 @@ const HospitalDashboard = () => {
                                     )}
                                 </div>
                             </div>
+                        {activeTab === 'labs' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-800">Laboratory Network</h3>
+                                        <p className="text-slate-500 text-sm">Monitor affiliated diagnostic centers and their performance.</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {labs.length > 0 ? labs.map(lab => (
+                                        <div key={lab.id} className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                                                    <Beaker size={24} />
+                                                </div>
+                                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">Active</span>
+                                            </div>
+                                            <h4 className="font-bold text-slate-800 text-lg">{lab.name}</h4>
+                                            <p className="text-sm text-slate-500 mb-6">{lab.address}</p>
+
+                                            <div className="pt-4 border-t border-slate-50 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                <span>Technical Staff</span>
+                                                <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{lab.technician_count} Technicians</span>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                                            <Beaker size={48} className="mb-4 opacity-20" />
+                                            <p className="font-bold uppercase tracking-widest text-xs">No affiliated labs found</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'staff' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-800">Staff Management</h3>
+                                        <p className="text-slate-500 text-sm">Manage laboratory technicians and support personnel.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreateTechModal(true)}
+                                        className="px-6 py-3 bg-[#3B9EE2] text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-[#2E8BCC] transition-all"
+                                    >
+                                        <Plus size={18} /> Onboard Staff
+                                    </button>
+                                </div>
+
+                                <div className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden shadow-sm">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-50 border-b border-slate-100">
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Username</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Assigned Lab</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">License #</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {technicians.length > 0 ? technicians.map(tech => (
+                                                <tr key={tech.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm font-bold text-slate-800">{tech.user.first_name} {tech.user.last_name}</div>
+                                                        <div className="text-[10px] text-slate-400">{tech.user.email}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm font-medium text-slate-600">{tech.user.username}</td>
+                                                    <td className="px-6 py-4 text-sm font-medium text-slate-600">{tech.lab_name}</td>
+                                                    <td className="px-6 py-4 text-sm font-mono text-slate-400">{tech.license_number}</td>
+                                                    <td className="px-6 py-4">
+                                                        {tech.is_verified ? (
+                                                            <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-widest">Verified</span>
+                                                        ) : (
+                                                            <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-black rounded-full uppercase tracking-widest">Pending</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            )) : (
+                                                <tr>
+                                                    <td colSpan="5" className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                                                        No staff members registered yet
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         )}
 
                         {activeTab === 'logs' && (
