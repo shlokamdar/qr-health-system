@@ -105,7 +105,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
 
 
       {/* MIDDLE IDENTITY SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: 'clamp(14px, 3.4cqw, 22px)', marginBottom: 'clamp(14px, 3.8cqw, 24px)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: 'clamp(12px, 3.2cqw, 20px)', marginBottom: 'clamp(10px, 3.0cqw, 18px)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}>
           <div>
             <div style={{ fontSize: 'clamp(10px, 2cqw, 12px)', color: 'rgba(255,255,255,0.52)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.14em' }}>Health ID</div>
@@ -137,7 +137,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         position: 'relative',
         gap: 'clamp(10px, 2.6cqw, 18px)',
         zIndex: 10,
-        marginBottom: 'clamp(12px, 3.4cqw, 22px)'
+        marginBottom: 'clamp(8px, 2.6cqw, 16px)'
       }}>
         <div>
           <div style={{ fontSize: 'clamp(9px, 1.7cqw, 11px)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.12em' }}>Blood Type</div>
@@ -162,11 +162,11 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         zIndex: 10
       }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '1cqw', letterSpacing: '0.1cqw' }}>Emergency Contacts</div>
-          <div style={{ fontSize: '2.8cqw', color: 'white' }}>
+          <div style={{ fontSize: 'clamp(9px, 1.85cqw, 11px)', color: 'rgba(255,255,255,0.42)', textTransform: 'uppercase', fontWeight: 800, marginBottom: 'clamp(4px, 0.8cqw, 8px)', letterSpacing: '0.12em' }}>Emergency Contacts</div>
+          <div style={{ fontSize: 'clamp(12px, 2.45cqw, 14px)', color: 'white' }}>
             {contacts.length > 0 ? (
               contacts.slice(0, 1).map((c, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1.5cqw' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.2cqw, 10px)', flexWrap: 'wrap', rowGap: 'clamp(2px, 0.4cqw, 4px)' }}>
                   <span style={{ fontWeight: 800 }}>{c.name}</span>
                   <span style={{ opacity: 0.3 }}>·</span>
                    <span style={{ fontWeight: 600, opacity: 0.8 }}>{c.relationship}</span>

@@ -163,7 +163,7 @@ class OldPrescription(models.Model):
     prescription_date = models.DateField()
     doctor_name = models.CharField(max_length=100, blank=True)
     hospital_name = models.CharField(max_length=200, blank=True)
-    symptoms = models.TextField(help_text=_("Symptoms reported at the time"))
+    symptoms = models.TextField(blank=True, help_text=_("Symptoms reported at the time"))
     diagnosis = models.TextField(blank=True)
     medicines = models.TextField(blank=True, help_text=_("List of medicines and dosages"))
     insights = models.TextField(blank=True, help_text=_("Doctor's notes/insights"))
