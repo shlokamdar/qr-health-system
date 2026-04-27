@@ -36,59 +36,84 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
       style={{
         width: '100%',
         aspectRatio: '85/54',
-        background: '#0D1B2A',
-        borderRadius: '2.5cqw',
-        padding: '3.2cqw 4cqw',
+        background: 'linear-gradient(135deg, #0D1B2A 0%, #0B1A29 55%, #091523 100%)',
+        borderRadius: 'clamp(16px, 2.15cqw, 26px)',
+        padding: 'clamp(14px, 3.2cqw, 24px) clamp(16px, 4cqw, 30px)',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+        boxShadow: '0 22px 60px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
         color: 'white',
         cursor: 'default',
-        border: '0.2cqw solid #E2E8F0'
+        border: '1px solid rgba(226, 232, 240, 0.22)'
       }}
     >
 
-      {/* Dot grid texture at 4% opacity */}
+      {/* Subtle highlight bloom */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: '-30%',
+          background:
+            'radial-gradient(closest-side at 18% 10%, rgba(59, 158, 226, 0.25), transparent 62%), radial-gradient(closest-side at 85% 45%, rgba(46, 196, 169, 0.16), transparent 60%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+          filter: 'blur(2px)',
+        }}
+      />
+
+      {/* Dot grid texture */}
       <div 
         style={{ 
           position: 'absolute', 
           inset: 0, 
-          opacity: 0.04, 
+          opacity: 0.032, 
           pointerEvents: 'none',
           backgroundImage: 'radial-gradient(white 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+          backgroundSize: '20px 20px',
           zIndex: 0
         }} 
       />
 
+      {/* Inner stroke (premium edge) */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 'clamp(1px, 0.25cqw, 2px)',
+          borderRadius: 'calc(clamp(16px, 2.15cqw, 26px) - 2px)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
+
       {/* TOP ROW */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2.5cqw' }}>
-            <Icon d={ICONS.Pulse} size="5cqw" className="text-white" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 2.2cqw, 16px)' }}>
+            <Icon d={ICONS.Pulse} size="clamp(18px, 4.6cqw, 28px)" className="text-white" />
             <div>
-              <div style={{ fontSize: '4.8cqw', fontWeight: '800', color: 'white', lineHeight: 1 }}>PulseID</div>
-              <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.6)', marginTop: '0.4cqw' }}>Unified Health Record</div>
+              <div style={{ fontSize: 'clamp(16px, 4.4cqw, 22px)', fontWeight: '850', color: 'white', lineHeight: 1, letterSpacing: '-0.02em' }}>PulseID</div>
+              <div style={{ fontSize: 'clamp(10px, 2cqw, 12px)', color: 'rgba(255,255,255,0.62)', marginTop: 'clamp(2px, 0.4cqw, 4px)' }}>Unified Health Record</div>
             </div>
           </div>
-        <div style={{ padding: '1cqw 2.5cqw', background: 'rgba(46, 196, 169, 0.1)', borderRadius: '1cqw', border: '1px solid rgba(46, 196, 169, 0.4)' }}>
-          <span style={{ fontSize: '2.2cqw', fontWeight: '800', textTransform: 'uppercase', color: '#2EC4A9', letterSpacing: '0.15cqw' }}>Patient</span>
+        <div style={{ padding: 'clamp(6px, 0.95cqw, 10px) clamp(10px, 2.2cqw, 14px)', background: 'rgba(46, 196, 169, 0.10)', borderRadius: 'clamp(8px, 1cqw, 12px)', border: '1px solid rgba(46, 196, 169, 0.35)' }}>
+          <span style={{ fontSize: 'clamp(10px, 2cqw, 12px)', fontWeight: '850', textTransform: 'uppercase', color: '#2EC4A9', letterSpacing: '0.12em' }}>Patient</span>
         </div>
       </div>
 
 
 
       {/* MIDDLE IDENTITY SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: '3.6cqw', marginBottom: '4.4cqw' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: 'clamp(14px, 3.4cqw, 22px)', marginBottom: 'clamp(14px, 3.8cqw, 24px)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}>
           <div>
-            <div style={{ fontSize: '2.4cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.15cqw' }}>Health ID</div>
-            <div style={{ fontSize: '5.2cqw', fontWeight: '800', color: 'white', letterSpacing: '0.1cqw', marginTop: '0.5cqw' }}>
+            <div style={{ fontSize: 'clamp(10px, 2cqw, 12px)', color: 'rgba(255,255,255,0.52)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.14em' }}>Health ID</div>
+            <div style={{ fontSize: 'clamp(18px, 4.9cqw, 26px)', fontWeight: '880', color: 'white', letterSpacing: '0.02em', marginTop: 'clamp(2px, 0.5cqw, 6px)' }}>
               {patient?.health_id || 'HID-XXXXXXXX'}
             </div>
           </div>
-          <div style={{ fontSize: '4.8cqw', color: 'white', fontWeight: '700', marginTop: '1.5cqw' }}>
+          <div style={{ fontSize: 'clamp(16px, 4.3cqw, 22px)', color: 'white', fontWeight: '800', marginTop: 'clamp(6px, 1.2cqw, 10px)', letterSpacing: '-0.01em' }}>
             {patient?.user?.first_name} {patient?.user?.last_name}
           </div>
         </div>
@@ -96,11 +121,12 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         {patient?.qr_code && (
           <div style={{ 
             background: '#fff', 
-            padding: '1.1cqw', 
-            borderRadius: '1.2cqw',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+            padding: 'clamp(6px, 1cqw, 10px)', 
+            borderRadius: 'clamp(10px, 1.2cqw, 14px)',
+            boxShadow: '0 16px 40px rgba(2, 6, 23, 0.28)',
+            border: '1px solid rgba(15, 23, 42, 0.10)'
           }}>
-            <img src={patient.qr_code} alt="QR" style={{ width: '20.5cqw', height: '20.5cqw', display: 'block' }} />
+            <img src={patient.qr_code} alt="QR" style={{ width: 'clamp(84px, 19.5cqw, 120px)', height: 'clamp(84px, 19.5cqw, 120px)', display: 'block' }} />
           </div>
         )}
       </div>
@@ -109,21 +135,21 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         display: 'grid', 
         gridTemplateColumns: 'repeat(3, 1fr)', 
         position: 'relative',
-        gap: '3cqw',
+        gap: 'clamp(10px, 2.6cqw, 18px)',
         zIndex: 10,
-        marginBottom: '4.4cqw'
+        marginBottom: 'clamp(12px, 3.4cqw, 22px)'
       }}>
         <div>
-          <div style={{ fontSize: '2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600 }}>Blood Type</div>
-          <div style={{ fontSize: '2.8cqw', color: 'white', fontWeight: '700', marginTop: '0.5cqw' }}>{patient?.blood_group || '—'}</div>
+          <div style={{ fontSize: 'clamp(9px, 1.7cqw, 11px)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.12em' }}>Blood Type</div>
+          <div style={{ fontSize: 'clamp(12px, 2.5cqw, 14px)', color: 'white', fontWeight: '800', marginTop: 'clamp(3px, 0.5cqw, 6px)' }}>{patient?.blood_group || '—'}</div>
         </div>
         <div>
-          <div style={{ fontSize: '2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600 }}>Gender</div>
-          <div style={{ fontSize: '2.8cqw', color: 'white', fontWeight: '700', marginTop: '0.5cqw' }}>{patient?.gender || '—'}</div>
+          <div style={{ fontSize: 'clamp(9px, 1.7cqw, 11px)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.12em' }}>Gender</div>
+          <div style={{ fontSize: 'clamp(12px, 2.5cqw, 14px)', color: 'white', fontWeight: '800', marginTop: 'clamp(3px, 0.5cqw, 6px)' }}>{patient?.gender || '—'}</div>
         </div>
         <div>
-          <div style={{ fontSize: '2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600 }}>Date of Birth</div>
-          <div style={{ fontSize: '2.8cqw', color: 'white', fontWeight: '700', marginTop: '0.5cqw' }}>{patient?.date_of_birth || patient?.dob || '—'}</div>
+          <div style={{ fontSize: 'clamp(9px, 1.7cqw, 11px)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.12em' }}>Date of Birth</div>
+          <div style={{ fontSize: 'clamp(12px, 2.5cqw, 14px)', color: 'white', fontWeight: '800', marginTop: 'clamp(3px, 0.5cqw, 6px)' }}>{patient?.date_of_birth || patient?.dob || '—'}</div>
         </div>
       </div>
 

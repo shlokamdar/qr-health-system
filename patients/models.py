@@ -165,10 +165,7 @@ class OldPrescription(models.Model):
     hospital_name = models.CharField(max_length=200, blank=True)
     symptoms = models.TextField(help_text=_("Symptoms reported at the time"))
     diagnosis = models.TextField(blank=True)
-    medicines = models.JSONField(
-        default=list, 
-        help_text=_("List of medicines with dosage, e.g., [{'name': 'Paracetamol', 'dosage': '500mg', 'frequency': 'twice daily'}]")
-    )
+    medicines = models.TextField(blank=True, help_text=_("List of medicines and dosages"))
     insights = models.TextField(blank=True, help_text=_("Doctor's notes/insights"))
     file = models.FileField(upload_to='old_prescriptions/', blank=True, null=True)
     uploaded_by = models.ForeignKey(
