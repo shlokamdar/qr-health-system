@@ -413,7 +413,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                 toast.error(message);
             }
         } catch (err) {
-            const message = 'Login failed. Please check connection.';
+            const message = err.response?.data?.detail || err.response?.data?.error || 'Login failed. Please check credentials.';
             setError(message);
             toast.error(message);
         } finally {
