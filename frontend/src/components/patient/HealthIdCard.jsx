@@ -38,7 +38,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         aspectRatio: '85/54',
         background: '#0D1B2A',
         borderRadius: '2.5cqw',
-        padding: '4cqw 5cqw',
+        padding: '3.2cqw 4cqw',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
@@ -80,7 +80,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
 
 
       {/* MIDDLE IDENTITY SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: '5cqw', marginBottom: '6cqw' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: '3.6cqw', marginBottom: '4.4cqw' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}>
           <div>
             <div style={{ fontSize: '2.4cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.15cqw' }}>Health ID</div>
@@ -96,11 +96,11 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         {patient?.qr_code && (
           <div style={{ 
             background: '#fff', 
-            padding: '1.5cqw', 
-            borderRadius: '1.5cqw',
+            padding: '1.1cqw', 
+            borderRadius: '1.2cqw',
             boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
           }}>
-            <img src={patient.qr_code} alt="QR" style={{ width: '22cqw', height: '22cqw', display: 'block' }} />
+            <img src={patient.qr_code} alt="QR" style={{ width: '20.5cqw', height: '20.5cqw', display: 'block' }} />
           </div>
         )}
       </div>
@@ -109,9 +109,9 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         display: 'grid', 
         gridTemplateColumns: 'repeat(3, 1fr)', 
         position: 'relative',
-        gap: '4cqw',
+        gap: '3cqw',
         zIndex: 10,
-        marginBottom: '6cqw'
+        marginBottom: '4.4cqw'
       }}>
         <div>
           <div style={{ fontSize: '2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600 }}>Blood Type</div>
@@ -136,7 +136,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         zIndex: 10
       }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '1.5cqw', letterSpacing: '0.1cqw' }}>Emergency Contacts</div>
+          <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '1cqw', letterSpacing: '0.1cqw' }}>Emergency Contacts</div>
           <div style={{ fontSize: '2.8cqw', color: 'white' }}>
             {contacts.length > 0 ? (
               contacts.slice(0, 1).map((c, i) => (

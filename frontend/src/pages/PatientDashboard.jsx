@@ -178,13 +178,30 @@ const PatientDashboard = () => {
   const handleUploadPrescription = async (e) => {
     e.preventDefault();
     const fd = new FormData();
-    Object.keys(newPrescription).forEach(k => fd.append(k, newPrescription[k]));
+    Object.keys(newPrescription).forEach(k => {
+      if (newPrescription[k] !== null) {
+        fd.append(k, newPrescription[k]);
+      }
+    });
+    
     try {
-      await PatientService.uploadOldPrescription(fd);
+      await PatientService.uploadPrescription(fd);
       toast.success('Prescription uploaded successfully!');
-      // Reset form...
+      setNewPrescription({ 
+        prescription_date: '', 
+        doctor_name: '', 
+        hospital_name: '', 
+        symptoms: '', 
+        diagnosis: '', 
+        medicines: '', 
+        insights: '', 
+        file: null 
+      });
       fetchAllData();
-    } catch (err) { toast.error('Upload failed. Please try again.'); }
+    } catch (err) { 
+      console.error("Prescription upload error:", err);
+      toast.error('Upload failed. Please try again.'); 
+    }
   };
 
   const handleAddContact = async (e) => {

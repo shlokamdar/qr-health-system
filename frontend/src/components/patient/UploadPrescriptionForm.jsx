@@ -9,8 +9,6 @@ const UploadPrescriptionForm = ({ newPrescription, setNewPrescription, handleUpl
     if (!file) return;
 
     up('file', file);
-
-    up('file', file);
   };
 
   const inputClasses = "w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] transition-all focus:outline-none focus:border-[#3B9EE2] text-[#0D1B2A] placeholder-[#9CA3AF] bg-white font-medium";
