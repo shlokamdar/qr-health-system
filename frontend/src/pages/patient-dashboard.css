@@ -20,6 +20,10 @@
   --radius-lg: 18px;
 }
 
+.pd-card-canonical {
+  container-type: inline-size;
+}
+
 /* Do not set margin/padding on .pd-app * — it loads after Tailwind and was
    overriding utility classes (p-*, m-*, px-*, etc.) on inputs and cards. */
 .pd-app {
