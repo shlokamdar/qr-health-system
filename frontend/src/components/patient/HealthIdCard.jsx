@@ -35,7 +35,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
       id="patient-health-card" 
       style={{
         width: '100%',
-        aspectRatio: '85/54',
+        aspectRatio: '85/58',
         background: '#0D1B2A',
         borderRadius: '2cqw',
         padding: '5cqw',
@@ -77,7 +77,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         </div>
       </div>
 
-      <div style={{ height: '0.2cqw', background: 'rgba(255,255,255,0.1)', margin: '3.5cqw 0', position: 'relative', zIndex: 10 }}></div>
+      <div style={{ height: '0.2cqw', background: 'rgba(255,255,255,0.1)', margin: '3cqw 0', position: 'relative', zIndex: 10 }}></div>
 
       {/* MIDDLE IDENTITY SECTION */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10 }}>
@@ -104,7 +104,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         )}
       </div>
 
-      <div style={{ height: '0.2cqw', background: 'rgba(255,255,255,0.1)', margin: '3.5cqw 0', position: 'relative', zIndex: 10 }}></div>
+      <div style={{ height: '0.2cqw', background: 'rgba(255,255,255,0.1)', margin: '3cqw 0', position: 'relative', zIndex: 10 }}></div>
 
       {/* STATS GRID - 3 columns */}
       <div style={{ 
@@ -129,7 +129,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
       </div>
 
       {/* Divider */}
-      <div style={{ height: '0.3cqw', background: 'rgba(255,255,255,0.15)', margin: '3.5cqw 0', position: 'relative', zIndex: 10 }}></div>
+      <div style={{ height: '0.3cqw', background: 'rgba(255,255,255,0.15)', margin: '3cqw 0', position: 'relative', zIndex: 10 }}></div>
 
       {/* EMERGENCY CONTACTS ROW */}
       <div style={{ 
