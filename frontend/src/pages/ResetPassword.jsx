@@ -41,7 +41,7 @@ const ResetPassword = () => {
             toast.error(errorMsg);
         }
     };
-封装
+
 
     return (
         <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center p-6 font-sans">
