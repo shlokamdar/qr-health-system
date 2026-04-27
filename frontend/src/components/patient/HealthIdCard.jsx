@@ -35,10 +35,10 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
       id="patient-health-card" 
       style={{
         width: '100%',
-        aspectRatio: '85/58',
+        aspectRatio: '85/54',
         background: '#0D1B2A',
-        borderRadius: '2cqw',
-        padding: '5cqw',
+        borderRadius: '2.5cqw',
+        padding: '4cqw 5cqw',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
@@ -65,30 +65,30 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
 
       {/* TOP ROW */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2cqw' }}>
-            <Icon d={ICONS.Pulse} size="4.5cqw" className="text-white" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2.5cqw' }}>
+            <Icon d={ICONS.Pulse} size="5cqw" className="text-white" />
             <div>
-              <div style={{ fontSize: '4cqw', fontWeight: '800', color: 'white', lineHeight: 1 }}>PulseID</div>
-              <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.6)', marginTop: '0.5cqw' }}>Unified Health Record</div>
+              <div style={{ fontSize: '4.8cqw', fontWeight: '800', color: 'white', lineHeight: 1 }}>PulseID</div>
+              <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.6)', marginTop: '0.4cqw' }}>Unified Health Record</div>
             </div>
           </div>
-        <div style={{ padding: '0.8cqw 2cqw', background: '#0d2e2a', borderRadius: '1cqw', border: '0.2cqw solid #2EC4A9' }}>
-          <span style={{ fontSize: '2cqw', fontWeight: '800', textTransform: 'uppercase', color: '#2EC4A9', letterSpacing: '0.15cqw' }}>Patient</span>
+        <div style={{ padding: '1cqw 2.5cqw', background: 'rgba(46, 196, 169, 0.1)', borderRadius: '1cqw', border: '1px solid rgba(46, 196, 169, 0.4)' }}>
+          <span style={{ fontSize: '2.2cqw', fontWeight: '800', textTransform: 'uppercase', color: '#2EC4A9', letterSpacing: '0.15cqw' }}>Patient</span>
         </div>
       </div>
 
-      <div style={{ height: '0.2cqw', background: 'rgba(255,255,255,0.1)', margin: '3cqw 0', position: 'relative', zIndex: 10 }}></div>
 
+      {/* STATS GRID - 3 columns */}
       {/* MIDDLE IDENTITY SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1cqw' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: '5cqw', marginBottom: '6cqw' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}>
           <div>
-            <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.2cqw' }}>Health ID</div>
-            <div style={{ fontSize: '4.4cqw', fontWeight: '800', color: 'white', letterSpacing: '0.2cqw', marginTop: '0.5cqw' }}>
+            <div style={{ fontSize: '2.4cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.15cqw' }}>Health ID</div>
+            <div style={{ fontSize: '5.2cqw', fontWeight: '800', color: 'white', letterSpacing: '0.1cqw', marginTop: '0.5cqw' }}>
               {patient?.health_id || 'HID-XXXXXXXX'}
             </div>
           </div>
-          <div style={{ fontSize: '4cqw', color: 'white', fontWeight: '700', marginTop: '1cqw' }}>
+          <div style={{ fontSize: '4.8cqw', color: 'white', fontWeight: '700', marginTop: '1.5cqw' }}>
             {patient?.user?.first_name} {patient?.user?.last_name}
           </div>
         </div>
@@ -96,24 +96,14 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         {patient?.qr_code && (
           <div style={{ 
             background: '#fff', 
-            padding: '1.2cqw', 
-            borderRadius: '1.2cqw',
+            padding: '1.5cqw', 
+            borderRadius: '1.5cqw',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
           }}>
-            <img src={patient.qr_code} alt="QR" style={{ width: '20cqw', height: '20cqw', display: 'block' }} />
+            <img src={patient.qr_code} alt="QR" style={{ width: '22cqw', height: '22cqw', display: 'block' }} />
           </div>
         )}
       </div>
-
-      <div style={{ height: '0.2cqw', background: 'rgba(255,255,255,0.1)', margin: '3cqw 0', position: 'relative', zIndex: 10 }}></div>
-
-      {/* STATS GRID - 3 columns */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
-        position: 'relative',
-        gap: '4.5cqw',
-        zIndex: 10
-      }}>
         <div>
           <div style={{ fontSize: '2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600 }}>Blood Type</div>
           <div style={{ fontSize: '2.8cqw', color: 'white', fontWeight: '700', marginTop: '0.5cqw' }}>{patient?.blood_group || '—'}</div>
@@ -128,8 +118,15 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: '0.3cqw', background: 'rgba(255,255,255,0.15)', margin: '3cqw 0', position: 'relative', zIndex: 10 }}></div>
+      {/* STATS GRID */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(3, 1fr)', 
+        position: 'relative',
+        gap: '4cqw',
+        zIndex: 10,
+        marginBottom: '6cqw'
+      }}>
 
       {/* EMERGENCY CONTACTS ROW */}
       <div style={{ 
@@ -140,20 +137,20 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         zIndex: 10
       }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '0.8cqw' }}>Emergency Contacts</div>
-          <div style={{ fontSize: '2.4cqw', color: 'white' }}>
+          <div style={{ fontSize: '2.2cqw', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '1.5cqw', letterSpacing: '0.1cqw' }}>Emergency Contacts</div>
+          <div style={{ fontSize: '2.8cqw', color: 'white' }}>
             {contacts.length > 0 ? (
               contacts.slice(0, 1).map((c, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1.2cqw', opacity: 0.9 }}>
-                  <span style={{ fontWeight: 700 }}>{c.name}</span>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1.5cqw' }}>
+                  <span style={{ fontWeight: 800 }}>{c.name}</span>
                   <span style={{ opacity: 0.3 }}>·</span>
-                   <span style={{ fontWeight: 500 }}>{c.relationship}</span>
+                   <span style={{ fontWeight: 600, opacity: 0.8 }}>{c.relationship}</span>
                   <span style={{ opacity: 0.3 }}>·</span>
-                  <span style={{ fontWeight: 500 }}>{c.phone}</span>
+                  <span style={{ fontWeight: 700, opacity: 0.9 }}>{c.phone}</span>
                 </div>
               ))
             ) : (
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>No emergency contacts added</div>
+              <div style={{ color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', fontSize: '2.4cqw' }}>No contacts added</div>
             )}
           </div>
         </div>
@@ -172,16 +169,16 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.8cqw',
-              color: 'rgba(255,255,255,0.45)',
-              fontSize: '2.2cqw',
-              fontWeight: 600,
+              gap: '1cqw',
+              color: 'rgba(255,255,255,0.4)',
+              fontSize: '2.4cqw',
+              fontWeight: 700,
               transition: 'color 0.2s'
             }}
             onMouseOver={e => e.currentTarget.style.color = '#3B9EE2'}
-            onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
+            onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
           >
-            Valid across all providers <Icon d={ICONS.ExternalLink} size="2.2cqw" />
+            Valid across all providers <Icon d={ICONS.ExternalLink} size="2.4cqw" />
           </button>
 
           {/* Download Group */}
@@ -190,25 +187,27 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
               <button 
                 onClick={(e) => { e.stopPropagation(); onDownloadCard(); }}
                 style={{
-                  padding: '0.8cqw 2cqw',
-                  background: 'rgba(255,255,255,0.05)',
+                  padding: '1cqw 2.5cqw',
+                  background: 'rgba(255,255,255,0.06)',
                   backdropFilter: 'blur(10px)',
-                  border: '0.2cqw solid rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '3cqw',
-                  color: 'rgba(255,255,255,0.7)',
-                  fontSize: '2cqw',
-                  fontWeight: '700',
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: '2.2cqw',
+                  fontWeight: '800',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.8cqw',
-                  transition: 'all 0.2s'
+                  gap: '1cqw',
+                  transition: 'all 0.2s',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05cqw'
                 }}
-                onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor = '#3B9EE2'; e.currentTarget.style.color = '#fff'; }}
-                onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = '#3B9EE2'; e.currentTarget.style.color = '#fff'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; }}
                 title="Download Full Card"
               >
-                <Icon d={ICONS.Download} size="2cqw" /> CARD
+                <Icon d={ICONS.Download} size="2.2cqw" /> Card
               </button>
             )}
           </div>
