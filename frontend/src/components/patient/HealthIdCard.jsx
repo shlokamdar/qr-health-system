@@ -78,7 +78,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
       </div>
 
 
-      {/* STATS GRID - 3 columns */}
+
       {/* MIDDLE IDENTITY SECTION */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, marginTop: '5cqw', marginBottom: '6cqw' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}>
@@ -104,6 +104,15 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
           </div>
         )}
       </div>
+      {/* STATS GRID */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(3, 1fr)', 
+        position: 'relative',
+        gap: '4cqw',
+        zIndex: 10,
+        marginBottom: '6cqw'
+      }}>
         <div>
           <div style={{ fontSize: '2cqw', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 600 }}>Blood Type</div>
           <div style={{ fontSize: '2.8cqw', color: 'white', fontWeight: '700', marginTop: '0.5cqw' }}>{patient?.blood_group || '—'}</div>
@@ -117,16 +126,6 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
           <div style={{ fontSize: '2.8cqw', color: 'white', fontWeight: '700', marginTop: '0.5cqw' }}>{patient?.date_of_birth || patient?.dob || '—'}</div>
         </div>
       </div>
-
-      {/* STATS GRID */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
-        position: 'relative',
-        gap: '4cqw',
-        zIndex: 10,
-        marginBottom: '6cqw'
-      }}>
 
       {/* EMERGENCY CONTACTS ROW */}
       <div style={{ 
