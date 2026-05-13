@@ -6,10 +6,25 @@ django.setup()
 
 from accounts.models import User
 from doctors.models import Doctor, Hospital
-from labs.models import DiagnosticLab, LabTechnician
+from labs.models import DiagnosticLab, LabTechnician, LabTest
 
 def create_fake_data():
     password = 'demoPassword123!'
+    
+    # Ensure Lab Tests exist! This fixes the 'test_type: Invalid pk "1"' upload error
+    tests_data = [
+        (1, 'Complete Blood Count (CBC)', 'CBC'),
+        (2, 'Lipid Profile', 'LIPID'),
+        (3, 'Thyroid Function Test', 'TFT'),
+        (4, 'Urinalysis', 'URINE'),
+        (5, 'COVID-19 RT-PCR', 'RTPCR')
+    ]
+    for tid, name, code in tests_data:
+        LabTest.objects.get_or_create(
+            id=tid, 
+            defaults={'name': name, 'code': code}
+        )
+    print("Lab tests verified and initialized.")
     
     # Create Hospital
     hospital, _ = Hospital.objects.get_or_create(
