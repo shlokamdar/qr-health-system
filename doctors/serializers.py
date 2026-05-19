@@ -115,6 +115,7 @@ class DoctorSerializer(serializers.ModelSerializer):
     license_document_url = serializers.SerializerMethodField()
     degree_certificate_url = serializers.SerializerMethodField()
     identity_proof_url = serializers.SerializerMethodField()
+    total_patients = serializers.SerializerMethodField()
 
     def _build_url(self, file_field):
         request = self.context.get('request')
@@ -137,6 +138,10 @@ class DoctorSerializer(serializers.ModelSerializer):
         if not obj: return None
         return self._build_url(obj.identity_proof)
 
+    def get_total_patients(self, obj):
+        if not obj: return 0
+        return obj.consultations.values('patient').distinct().count()
+
     class Meta:
         model = Doctor
         fields = [
@@ -149,12 +154,12 @@ class DoctorSerializer(serializers.ModelSerializer):
             'authorization_level',
             'is_verified', 'rejection_reason',
             'license_document_url', 'degree_certificate_url', 'identity_proof_url',
-            'created_at', 'updated_at'
+            'total_patients', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'user', 'authorization_level', 'is_verified', 'rejection_reason',
             'license_document_url', 'degree_certificate_url', 'identity_proof_url',
-            'created_at', 'updated_at'
+            'total_patients', 'created_at', 'updated_at'
         ]
 
 
