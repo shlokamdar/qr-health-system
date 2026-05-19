@@ -35,50 +35,107 @@ const WaveDivider = ({ fill, className = "" }) => (
 
 // Reusable Health ID Card Component
 const HealthIDCard = ({ className = "" }) => (
-    <div className={`w-full max-w-sm aspect-[85/54] bg-[#0D1B2A] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.18)] p-6 text-white relative overflow-hidden ${className}`}>
+    <div 
+        className={`w-full max-w-sm aspect-[85/54] bg-[#0D1B2A] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.18)] p-6 text-white relative overflow-hidden ${className}`}
+        style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            containerType: 'inline-size',
+        }}
+    >
+        {/* Subtle highlight */}
+        <div
+            style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'radial-gradient(ellipse 70% 55% at 72% 28%, rgba(46, 196, 169, 0.14), transparent 70%)',
+                pointerEvents: 'none',
+                zIndex: 0,
+            }}
+        />
+
         {/* Texture */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+        <div 
+            style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: 0.032,
+                pointerEvents: 'none',
+                backgroundImage: 'radial-gradient(white 1px, transparent 1px)',
+                backgroundSize: '20px 20px',
+                zIndex: 0,
+            }} 
+        />
         
         <div className="relative z-10 flex flex-col justify-between h-full">
             {/* Top Row */}
-            <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-white" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 2.2cqw, 16px)' }}>
+                    <span className="text-xl font-bold text-white leading-none mr-1" style={{ fontSize: 'clamp(18px, 4.6cqw, 28px)' }}>∿</span>
                     <div>
-                        <span className="font-bold text-lg tracking-tight block leading-none">PulseID</span>
-                        <span className="text-[8px] text-white/50 uppercase tracking-widest font-semibold">Unified Health Record</span>
+                        <div style={{ fontSize: 'clamp(16px, 4.4cqw, 22px)', fontWeight: '850', color: 'white', lineHeight: 1, letterSpacing: '-0.02em' }}>PulseID</div>
+                        <div style={{ fontSize: 'clamp(10px, 2cqw, 12px)', color: 'rgba(255,255,255,0.62)', marginTop: 'clamp(2px, 0.4cqw, 4px)' }}>Unified Health Record</div>
                     </div>
-            </div>
-            <div className="bg-[#0d2e2a] text-[#2EC4A9] px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Patient</div>
+                </div>
             </div>
 
             {/* Middle Row */}
-            <div className="flex justify-between items-center mt-2">
-                <div>
-                    <div className="text-[10px] text-[#6B7280] uppercase tracking-wider mb-0.5">Health ID</div>
-                    <div className="text-lg font-bold font-mono tracking-widest text-white mb-1">HID-3847-2910</div>
-                    <div className="text-sm text-white/90">Arjun Mehra</div>
-                </div>
-                <div className="bg-white p-1 rounded-lg">
-                    <div className="w-[60px] h-[60px] bg-[#0D1B2A] rounded flex items-center justify-center">
-                        <QrCode className="w-12 h-12 text-white" strokeWidth={1.5} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'clamp(12px, 3.2cqw, 20px)', marginBottom: 'clamp(10px, 3.0cqw, 18px)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}>
+                    <div>
+                        <div style={{ fontSize: 'clamp(10px, 2cqw, 12px)', color: 'rgba(255,255,255,0.52)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.14em' }}>HEALTH ID</div>
+                        <div style={{ fontSize: 'clamp(18px, 4.9cqw, 26px)', fontWeight: '880', color: 'white', letterSpacing: '0.02em', marginTop: 'clamp(2px, 0.5cqw, 6px)' }}>HID-E0D32414</div>
                     </div>
+                    <div style={{ fontSize: 'clamp(16px, 4.3cqw, 22px)', color: 'white', fontWeight: '800', marginTop: 'clamp(6px, 1.2cqw, 10px)', letterSpacing: '-0.01em' }}>Aarav Mehta</div>
+                </div>
+                
+                <div style={{ 
+                    background: '#fff', 
+                    padding: 'clamp(6px, 1cqw, 10px)', 
+                    borderRadius: 'clamp(10px, 1.2cqw, 14px)',
+                    boxShadow: '0 16px 40px rgba(2, 6, 23, 0.28)',
+                    border: '1px solid rgba(15, 23, 42, 0.10)'
+                }}>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=HID-E0D32414" alt="QR" style={{ width: 'clamp(55px, 12cqw, 75px)', height: 'clamp(55px, 12cqw, 75px)', display: 'block' }} />
                 </div>
             </div>
 
-            {/* Bottom Row */}
-            <div className="flex items-end justify-between">
-                <div className="flex gap-6">
-                    <div>
-                        <div className="text-[10px] text-[#6B7280] uppercase tracking-wider mb-0.5">Blood Group</div>
-                        <div className="font-bold text-white">O+</div>
-                    </div>
-                    <div>
-                        <div className="text-[10px] text-[#6B7280] uppercase tracking-wider mb-0.5">Organ Donor</div>
-                        <div className="font-bold text-[#2EC4A9]">Yes</div>
+            {/* Bottom Grid */}
+            <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(3, 1fr)', 
+                gap: 'clamp(10px, 2.6cqw, 18px)',
+                marginBottom: 'clamp(8px, 2.6cqw, 16px)'
+            }}>
+                <div>
+                    <div style={{ fontSize: 'clamp(9px, 1.7cqw, 11px)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.12em' }}>BLOOD TYPE</div>
+                    <div style={{ fontSize: 'clamp(12px, 2.5cqw, 14px)', color: 'white', fontWeight: '800', marginTop: 'clamp(3px, 0.5cqw, 6px)' }}>O+</div>
+                </div>
+                <div>
+                    <div style={{ fontSize: 'clamp(9px, 1.7cqw, 11px)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.12em' }}>GENDER</div>
+                    <div style={{ fontSize: 'clamp(12px, 2.5cqw, 14px)', color: 'white', fontWeight: '800', marginTop: 'clamp(3px, 0.5cqw, 6px)' }}>Male</div>
+                </div>
+                <div>
+                    <div style={{ fontSize: 'clamp(9px, 1.7cqw, 11px)', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 750, letterSpacing: '0.12em' }}>DATE OF BIRTH</div>
+                    <div style={{ fontSize: 'clamp(12px, 2.5cqw, 14px)', color: 'white', fontWeight: '800', marginTop: 'clamp(3px, 0.5cqw, 6px)' }}>1992-08-12</div>
+                </div>
+            </div>
+
+            {/* Emergency Contacts Row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 'clamp(9px, 1.85cqw, 11px)', color: 'rgba(255,255,255,0.42)', textTransform: 'uppercase', fontWeight: 800, marginBottom: 'clamp(4px, 0.8cqw, 8px)', letterSpacing: '0.12em' }}>EMERGENCY CONTACTS</div>
+                    <div style={{ fontSize: 'clamp(11px, 2.3cqw, 13px)', color: 'white' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.2cqw, 10px)', flexWrap: 'wrap', rowGap: 'clamp(2px, 0.4cqw, 4px)' }}>
+                            <span style={{ fontWeight: 800 }}>Riya Mehta</span>
+                            <span style={{ opacity: 0.3 }}>·</span>
+                            <span style={{ fontWeight: 600, opacity: 0.8 }}>Wife</span>
+                            <span style={{ opacity: 0.3 }}>·</span>
+                            <span style={{ fontWeight: 700, opacity: 0.9 }}>+91 98192 11082</span>
+                        </div>
                     </div>
                 </div>
-                <div className="text-[10px] text-[#6B7280]">Valid across all providers</div>
             </div>
         </div>
     </div>
@@ -168,30 +225,14 @@ const Homepage = () => {
                         </div>
 
                         <div className="border-t border-[#E2E8F0] pt-8">
-                            <p className="text-[#9CA3AF] text-[13px]">Used by patients, doctors, and labs across clinics and hospitals.</p>
+                             <p className="text-[#9CA3AF] text-[13px]">Used by patients, doctors, and labs across clinics and hospitals.</p>
                         </div>
                     </div>
 
                     {/* Right Column: Animated Card */}
                     <div className="relative flex justify-center items-center h-full min-h-[400px]">
-                        <div className="relative w-full max-w-md animate-[float_4s_ease-in-out_infinite]">
+                        <div className="relative w-full max-w-md animate-[float_4s_ease-in-out_infinite] flex justify-center">
                              <HealthIDCard />
-                            
-                            {/* Floating Badge 1 */}
-                            <div className="absolute -top-4 -right-4 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-[float_5s_ease-in-out_infinite_1s]">
-                                <div className="bg-[#2EC4A9]/20 p-1 rounded-full">
-                                    <CheckCircle className="w-4 h-4 text-[#2EC4A9]" />
-                                </div>
-                                <span className="text-sm font-bold text-[#0D1B2A]">Access Granted</span>
-                            </div>
-
-                            {/* Floating Badge 2 */}
-                            <div className="absolute -bottom-4 -left-4 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-[float_6s_ease-in-out_infinite_0.5s]">
-                                <div className="bg-[#3B9EE2]/20 p-1 rounded-full">
-                                    <Lock className="w-4 h-4 text-[#3B9EE2]" />
-                                </div>
-                                <span className="text-sm font-bold text-[#0D1B2A]">OTP Verified</span>
-                            </div>
                         </div>
                     </div>
                 </div>
