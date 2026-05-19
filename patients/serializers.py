@@ -14,9 +14,27 @@ class EmergencyContactSerializer(serializers.ModelSerializer):
         model = EmergencyContact
         fields = [
             'id', 'name', 'relationship', 'phone', 'email',
+            'is_primary', 'preferred_otp_method', 'allow_emergency_access',
             'can_grant_access', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+
+class PublicEmergencyContactSerializer(serializers.ModelSerializer):
+    """Public basic emergency contact info with masked phone and no email."""
+    phone = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = EmergencyContact
+        fields = [
+            'id', 'name', 'relationship', 'phone', 'is_primary'
+        ]
+        read_only_fields = fields
+
+    def get_phone(self, obj):
+        if obj.phone and len(obj.phone) >= 4:
+            return '*' * (len(obj.phone) - 4) + obj.phone[-4:]
+        return obj.phone
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -55,7 +73,7 @@ class PatientPublicSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     full_name = serializers.SerializerMethodField()
     age = serializers.ReadOnlyField()
-    emergency_contacts = EmergencyContactSerializer(many=True, read_only=True)
+    emergency_contacts = serializers.SerializerMethodField()
     
     class Meta:
         model = Patient
@@ -65,6 +83,13 @@ class PatientPublicSerializer(serializers.ModelSerializer):
             'emergency_contacts'
         ]
         read_only_fields = fields
+
+    def get_emergency_contacts(self, obj):
+        if obj.show_all_emergency_contacts:
+            contacts = obj.emergency_contacts.all()[:2] # show up to 2
+        else:
+            contacts = obj.emergency_contacts.filter(is_primary=True)[:1]
+        return PublicEmergencyContactSerializer(contacts, many=True).data
 
     def get_full_name(self, obj):
         return obj.user.get_full_name() or obj.user.username

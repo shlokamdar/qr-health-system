@@ -7,6 +7,7 @@ django.setup()
 from accounts.models import User
 from doctors.models import Doctor, Hospital
 from labs.models import DiagnosticLab, LabTechnician, LabTest
+from patients.models import Patient
 
 def create_fake_data():
     password = 'demoPassword123!'
@@ -98,10 +99,38 @@ def create_fake_data():
         }
     )
 
+    # Create Patient
+    pat_user, created = User.objects.get_or_create(
+        username='demopatient',
+        defaults={
+            'first_name': 'Alice',
+            'last_name': 'Johnson',
+            'email': 'patient@example.com',
+            'role': User.Role.PATIENT
+        }
+    )
+    if created:
+        pat_user.set_password(password)
+        pat_user.save()
+
+    Patient.objects.get_or_create(
+        user=pat_user,
+        defaults={
+            'date_of_birth': '1990-05-15',
+            'contact_number': '555-0303',
+            'address': '789 Patient Way, Metropolis',
+            'blood_group': 'O+',
+            'gender': 'Female',
+            'allergies': 'Penicillin',
+            'chronic_conditions': 'None'
+        }
+    )
+
     print("Data successfully generated!")
     print("--- LOGIN CREDENTIALS ---")
     print(f"Doctor Login: demodoctor / {password}")
     print(f"Lab Tech Login: demolabtech / {password}")
+    print(f"Patient Login: demopatient / {password}")
 
 if __name__ == '__main__':
     create_fake_data()

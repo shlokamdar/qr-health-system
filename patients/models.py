@@ -44,6 +44,11 @@ class Patient(models.Model):
     ]
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='Male')
     
+    # Emergency Settings
+    show_all_emergency_contacts = models.BooleanField(default=False)
+    allow_public_qr_access = models.BooleanField(default=False)
+    doctor_snapshot_enabled = models.BooleanField(default=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -97,6 +102,11 @@ class Patient(models.Model):
 class EmergencyContact(models.Model):
     """Emergency contacts who can grant access on behalf of the patient."""
     
+    class OTPMethod(models.TextChoices):
+        SMS = 'SMS', _('SMS')
+        EMAIL = 'EMAIL', _('Email')
+        BOTH = 'BOTH', _('Both')
+
     patient = models.ForeignKey(
         Patient, 
         on_delete=models.CASCADE, 
@@ -106,6 +116,13 @@ class EmergencyContact(models.Model):
     relationship = models.CharField(max_length=50)
     phone = models.CharField(max_length=15)
     email = models.EmailField(blank=True, null=True)
+    is_primary = models.BooleanField(default=False)
+    preferred_otp_method = models.CharField(
+        max_length=10,
+        choices=OTPMethod.choices,
+        default=OTPMethod.SMS
+    )
+    allow_emergency_access = models.BooleanField(default=True)
     can_grant_access = models.BooleanField(
         default=True, 
         help_text=_("Can share OTP on behalf of patient in emergencies")

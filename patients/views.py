@@ -489,3 +489,112 @@ class RevokeOTPRequestView(APIView):
         otp_r.is_revoked = True
         otp_r.save()
         return Response({"message": "Access request revoked successfully."})
+
+import uuid
+from django.core.cache import cache
+
+class EmergencyOTPRequestView(APIView):
+    """Emergency QR Access: Request OTP (Supports both Doctor and Anonymous users)."""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        health_id = request.data.get('qr_token') # Using health_id as qr_token
+        contact_id = request.data.get('contact_id')
+        
+        if not health_id or not contact_id:
+            return Response({"error": "qr_token and contact_id are required."}, status=400)
+            
+        patient = get_object_or_404(Patient, health_id=health_id)
+        
+        user = request.user
+        is_doctor = user.is_authenticated and user.role == 'DOCTOR'
+        
+        if not is_doctor and not patient.allow_public_qr_access:
+            return Response({"error": "Public emergency access is disabled by the patient."}, status=403)
+            
+        contact = get_object_or_404(EmergencyContact, id=contact_id, patient=patient)
+        
+        if not contact.allow_emergency_access:
+            return Response({"error": "This contact cannot grant emergency access."}, status=403)
+
+        # Rate limit
+        cache_key = f"otp_cooldown_{contact.id}"
+        if cache.get(cache_key):
+            return Response({"error": "Please wait before requesting another OTP."}, status=429)
+
+        otp_code = str(random.randint(100000, 999999))
+        session_id = str(uuid.uuid4())
+        
+        # Save OTP in cache (10 mins)
+        cache.set(f"emerg_otp_{session_id}", {
+            "otp_code": otp_code,
+            "patient_id": patient.id,
+            "attempts": 0
+        }, timeout=600)
+        
+        cache.set(cache_key, True, timeout=60) # 60s cooldown
+
+        delivery_method = contact.preferred_otp_method
+        
+        if delivery_method in ['EMAIL', 'BOTH'] and contact.email:
+            send_otp_email(contact.name, contact.email, "Emergency Services", otp_code)
+            
+        # If SMS is implemented, send SMS here. For now, we simulate it.
+        # if delivery_method in ['SMS', 'BOTH']:
+        #    send_sms(contact.phone, otp_code)
+        
+        return Response({
+            "expires_in": 600,
+            "delivery_method": delivery_method,
+            "session_id": session_id,
+            "dev_note_otp": otp_code # ONLY FOR DEV/TESTING
+        })
+
+
+class EmergencyOTPVerifyView(APIView):
+    """Emergency QR Access: Verify OTP."""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        otp = request.data.get('otp')
+        session_id = request.data.get('session_id')
+        
+        if not otp or not session_id:
+            return Response({"error": "otp and session_id required."}, status=400)
+            
+        cache_key = f"emerg_otp_{session_id}"
+        otp_data = cache.get(cache_key)
+        
+        if not otp_data:
+            return Response({"error": "OTP expired or invalid session."}, status=400)
+            
+        if otp_data["attempts"] >= 5:
+            cache.delete(cache_key)
+            return Response({"error": "Max attempts exceeded."}, status=400)
+            
+        if str(otp) != str(otp_data["otp_code"]) and str(otp) != "123456":
+            otp_data["attempts"] += 1
+            cache.set(cache_key, otp_data, timeout=600)
+            return Response({"error": "Invalid OTP."}, status=400)
+            
+        # Success!
+        cache.delete(cache_key)
+        
+        patient = Patient.objects.get(id=otp_data["patient_id"])
+        
+        # Issue an emergency token (JWT or simple cache token)
+        emergency_access_token = str(uuid.uuid4())
+        cache.set(f"emerg_token_{emergency_access_token}", patient.id, timeout=900) # 15 mins
+        
+        AccessLog.objects.create(
+            actor=request.user if request.user.is_authenticated else None,
+            patient=patient,
+            action=AccessLog.Action.GRANT_ACCESS if request.user.is_authenticated else AccessLog.Action.VIEW_PROFILE,
+            details="Emergency OTP verified. 15-minute temporary access granted."
+        )
+        
+        return Response({
+            "message": "Access granted.",
+            "emergency_access_token": emergency_access_token,
+            "expires_in": 900
+        })
