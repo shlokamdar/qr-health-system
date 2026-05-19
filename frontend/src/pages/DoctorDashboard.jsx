@@ -255,10 +255,13 @@ const DoctorDashboard = () => {
                 PatientService.getByHealthId(healthId)
                     .then(data => {
                         setPatientResult(data);
-                        return Promise.all([
-                            PatientService.getRecords(healthId),
-                            DoctorService.getPatientHistory(healthId)
-                        ]);
+                        if (data.has_full_access) {
+                            return Promise.all([
+                                PatientService.getRecords(healthId),
+                                DoctorService.getPatientHistory(healthId)
+                            ]);
+                        }
+                        return Promise.resolve([[], []]);
                     })
                     .then(([recData, consData]) => {
                         setRecords(recData);
@@ -311,11 +314,16 @@ const DoctorDashboard = () => {
             const data = await PatientService.getByHealthId(idToSearch);
             setPatientResult(data);
 
-            const recData = await PatientService.getRecords(idToSearch);
-            setRecords(recData);
+            if (data.has_full_access) {
+                const recData = await PatientService.getRecords(idToSearch);
+                setRecords(recData);
 
-            const consData = await DoctorService.getPatientHistory(idToSearch);
-            setConsultations(consData);
+                const consData = await DoctorService.getPatientHistory(idToSearch);
+                setConsultations(consData);
+            } else {
+                setRecords([]);
+                setConsultations([]);
+            }
 
             // Default to consultation tab when patient is loaded
             setPatientSubTab('consultation');
