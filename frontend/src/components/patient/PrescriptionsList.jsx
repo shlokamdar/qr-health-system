@@ -1,4 +1,5 @@
 import React from 'react';
+import { getFileUrl } from '../../utils/api';
 
 const Icon = ({ d, size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -46,7 +47,7 @@ const PrescriptionsList = ({ prescriptions }) => {
               )}
             </div>
             {presc.file && (
-              <a href={presc.file} target="_blank" rel="noopener noreferrer"
+              <a href={getFileUrl(presc.file)} target="_blank" rel="noopener noreferrer"
                 style={{ background: '#EFF6FF', color: '#3B9EE2', border: '1px solid #BFDBFE', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', marginLeft: 12 }}>
                 View →
               </a>

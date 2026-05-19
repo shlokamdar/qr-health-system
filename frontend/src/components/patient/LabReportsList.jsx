@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { getFileUrl } from '../../utils/api';
 const Icon = ({ d, size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -80,11 +80,11 @@ const LabReportsList = ({ labReports }) => {
                 </div>
                 {report.file && (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <a href={report.file} target="_blank" rel="noopener noreferrer"
+                    <a href={getFileUrl(report.file)} target="_blank" rel="noopener noreferrer"
                       style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#EFF6FF', color: '#3B9EE2', border: '1px solid #BFDBFE', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
                       <Icon d={EYE} size={12} /> View
                     </a>
-                    <a href={report.file} download
+                    <a href={getFileUrl(report.file)} download
                       style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F8FAFB', color: '#4A5568', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
                       <Icon d={DOWNLOAD} size={12} />
                     </a>

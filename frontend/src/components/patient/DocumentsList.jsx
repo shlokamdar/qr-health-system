@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { getFileUrl } from '../../utils/api';
 const Icon = ({ d, size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -55,7 +55,7 @@ const DocumentsList = ({ documents }) => {
               </span>
               <div style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>{new Date(doc.uploaded_at).toLocaleDateString()}</div>
               {doc.file && (
-                <a href={doc.file} target="_blank" rel="noopener noreferrer"
+                <a href={getFileUrl(doc.file)} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#3B9EE2', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
                   <Icon d={DOWNLOAD} size={13} /> Download
                 </a>

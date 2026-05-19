@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, ChevronRight, X, Calendar, User, ExternalLink, Download, FileCheck, Info, FileX } from 'lucide-react';
+import { getFileUrl } from '../../utils/api';
 
 const MedicalRecordList = ({ records }) => {
     const [selectedRecord, setSelectedRecord] = useState(null);
@@ -113,7 +114,7 @@ const MedicalRecordList = ({ records }) => {
                                 {selectedRecord.file && (
                                     <div className="pt-4">
                                         <a
-                                            href={selectedRecord.file}
+                                            href={getFileUrl(selectedRecord.file)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="group flex items-center justify-between bg-[#0D1B2A] text-white p-6 rounded-[2rem] hover:bg-[#1a2e41] transition-all shadow-xl shadow-[#0D1B2A]/10 active:scale-[0.98]"
