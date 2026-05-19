@@ -24,6 +24,11 @@
   container-type: inline-size;
 }
 
+#patient-health-card {
+  border: none !important;
+  outline: none !important;
+}
+
 /* Do not set margin/padding on .pd-app * — it loads after Tailwind and was
    overriding utility classes (p-*, m-*, px-*, etc.) on inputs and cards. */
 .pd-app {

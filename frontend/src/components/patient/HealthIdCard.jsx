@@ -39,7 +39,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
       id="patient-health-card" 
       style={{
         width: '100%',
-        background: 'linear-gradient(135deg, #0D1B2A 0%, #0B1A29 55%, #091523 100%)',
+        background: '#0D1B2A',
         borderRadius: 'clamp(16px, 2.15cqw, 26px)',
         padding: 'clamp(12px, 2.7cqw, 20px) clamp(16px, 4cqw, 30px)',
         position: 'relative',
@@ -49,45 +49,35 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         boxShadow: '0 22px 60px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
         color: 'white',
         cursor: 'default',
-        border: 'none'
+        border: 'none',
+        outline: 'none',
       }}
     >
 
-      {/* Subtle highlight bloom */}
+      {/* Subtle highlight — kept away from edges to avoid blue fringe in exports */}
       <div
+        className="health-card-decor"
         style={{
           position: 'absolute',
-          inset: '-30%',
+          inset: 0,
           background:
-            'radial-gradient(closest-side at 18% 10%, rgba(59, 158, 226, 0.25), transparent 62%), radial-gradient(closest-side at 85% 45%, rgba(46, 196, 169, 0.16), transparent 60%)',
+            'radial-gradient(ellipse 70% 55% at 72% 28%, rgba(46, 196, 169, 0.14), transparent 70%)',
           pointerEvents: 'none',
           zIndex: 0,
-          filter: 'blur(2px)',
         }}
       />
 
       {/* Dot grid texture */}
-      <div 
-        style={{ 
-          position: 'absolute', 
-          inset: 0, 
-          opacity: 0.032, 
+      <div
+        className="health-card-decor"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.032,
           pointerEvents: 'none',
           backgroundImage: 'radial-gradient(white 1px, transparent 1px)',
           backgroundSize: '20px 20px',
-          zIndex: 0
-        }} 
-      />
-
-      {/* Inner stroke (premium edge) */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 'clamp(1px, 0.25cqw, 2px)',
-          borderRadius: 'calc(clamp(16px, 2.15cqw, 26px) - 2px)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          pointerEvents: 'none',
-          zIndex: 1,
+          zIndex: 0,
         }}
       />
 

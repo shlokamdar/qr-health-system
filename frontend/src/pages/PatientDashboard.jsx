@@ -297,11 +297,16 @@ const PatientDashboard = () => {
     const originalWidth = cardElement.style.width;
     const originalHeight = cardElement.style.height;
     const originalMaxW = cardElement.style.maxWidth;
+    const originalBoxShadow = cardElement.style.boxShadow;
+    const originalBackground = cardElement.style.background;
 
     elementsToHide.forEach((el) => { el.style.display = 'none'; });
+    cardElement.querySelectorAll('.health-card-decor').forEach((el) => { el.style.display = 'none'; });
     cardElement.style.width = `${CAPTURE_WIDTH}px`;
     cardElement.style.height = 'auto';
     cardElement.style.maxWidth = 'none';
+    cardElement.style.boxShadow = 'none';
+    cardElement.style.background = '#0D1B2A';
 
     await new Promise((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(resolve));
@@ -321,8 +326,15 @@ const PatientDashboard = () => {
             clonedCard.style.width = `${CAPTURE_WIDTH}px`;
             clonedCard.style.height = 'auto';
             clonedCard.style.maxWidth = 'none';
+            clonedCard.style.boxShadow = 'none';
+            clonedCard.style.border = 'none';
+            clonedCard.style.outline = 'none';
+            clonedCard.style.background = '#0D1B2A';
           }
           clonedDoc.querySelectorAll(hideSelector).forEach((el) => {
+            el.style.display = 'none';
+          });
+          clonedDoc.querySelectorAll('.health-card-decor').forEach((el) => {
             el.style.display = 'none';
           });
         },
@@ -337,9 +349,12 @@ const PatientDashboard = () => {
       toast.error("Download failed. Please try again.");
     } finally {
       elementsToHide.forEach((el, i) => { el.style.display = savedDisplays[i]; });
+      cardElement.querySelectorAll('.health-card-decor').forEach((el) => { el.style.display = ''; });
       cardElement.style.width = originalWidth;
       cardElement.style.height = originalHeight;
       cardElement.style.maxWidth = originalMaxW;
+      cardElement.style.boxShadow = originalBoxShadow;
+      cardElement.style.background = originalBackground;
     }
   };
 
