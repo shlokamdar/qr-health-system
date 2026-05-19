@@ -174,7 +174,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                 .catch(() => setAvailableLabs([]));
         }
         if (registerRole === 'DOCTOR') {
-            api.get('doctors/hospitals/')
+            api.get('hospitals/')
                 .then(res => {
                     const list = res.data.results || res.data;
                     setAvailableHospitals(list.filter(h => h.is_verified));
@@ -361,7 +361,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
         setLoading(true);
         setError('');
         try {
-            await api.post('doctors/hospitals/', {
+            await api.post('hospitals/', {
                 admin_username: hospitalData.admin_username,
                 email: hospitalData.email,
                 admin_password: hospitalData.admin_password,

@@ -21,11 +21,13 @@ def run_test():
         "address": "123 Test St",
         "registration_number": reg_number,
         "phone": "555-0199",
-        "email": f"contact@{get_random_string()}.com"
+        "email": f"contact@{get_random_string()}.com",
+        "admin_username": f"admin_{get_random_string(4)}",
+        "admin_password": "password123"
     }
     
     try:
-        resp = requests.post(f"{BASE_URL}/doctors/hospitals/", json=reg_data)
+        resp = requests.post(f"{BASE_URL}/hospitals/", json=reg_data)
         if resp.status_code == 201:
             print("[+] Registration Successful!")
             hospital_id = resp.json().get('id') # Note: Endpoint might not return ID if using default serializer, let's check.

@@ -42,7 +42,7 @@ const DoctorService = {
     },
 
     getHospitals: async () => {
-        const res = await api.get('doctors/hospitals/');
+        const res = await api.get('hospitals/');
         return res.data;
     },
 
