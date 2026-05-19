@@ -563,7 +563,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
 
     const handleDownloadPDF = async () => {
-        const element = document.getElementById('health-id-card');
+        const element = document.getElementById('health-id-card-success');
         if (!element) return;
 
         try {
@@ -597,7 +597,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     };
 
     const handleDownloadImage = async () => {
-        const element = document.getElementById('health-id-card');
+        const element = document.getElementById('health-id-card-success');
         if (!element) return;
 
         try {
@@ -1295,6 +1295,20 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                                             placeholder="+91..." 
                                                                         />
                                                                     </div>
+                                                                </div>
+                                                                <div>
+                                                                    <label className={labelStyle}>Email (Optional)</label>
+                                                                    <input 
+                                                                        type="email" 
+                                                                        className={inputStyle} 
+                                                                        value={contact.email || ''} 
+                                                                        onChange={e => {
+                                                                            const updated = [...patientData.emergencyContacts];
+                                                                            updated[index].email = e.target.value;
+                                                                            setPatientData({ ...patientData, emergencyContacts: updated });
+                                                                        }} 
+                                                                        placeholder="contact@email.com"
+                                                                    />
                                                                 </div>
                                                             </div>
                                                         ))}

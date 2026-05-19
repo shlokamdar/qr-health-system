@@ -89,6 +89,8 @@ class PatientPublicSerializer(serializers.ModelSerializer):
             contacts = obj.emergency_contacts.all()[:2] # show up to 2
         else:
             contacts = obj.emergency_contacts.filter(is_primary=True)[:1]
+            if not contacts.exists():
+                contacts = obj.emergency_contacts.all()[:1] # fallback to any contact
         return PublicEmergencyContactSerializer(contacts, many=True).data
 
     def get_full_name(self, obj):

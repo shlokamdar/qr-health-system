@@ -91,7 +91,8 @@ class RegisterSerializer(serializers.ModelSerializer):
                         patient=patient,
                         name=ec_data['name'],
                         relationship=ec_data.get('relationship', ''),
-                        phone=ec_data['phone']
+                        phone=ec_data['phone'],
+                        email=ec_data.get('email', '')
                     )
             
         elif role == User.Role.DOCTOR:
