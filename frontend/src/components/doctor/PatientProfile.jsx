@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Phone, Shield, AlertCircle, Lock, Droplets, BadgeCheck, Activity, AlertTriangle, ShieldCheck, Clock, Calendar, MapPin, Contact } from 'lucide-react';
+import { User, Phone, Shield, AlertCircle, Lock, Droplets, BadgeCheck, Activity, AlertTriangle, ShieldCheck, Clock, Calendar, MapPin, Contact, Mail } from 'lucide-react';
 
 const PatientProfile = ({ patient, handleRequestOTP }) => {
     if (!patient) return null;
