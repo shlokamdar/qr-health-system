@@ -570,7 +570,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             const canvas = await html2canvas(element, {
                 scale: 3,
                 useCORS: true,
-                allowTaint: true,
+                allowTaint: false,
                 backgroundColor: '#0D1B2A',
                 logging: false,
             });
@@ -604,17 +604,25 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             const canvas = await html2canvas(element, {
                 scale: 4,
                 useCORS: true,
-                allowTaint: true,
+                allowTaint: false,
                 backgroundColor: '#0D1B2A',
                 logging: false,
             });
 
-            const link = document.createElement('a');
-            link.download = `PulseID-Card-${patientData.lastName || 'Card'}.png`;
-            link.href = canvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    toast.error("Failed to download image. Please try again.");
+                    return;
+                }
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = `PulseID-Card-${patientData.lastName || 'Card'}.png`;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            }, 'image/png');
         } catch (err) {
             console.error("Image generation failed", err);
             const msg = "Failed to download image. Please try again.";
@@ -1400,7 +1408,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                         <div className="bg-white p-3 rounded-xl inline-block shadow-inner w-[200px] h-[200px] flex items-center justify-center relative z-10">
                                                             {/* QR Code for registration success */}
                                                             <div className="bg-white flex items-center justify-center w-full h-full">
-                                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${generatedID}`} alt="QR Code" className="w-[180px] h-[180px]" />
+                                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${generatedID}`} crossOrigin="anonymous" alt="QR Code" className="w-[180px] h-[180px]" />
                                                             </div>
                                                         </div>
                                                         

@@ -340,10 +340,20 @@ const PatientDashboard = () => {
         },
       });
 
-      const link = document.createElement('a');
-      link.download = `PulseID_${patient?.health_id || 'Health_Card'}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error("Download failed. Please try again.");
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `PulseID_${patient?.health_id || 'Health_Card'}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+      }, 'image/png', 1.0);
     } catch (err) {
       console.error("PNG capture failed", err);
       toast.error("Download failed. Please try again.");

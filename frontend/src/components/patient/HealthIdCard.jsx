@@ -122,7 +122,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
             boxShadow: '0 16px 40px rgba(2, 6, 23, 0.28)',
             border: '1px solid rgba(15, 23, 42, 0.10)'
           }}>
-            <img src={patient.qr_code} alt="QR" style={{ width: 'clamp(80px, 18.2cqw, 112px)', height: 'clamp(80px, 18.2cqw, 112px)', display: 'block' }} />
+            <img src={patient.qr_code} crossOrigin="anonymous" alt="QR" style={{ width: 'clamp(80px, 18.2cqw, 112px)', height: 'clamp(80px, 18.2cqw, 112px)', display: 'block' }} />
           </div>
         )}
       </div>
