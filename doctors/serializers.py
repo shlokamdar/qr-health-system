@@ -140,7 +140,9 @@ class DoctorSerializer(serializers.ModelSerializer):
 
     def get_total_patients(self, obj):
         if not obj: return 0
-        return obj.consultations.values('patient').distinct().count()
+        consulted = set(obj.consultations.values_list('patient_id', flat=True))
+        permitted = set(obj.patient_permissions.values_list('patient_id', flat=True))
+        return len(consulted | permitted)
 
     class Meta:
         model = Doctor
