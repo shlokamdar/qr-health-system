@@ -49,7 +49,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         boxShadow: '0 22px 60px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
         color: 'white',
         cursor: 'default',
-        border: '1px solid rgba(226, 232, 240, 0.22)'
+        border: 'none'
       }}
     >
 
