@@ -23,9 +23,10 @@ const OTPRequestModal = ({ patient, isPublic, onClose, onSuccess }) => {
             if (isPublic) {
                 const payload = {
                     qr_token: patient.health_id,
-                    contact_id: selectedContactId
+                    contact_id: selectedContactId,
+                    verifier_type: verifierType
                 };
-                response = await api.post('emergency/request-otp/', payload);
+                response = await api.post('patients/emergency/request-otp/', payload);
                 toast.success("Access request sent!");
                 onSuccess(response.data.session_id, response.data.delivery_method);
             } else {
@@ -35,7 +36,7 @@ const OTPRequestModal = ({ patient, isPublic, onClose, onSuccess }) => {
                     verifier_type: verifierType,
                     verifier_contact_id: selectedContactId || null
                 };
-                response = await api.post('otp/request/', payload);
+                response = await api.post('patients/otp/request/', payload);
                 toast.success("Access request sent!");
                 onSuccess(response.data.request_id, deliveryMethod);
             }
@@ -70,9 +71,8 @@ const OTPRequestModal = ({ patient, isPublic, onClose, onSuccess }) => {
                     <form id="otp-request-form" onSubmit={handleSubmit} className="space-y-6">
                         
                         {/* Verifier Selection */}
-                        {!isPublic && (
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block ml-1">
                                 Who will verify this request?
                             </label>
                             <div className="grid grid-cols-2 gap-3">
@@ -88,7 +88,6 @@ const OTPRequestModal = ({ patient, isPublic, onClose, onSuccess }) => {
                                 </label>
                             </div>
                         </div>
-                        )}
 
                         {/* Emergency Contact Dropdown */}
                         {verifierType === 'EMERGENCY_CONTACT' && (

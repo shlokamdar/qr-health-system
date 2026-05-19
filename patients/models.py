@@ -294,7 +294,9 @@ class OTPRequest(models.Model):
     doctor = models.ForeignKey(
         'doctors.Doctor', 
         on_delete=models.CASCADE, 
-        related_name='otp_requests'
+        related_name='otp_requests',
+        null=True,
+        blank=True
     )
     patient = models.ForeignKey(
         Patient, 

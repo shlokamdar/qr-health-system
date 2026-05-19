@@ -500,25 +500,30 @@ class EmergencyOTPRequestView(APIView):
     def post(self, request):
         health_id = request.data.get('qr_token') # Using health_id as qr_token
         contact_id = request.data.get('contact_id')
+        verifier_type = request.data.get('verifier_type', 'EMERGENCY_CONTACT')
         
-        if not health_id or not contact_id:
-            return Response({"error": "qr_token and contact_id are required."}, status=400)
+        if not health_id:
+            return Response({"error": "qr_token is required."}, status=400)
             
         patient = get_object_or_404(Patient, health_id=health_id)
         
         user = request.user
         is_doctor = user.is_authenticated and user.role == 'DOCTOR'
+        doctor = getattr(user, 'doctor_profile', None) if is_doctor else None
         
         if not is_doctor and not patient.allow_public_qr_access:
             return Response({"error": "Public emergency access is disabled by the patient."}, status=403)
             
-        contact = get_object_or_404(EmergencyContact, id=contact_id, patient=patient)
-        
-        if not contact.allow_emergency_access:
-            return Response({"error": "This contact cannot grant emergency access."}, status=403)
+        contact = None
+        if verifier_type == 'EMERGENCY_CONTACT':
+            if not contact_id:
+                return Response({"error": "contact_id is required for EMERGENCY_CONTACT."}, status=400)
+            contact = get_object_or_404(EmergencyContact, id=contact_id, patient=patient)
+            if not contact.allow_emergency_access:
+                return Response({"error": "This contact cannot grant emergency access."}, status=403)
 
         # Rate limit
-        cache_key = f"otp_cooldown_{contact.id}"
+        cache_key = f"otp_cooldown_{health_id}_{verifier_type}"
         if cache.get(cache_key):
             return Response({"error": "Please wait before requesting another OTP."}, status=429)
 
@@ -534,19 +539,45 @@ class EmergencyOTPRequestView(APIView):
         
         cache.set(cache_key, True, timeout=60) # 60s cooldown
 
-        delivery_method = contact.preferred_otp_method
-        
-        if delivery_method in ['EMAIL', 'BOTH'] and contact.email:
-            send_otp_email(contact.name, contact.email, "Emergency Services", otp_code)
+        delivery_method = 'EMAIL'
+        if contact and contact.preferred_otp_method:
+            delivery_method = contact.preferred_otp_method
             
-        # If SMS is implemented, send SMS here. For now, we simulate it.
-        # if delivery_method in ['SMS', 'BOTH']:
-        #    send_sms(contact.phone, otp_code)
+        # Save to DB so it shows on Dashboard
+        otp_request = OTPRequest.objects.create(
+            doctor=doctor, # None for public
+            patient=patient,
+            otp_code=otp_code,
+            delivery_method=delivery_method,
+            verifier_type=verifier_type,
+            verifier_contact=contact
+        )
+
+        sender_name = "Emergency Services (Public QR)" if not is_doctor else f"Dr. {user.get_full_name() or user.username}"
+        
+        if verifier_type == 'PATIENT':
+            if patient.user.email:
+                send_otp_email(patient.user.get_full_name() or patient.user.username, patient.user.email, sender_name, otp_code)
+            else:
+                return Response({"error": "Patient does not have an email registered."}, status=400)
+        else:
+            if contact.email:
+                send_otp_email(contact.name, contact.email, sender_name, otp_code)
+            else:
+                return Response({"error": "Emergency contact does not have an email registered."}, status=400)
+
+        # Notify Dashboard
+        Notification.objects.create(
+            user=patient.user,
+            title="Emergency Access Request",
+            message=f"Someone scanned your public QR code and requested access. OTP: {otp_code}."
+        )
         
         return Response({
             "expires_in": 600,
             "delivery_method": delivery_method,
             "session_id": session_id,
+            "request_id": otp_request.id,
             "dev_note_otp": otp_code # ONLY FOR DEV/TESTING
         })
 
@@ -581,6 +612,13 @@ class EmergencyOTPVerifyView(APIView):
         cache.delete(cache_key)
         
         patient = Patient.objects.get(id=otp_data["patient_id"])
+        
+        # Mark OTPRequest as verified
+        OTPRequest.objects.filter(
+            patient=patient,
+            otp_code=otp_data["otp_code"],
+            is_verified=False
+        ).update(is_verified=True)
         
         # Issue an emergency token (JWT or simple cache token)
         emergency_access_token = str(uuid.uuid4())
