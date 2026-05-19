@@ -289,31 +289,44 @@ const PatientDashboard = () => {
       return;
     }
 
-    // Capture original styles
+    const CAPTURE_WIDTH = 640;
+    const hideSelector = '[data-card-download-hide], [data-html2canvas-ignore]';
+    const elementsToHide = cardElement.querySelectorAll(hideSelector);
+    const savedDisplays = Array.from(elementsToHide).map((el) => el.style.display);
+
     const originalWidth = cardElement.style.width;
     const originalHeight = cardElement.style.height;
     const originalMaxW = cardElement.style.maxWidth;
 
+    elementsToHide.forEach((el) => { el.style.display = 'none'; });
+    cardElement.style.width = `${CAPTURE_WIDTH}px`;
+    cardElement.style.height = 'auto';
+    cardElement.style.maxWidth = 'none';
+
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
+
     try {
       const html2canvas = (await import('html2canvas')).default;
-      
-      // Capture the card with high fidelity
+
       const canvas = await html2canvas(cardElement, {
-        scale: 4, // Higher scale for clinical-grade clarity
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: '#0D1B2A',
         onclone: (clonedDoc) => {
-          // Additional safety: Ensure the hide-in-download elements are really gone
-          const hiddenElements = clonedDoc.querySelectorAll('[data-html2canvas-ignore="true"]');
-          hiddenElements.forEach(el => el.style.display = 'none');
-        }
+          const clonedCard = clonedDoc.getElementById('patient-health-card');
+          if (clonedCard) {
+            clonedCard.style.width = `${CAPTURE_WIDTH}px`;
+            clonedCard.style.height = 'auto';
+            clonedCard.style.maxWidth = 'none';
+          }
+          clonedDoc.querySelectorAll(hideSelector).forEach((el) => {
+            el.style.display = 'none';
+          });
+        },
       });
-
-      // Restore original styles
-      cardElement.style.width = originalWidth;
-      cardElement.style.height = originalHeight;
-      cardElement.style.maxWidth = originalMaxW;
 
       const link = document.createElement('a');
       link.download = `PulseID_${patient?.health_id || 'Health_Card'}.png`;
@@ -321,11 +334,12 @@ const PatientDashboard = () => {
       link.click();
     } catch (err) {
       console.error("PNG capture failed", err);
-      // Restore styles even on failure
+      toast.error("Download failed. Please try again.");
+    } finally {
+      elementsToHide.forEach((el, i) => { el.style.display = savedDisplays[i]; });
       cardElement.style.width = originalWidth;
       cardElement.style.height = originalHeight;
       cardElement.style.maxWidth = originalMaxW;
-      toast.error("Download failed. Please try again.");
     }
   };
 

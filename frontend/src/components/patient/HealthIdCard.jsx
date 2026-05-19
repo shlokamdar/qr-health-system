@@ -100,7 +100,10 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
               <div style={{ fontSize: 'clamp(10px, 2cqw, 12px)', color: 'rgba(255,255,255,0.62)', marginTop: 'clamp(2px, 0.4cqw, 4px)' }}>Unified Health Record</div>
             </div>
           </div>
-        <div style={{ padding: 'clamp(6px, 0.95cqw, 10px) clamp(10px, 2.2cqw, 14px)', background: 'rgba(46, 196, 169, 0.10)', borderRadius: 'clamp(8px, 1cqw, 12px)', border: '1px solid rgba(46, 196, 169, 0.35)' }}>
+        <div
+          data-card-download-hide="true"
+          style={{ padding: 'clamp(6px, 0.95cqw, 10px) clamp(10px, 2.2cqw, 14px)', background: 'rgba(46, 196, 169, 0.10)', borderRadius: 'clamp(8px, 1cqw, 12px)', border: '1px solid rgba(46, 196, 169, 0.35)' }}
+        >
           <span style={{ fontSize: 'clamp(10px, 2cqw, 12px)', fontWeight: '850', textTransform: 'uppercase', color: '#2EC4A9', letterSpacing: '0.12em' }}>Patient</span>
         </div>
       </div>
@@ -185,6 +188,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
         {showUtilityArea && (
           <div 
             style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+            data-card-download-hide="true"
             data-html2canvas-ignore="true"
           >
             {!!setActiveTab && (
