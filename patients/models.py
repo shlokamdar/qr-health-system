@@ -28,7 +28,7 @@ class Patient(models.Model):
     health_id = models.CharField(max_length=50, unique=True, blank=True)
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
-    contact_number = models.CharField(max_length=15, blank=True)
+    contact_number = models.CharField(max_length=30, blank=True)
     address = models.TextField(blank=True)
     
     # New enhanced fields
@@ -114,7 +114,7 @@ class EmergencyContact(models.Model):
     )
     name = models.CharField(max_length=100)
     relationship = models.CharField(max_length=50)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=30)
     email = models.EmailField(blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     preferred_otp_method = models.CharField(

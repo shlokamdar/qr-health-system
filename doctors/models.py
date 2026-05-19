@@ -8,7 +8,7 @@ class Hospital(models.Model):
     name = models.CharField(max_length=200)
     address = models.TextField()
     registration_number = models.CharField(max_length=50, unique=True)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=30)
     email = models.EmailField()
     is_verified = models.BooleanField(
         default=False, 
@@ -106,7 +106,7 @@ class Doctor(models.Model):
     
     # Personal Details
     date_of_birth = models.DateField(null=True, blank=True)
-    contact_number = models.CharField(max_length=15, blank=True)
+    contact_number = models.CharField(max_length=30, blank=True)
     address = models.TextField(blank=True)
     
     # Documents

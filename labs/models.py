@@ -11,7 +11,7 @@ class DiagnosticLab(models.Model):
     name = models.CharField(max_length=200)
     address = models.TextField()
     accreditation_number = models.CharField(max_length=50, unique=True)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=30)
     email = models.EmailField()
     hospital = models.ForeignKey(
         Hospital, 
