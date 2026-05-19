@@ -150,6 +150,10 @@ def send_hospital_registration_email(hospital):
 def send_doctor_approved_email(doctor):
     """Notify doctor that their account has been verified."""
     subject = "PulseID Account Verified"
+    
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pulseid.online')
+    login_url = f"{frontend_url}/doctor/login"
+    
     message = f"""
     Hello Dr. {doctor.user.get_full_name() or doctor.user.username},
 
@@ -158,9 +162,10 @@ def send_doctor_approved_email(doctor):
     Authorization Level: {doctor.authorization_level}
     
     You can now log in to the Doctor Dashboard to manage your patients and medical records.
+    Login using: {login_url}
     
     Regards,
-    QR Health System
+    PulseID Health System
     """
     if doctor.user.email:
         send_email_async(subject, message, [doctor.user.email])
@@ -183,7 +188,20 @@ def send_registration_welcome_email(user):
     """Send welcome email to newly registered users."""
     subject = "Welcome to PulseID Health System"
     role_display = user.role.replace('_', ' ').title()
-    content = f"""
+    
+    if user.role in ['DOCTOR', 'LAB_TECH', 'HOSPITAL_ADMIN']:
+        subject = "Account Created - Pending Verification"
+        content = f"""
+    Welcome to PulseID! Your account as a {role_display} has been successfully created.
+    
+    Username: {user.username}
+    Email: {user.email}
+    
+    Your account is currently under review and waiting for the administrator to approve your identity and credentials. 
+    We will notify you via email as soon as your account is verified.
+    """
+    else:
+        content = f"""
     Welcome to PulseID! Your account as a {role_display} has been successfully created.
     
     Username: {user.username}
@@ -191,6 +209,7 @@ def send_registration_welcome_email(user):
     
     You can now log in to your dashboard to manage your health records and permissions.
     """
+    
     message = format_email_message(user.get_full_name() or user.username, content)
     if user.email:
         send_email_async(subject, message, [user.email])

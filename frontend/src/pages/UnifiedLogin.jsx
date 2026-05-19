@@ -739,7 +739,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
             // Profile Data
             const profileData = {
-                specialization: doctorData.specialization,
+                specialization: doctorData.specialization === 'Other' ? doctorData.otherSpecialization : doctorData.specialization,
                 experience: doctorData.experience,
                 hospital_id: doctorData.hospital || null,
                 department: doctorData.department,
@@ -1572,13 +1572,25 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                         <option>Cardiology</option>
                                                         <option>Pediatrics</option>
                                                         <option>Surgery</option>
-                                                        <option>Dermatology</option>
-                                                        <option>Orthopedics</option>
+                                                        <option value="Dermatology">Dermatology</option>
+                                                        <option value="Orthopedics">Orthopedics</option>
+                                                        <option value="Other">Other</option>
                                                     </select>
                                                     <div className="absolute right-4 top-4 pointer-events-none text-slate-400">
                                                         <ArrowRight className="w-4 h-4 rotate-90" />
                                                     </div>
                                                 </div>
+                                                {doctorData.specialization === 'Other' && (
+                                                    <div className="mt-3">
+                                                        <input 
+                                                            type="text" 
+                                                            className={inputStyle} 
+                                                            placeholder="Please specify" 
+                                                            value={doctorData.otherSpecialization} 
+                                                            onChange={e => setDoctorData({ ...doctorData, otherSpecialization: e.target.value })} 
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <label className={labelStyle}>Affiliated Hospital</label>
