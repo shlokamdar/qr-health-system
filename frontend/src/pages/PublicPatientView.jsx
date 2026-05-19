@@ -189,9 +189,11 @@ const PublicPatientView = () => {
             </div>
             
             <footer className="text-center py-10 opacity-40">
-                <div className="pd-logo justify-center grayscale scale-75">
-                    <div className="pd-logo-mark"><span className="text-white font-black">P</span></div>
-                    <div className="pd-logo-text text-[#0D1B2A]">PulseID</div>
+                <div className="flex items-center justify-center gap-2 grayscale scale-75">
+                    <Activity className="w-6 h-6 text-[#0D1B2A]" />
+                    <span className="text-xl font-bold text-[#0D1B2A] tracking-tight">
+                        PulseID
+                    </span>
                 </div>
             </footer>
 

@@ -48,6 +48,7 @@ const ICONS = {
   LogOut: ['M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4', 'M16 17l5-5-5-5', 'M21 12H9'],
   Settings: ['M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.09a2 2 0 01-1-1.74v-.51a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'],
   LifeBuoy: ['M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0', 'M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0', 'M4.93 4.93l2.83 2.83', 'M16.24 16.24l2.83 2.83', 'M4.93 19.07l2.83 -2.83', 'M16.24 7.76l2.83 -2.83'],
+  Activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
 };
 
 const RevokeModal = ({ onConfirm, onCancel }) => (
@@ -345,7 +346,7 @@ const PatientDashboard = () => {
       {/* ── DESKTOP NAVBAR ── */}
       <header className="pd-navbar">
         <div className="pd-logo">
-          <div className="pd-logo-mark"><span style={{ color: '#fff', fontWeight: 800 }}>P</span></div>
+          <Icon d={ICONS.Activity} size={24} style={{ color: '#0D1B2A' }} />
           <div className="pd-logo-text">PulseID</div>
         </div>
         <div className="pd-nav-right">
@@ -412,7 +413,7 @@ const PatientDashboard = () => {
       {/* ── MOBILE HEADER ── */}
       <header className="pd-mobile-header">
         <div className="pd-logo">
-          <div className="pd-logo-mark" style={{ width: 28, height: 28 }}><span style={{ color: '#fff', fontSize: 14, fontWeight: 800 }}>P</span></div>
+          <Icon d={ICONS.Activity} size={24} style={{ color: '#0D1B2A' }} />
           <div className="pd-logo-text" style={{ fontSize: 16 }}>PulseID</div>
         </div>
         <div className="pd-nav-right" style={{ gap: 10 }}>

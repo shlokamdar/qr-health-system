@@ -17,7 +17,7 @@ const Header = () => {
             <div className="w-full px-4 md:px-8 flex items-center justify-between">
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-2">
-                    <Activity className="w-6 h-6 text-primary" />
+                    <Activity className="w-6 h-6 text-headings" />
                     <span className="text-xl font-bold text-headings tracking-tight">
                         PulseID
                     </span>
