@@ -30,7 +30,7 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
   };
 
   // In "live preview" contexts we often render the card without actions.
-  // Hiding the utility area prevents footer cropping within the fixed aspect ratio.
+  // Hiding the utility area prevents footer cropping in compact previews.
   const showUtilityArea = !!setActiveTab || !!onDownloadCard || !!onDownloadQR;
 
   return (
@@ -39,7 +39,6 @@ const HealthIdCard = ({ patient, emergencyContacts = [], onDownloadQR, onDownloa
       id="patient-health-card" 
       style={{
         width: '100%',
-        aspectRatio: '85/54',
         background: 'linear-gradient(135deg, #0D1B2A 0%, #0B1A29 55%, #091523 100%)',
         borderRadius: 'clamp(16px, 2.15cqw, 26px)',
         padding: 'clamp(12px, 2.7cqw, 20px) clamp(16px, 4cqw, 30px)',

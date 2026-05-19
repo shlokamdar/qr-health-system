@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import PatientService from '../services/patient.service';
@@ -85,6 +85,22 @@ const PatientDashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const dropdownRef = useRef(null);
+  const bellDesktopRef = useRef(null);
+  const bellMobileRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifications &&
+          (!dropdownRef.current || !dropdownRef.current.contains(event.target)) &&
+          (!bellDesktopRef.current || !bellDesktopRef.current.contains(event.target)) &&
+          (!bellMobileRef.current || !bellMobileRef.current.contains(event.target))) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -363,6 +379,7 @@ const PatientDashboard = () => {
           {/* Notification Bell Desktop */}
           <div className="pd-notification-wrapper" style={{ position: 'relative', marginLeft: 10 }}>
             <button 
+              ref={bellDesktopRef}
               className="pd-icon-btn" 
               onClick={() => setShowNotifications(!showNotifications)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4A5568', position: 'relative', display: 'flex', alignItems: 'center' }}
@@ -376,7 +393,7 @@ const PatientDashboard = () => {
             </button>
 
             {showNotifications && (
-              <div className="pd-notification-dropdown fade-in" style={{ position: 'absolute', top: '100%', right: 0, width: 320, background: '#fff', borderRadius: 16, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', border: '1px solid #E2E8F0', zIndex: 1000, marginTop: 12, overflow: 'hidden' }}>
+              <div ref={dropdownRef} className="pd-notification-dropdown fade-in" style={{ position: 'absolute', top: '100%', right: 0, width: 320, background: '#fff', borderRadius: 16, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', border: '1px solid #E2E8F0', zIndex: 1000, marginTop: 12, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFBFC' }}>
                   <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0D1B2A' }}>Notifications</h4>
                   <button onClick={handleMarkAllRead} style={{ fontSize: 11, color: '#3B9EE2', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Mark all as read</button>
@@ -420,7 +437,7 @@ const PatientDashboard = () => {
           <div className="pd-avatar" style={{ width: 28, height: 28, background: '#EFF6FF', color: '#3B9EE2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
             {(user?.first_name || 'P').charAt(0).toUpperCase()}
           </div>
-          <div style={{ position: 'relative' }} onClick={() => { setActiveTab('overview'); setShowNotifications(!showNotifications); }}>
+          <div ref={bellMobileRef} style={{ position: 'relative' }} onClick={() => { setActiveTab('overview'); setShowNotifications(!showNotifications); }}>
             <Icon d={ICONS.Bell} size={20} style={{ color: '#4A5568' }} />
             {notifications.filter(n => !n.is_read).length > 0 && <div style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1px solid #fff' }} />}
           </div>
