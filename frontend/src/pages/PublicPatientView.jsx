@@ -201,6 +201,7 @@ const PublicPatientView = () => {
             {showRequestModal && (
                 <OTPRequestModal 
                     patient={patient} 
+                    isPublic={true}
                     onClose={() => setShowRequestModal(false)}
                     onSuccess={(reqId, method) => {
                         setShowRequestModal(false);
@@ -214,11 +215,15 @@ const PublicPatientView = () => {
             {showEntryModal && (
                 <OTPEntryModal
                     patient={patient}
+                    isPublic={true}
                     requestId={activeRequestId}
                     deliveryMethod={deliveryMethod}
                     onClose={() => setShowEntryModal(false)}
-                    onSuccess={() => {
+                    onSuccess={(token) => {
                         setShowEntryModal(false);
+                        if (token) {
+                            localStorage.setItem('emergency_token', token);
+                        }
                         window.location.reload();
                     }}
                 />

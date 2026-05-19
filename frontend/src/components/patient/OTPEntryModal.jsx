@@ -3,7 +3,7 @@ import { ShieldAlert, X, ChevronRight, RefreshCw, AlertCircle, Clock } from 'luc
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
-const OTPEntryModal = ({ patient, requestId, deliveryMethod, onClose, onSuccess }) => {
+const OTPEntryModal = ({ patient, isPublic, requestId, deliveryMethod, onClose, onSuccess }) => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [attemptsLeft, setAttemptsLeft] = useState(5);
@@ -85,13 +85,22 @@ const OTPEntryModal = ({ patient, requestId, deliveryMethod, onClose, onSuccess 
 
         try {
             setLoading(true);
-            await api.post('otp/verify/', {
-                health_id: patient.health_id,
-                otp_code: code,
-                request_id: requestId
-            });
-            toast.success("Identity Verified. Full access granted.");
-            onSuccess();
+            if (isPublic) {
+                const res = await api.post('emergency/verify-otp/', {
+                    session_id: requestId,
+                    otp: code
+                });
+                toast.success("Identity Verified. Temporary access granted.");
+                onSuccess(res.data.emergency_access_token);
+            } else {
+                await api.post('otp/verify/', {
+                    health_id: patient.health_id,
+                    otp_code: code,
+                    request_id: requestId
+                });
+                toast.success("Identity Verified. Full access granted.");
+                onSuccess();
+            }
         } catch (err) {
             console.error(err);
             const errData = err.response?.data;

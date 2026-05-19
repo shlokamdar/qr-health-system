@@ -32,8 +32,6 @@ class PublicEmergencyContactSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_phone(self, obj):
-        if obj.phone and len(obj.phone) >= 4:
-            return '*' * (len(obj.phone) - 4) + obj.phone[-4:]
         return obj.phone
 
 

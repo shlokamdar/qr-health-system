@@ -3,8 +3,8 @@ import { ShieldAlert, X, ChevronRight, Phone, Mail, LayoutDashboard, User } from
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
-const OTPRequestModal = ({ patient, onClose, onSuccess }) => {
-    const [verifierType, setVerifierType] = useState('PATIENT');
+const OTPRequestModal = ({ patient, isPublic, onClose, onSuccess }) => {
+    const [verifierType, setVerifierType] = useState(isPublic ? 'EMERGENCY_CONTACT' : 'PATIENT');
     const [selectedContactId, setSelectedContactId] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('DASHBOARD');
     const [loading, setLoading] = useState(false);
@@ -19,19 +19,29 @@ const OTPRequestModal = ({ patient, onClose, onSuccess }) => {
 
         try {
             setLoading(true);
-            const payload = {
-                health_id: patient.health_id,
-                delivery_method: deliveryMethod,
-                verifier_type: verifierType,
-                verifier_contact_id: selectedContactId || null
-            };
-
-            const response = await api.post('otp/request/', payload);
-            toast.success("Access request sent!");
-            onSuccess(response.data.request_id, deliveryMethod);
+            let response;
+            if (isPublic) {
+                const payload = {
+                    qr_token: patient.health_id,
+                    contact_id: selectedContactId
+                };
+                response = await api.post('emergency/request-otp/', payload);
+                toast.success("Access request sent!");
+                onSuccess(response.data.session_id, response.data.delivery_method);
+            } else {
+                const payload = {
+                    health_id: patient.health_id,
+                    delivery_method: deliveryMethod,
+                    verifier_type: verifierType,
+                    verifier_contact_id: selectedContactId || null
+                };
+                response = await api.post('otp/request/', payload);
+                toast.success("Access request sent!");
+                onSuccess(response.data.request_id, deliveryMethod);
+            }
         } catch (err) {
             console.error(err);
-            toast.error(err.response?.data?.error || "Failed to request OTP. Ensure you stay authenticated as a Doctor.");
+            toast.error(err.response?.data?.error || "Failed to request OTP.");
         } finally {
             setLoading(false);
         }
@@ -60,8 +70,9 @@ const OTPRequestModal = ({ patient, onClose, onSuccess }) => {
                     <form id="otp-request-form" onSubmit={handleSubmit} className="space-y-6">
                         
                         {/* Verifier Selection */}
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                        {!isPublic && (
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block ml-1">
                                 Who will verify this request?
                             </label>
                             <div className="grid grid-cols-2 gap-3">
@@ -77,6 +88,7 @@ const OTPRequestModal = ({ patient, onClose, onSuccess }) => {
                                 </label>
                             </div>
                         </div>
+                        )}
 
                         {/* Emergency Contact Dropdown */}
                         {verifierType === 'EMERGENCY_CONTACT' && (
@@ -104,8 +116,9 @@ const OTPRequestModal = ({ patient, onClose, onSuccess }) => {
                         <div className="h-px bg-slate-200/60 w-full" />
 
                         {/* Delivery Method */}
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block ml-1">
+                        {!isPublic && (
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block ml-1">
                                 Delivery Method
                             </label>
                             <div className="space-y-2">
@@ -129,6 +142,7 @@ const OTPRequestModal = ({ patient, onClose, onSuccess }) => {
                                 ))}
                             </div>
                         </div>
+                        )}
                     </form>
                 </div>
 
