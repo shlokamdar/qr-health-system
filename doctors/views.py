@@ -19,6 +19,7 @@ from accounts.serializers import UserSerializer
 from labs.models import DiagnosticLab, LabTechnician
 from labs.serializers import LabTechnicianSerializer, LabTechnicianRegisterSerializer
 from audit.models import AccessLog
+from utils.notifications import send_registration_welcome_email
 
 
 class HospitalViewSet(viewsets.ModelViewSet):
