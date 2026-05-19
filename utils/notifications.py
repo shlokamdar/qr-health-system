@@ -219,3 +219,24 @@ def send_profile_accessed_notification(patient, actor):
     message = format_email_message(patient.user.get_full_name() or patient.user.username, content)
     if patient.user.email:
         send_email_async(subject, message, [patient.user.email])
+
+def send_emergency_contact_added_email(contact, patient):
+    """Notify someone that they have been added as an emergency contact."""
+    subject = "You've been added as an Emergency Contact on PulseID"
+    patient_name = patient.user.get_full_name() or patient.user.username
+    
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pulseid.online')
+    
+    content = f"""
+    {patient_name} just added you as their emergency contact on PulseID.
+
+    Here's what you can do if an emergency arises:
+    - You may be asked to share a One-Time PIN (OTP) with first responders or doctors scanning {patient_name}'s health card.
+    - BEWARE: Do not share the OTP with anyone unless you have received a call and verified the emergency. Always wait for a phone call before sharing the PIN.
+
+    Don't have a PulseID yet? Create your own unified digital health record at:
+    {frontend_url}
+    """
+    message = format_email_message(contact.name, content)
+    if contact.email:
+        send_email_async(subject, message, [contact.email])

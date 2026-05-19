@@ -20,7 +20,7 @@ from accounts.models import Notification
 from utils.notifications import (
     send_access_granted_email, send_access_revoked_email,
     send_otp_email, send_access_request_notification,
-    send_profile_accessed_notification
+    send_profile_accessed_notification, send_emergency_contact_added_email
 )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -139,7 +139,8 @@ class EmergencyContactViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         patient = get_object_or_404(Patient, user=self.request.user)
-        serializer.save(patient=patient)
+        instance = serializer.save(patient=patient)
+        send_emergency_contact_added_email(instance, patient)
 
 
 class PatientDocumentViewSet(viewsets.ModelViewSet):
@@ -573,7 +574,7 @@ class EmergencyOTPRequestView(APIView):
         return Response({
             "expires_in": 600,
             "delivery_method": delivery_method,
-            "session_id": session_id,
+            "session_id": otp_request.id, # Pass request ID instead of session UUID
             "request_id": otp_request.id,
             "dev_note_otp": otp_code # ONLY FOR DEV/TESTING
         })
@@ -585,37 +586,34 @@ class EmergencyOTPVerifyView(APIView):
     
     def post(self, request):
         otp = request.data.get('otp')
-        session_id = request.data.get('session_id')
+        request_id = request.data.get('session_id') # Frontend passes request_id here as session_id
         
-        if not otp or not session_id:
+        if not otp or not request_id:
             return Response({"error": "otp and session_id required."}, status=400)
             
-        cache_key = f"emerg_otp_{session_id}"
-        otp_data = cache.get(cache_key)
+        otp_request = OTPRequest.objects.filter(id=request_id).first()
         
-        if not otp_data:
+        if not otp_request or otp_request.is_revoked or otp_request.is_verified:
             return Response({"error": "OTP expired or invalid session."}, status=400)
             
-        if otp_data["attempts"] >= 5:
-            cache.delete(cache_key)
+        if otp_request.is_expired:
+            return Response({"error": "OTP has expired."}, status=400)
+            
+        if otp_request.attempts >= 5:
+            otp_request.is_revoked = True
+            otp_request.save()
             return Response({"error": "Max attempts exceeded."}, status=400)
             
-        if str(otp) != str(otp_data["otp_code"]) and str(otp) != "123456":
-            otp_data["attempts"] += 1
-            cache.set(cache_key, otp_data, timeout=600)
+        if str(otp) != str(otp_request.otp_code) and str(otp) != "123456":
+            otp_request.attempts += 1
+            otp_request.save()
             return Response({"error": "Invalid OTP."}, status=400)
             
         # Success!
-        cache.delete(cache_key)
+        otp_request.is_verified = True
+        otp_request.save()
         
-        patient = Patient.objects.get(id=otp_data["patient_id"])
-        
-        # Mark OTPRequest as verified
-        OTPRequest.objects.filter(
-            patient=patient,
-            otp_code=otp_data["otp_code"],
-            is_verified=False
-        ).update(is_verified=True)
+        patient = otp_request.patient
         
         # Issue an emergency token (JWT or simple cache token)
         emergency_access_token = str(uuid.uuid4())

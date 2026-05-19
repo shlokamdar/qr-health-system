@@ -5,7 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import AuthenticationFailed
 from .models import Notification
-from utils.notifications import send_registration_welcome_email
+from utils.notifications import send_registration_welcome_email, send_emergency_contact_added_email
 
 User = get_user_model()
 
@@ -87,13 +87,14 @@ class RegisterSerializer(serializers.ModelSerializer):
             emergency_contacts = profile_data.get('emergency_contacts', [])
             for ec_data in emergency_contacts:
                 if ec_data.get('name') and ec_data.get('phone'):  # Basic validation
-                    EmergencyContact.objects.create(
+                    ec = EmergencyContact.objects.create(
                         patient=patient,
                         name=ec_data['name'],
                         relationship=ec_data.get('relationship', ''),
                         phone=ec_data['phone'],
                         email=ec_data.get('email', '')
                     )
+                    send_emergency_contact_added_email(ec, patient)
             
         elif role == User.Role.DOCTOR:
             from doctors.models import Doctor, Hospital
