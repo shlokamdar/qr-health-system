@@ -242,3 +242,22 @@ def send_emergency_contact_added_email(contact, patient):
     body_text = f"{patient_name} added you as their emergency contact on PulseID. In an emergency, you may be asked to share a One-Time PIN (OTP).\n\nBEWARE: Do not share the OTP unless you have received a phone call and verified the emergency."
     
     _send_notification(subject, contact.email, heading, body_html, body_text, "Create PulseID Account", frontend_url)
+
+def send_hospital_approved_email(hospital_admin):
+    """Notify hospital admin that their hospital profile has been verified."""
+    subject = "PulseID Hospital Account Verified"
+    heading = f"Hello {hospital_admin.user.get_full_name() or hospital_admin.user.username},"
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://pulseid.online')
+    
+    body_html = f"Your hospital profile for <strong>{hospital_admin.hospital.name}</strong> has been successfully verified by the administration team. You can now log in and access your provider dashboard."
+    body_text = f"Your hospital profile for {hospital_admin.hospital.name} has been successfully verified by the administration team. You can now log in and access your provider dashboard."
+    
+    _send_notification(
+        subject, 
+        hospital_admin.user.email, 
+        heading, 
+        body_html, 
+        body_text, 
+        "Log In to Dashboard", 
+        f"{frontend_url}/hospital/login"
+    )

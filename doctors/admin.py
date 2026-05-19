@@ -11,7 +11,9 @@ class HospitalAdmin(admin.ModelAdmin):
     
     @admin.action(description='Verify selected hospitals')
     def verify_hospitals(self, request, queryset):
-        queryset.update(is_verified=True)
+        for hospital in queryset:
+            hospital.is_verified = True
+            hospital.save()
 
 
 @admin.register(Doctor)
@@ -23,7 +25,9 @@ class DoctorAdmin(admin.ModelAdmin):
     
     @admin.action(description='Verify selected doctors')
     def verify_doctors(self, request, queryset):
-        queryset.update(is_verified=True)
+        for doctor in queryset:
+            doctor.is_verified = True
+            doctor.save()
     
     @admin.action(description='Set authorization level to BASIC')
     def set_basic_auth(self, request, queryset):
