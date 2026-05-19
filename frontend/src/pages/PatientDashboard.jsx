@@ -218,7 +218,7 @@ const PatientDashboard = () => {
 
   const handleMarkAllRead = async () => {
     try {
-      await api.post('accounts/notifications/mark_all_as_read/');
+      await api.post('auth/notifications/mark_all_as_read/');
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
       toast.success('All marked as read');
     } catch (err) { toast.error('Action failed'); }
