@@ -511,9 +511,6 @@ class EmergencyOTPRequestView(APIView):
         is_doctor = user.is_authenticated and user.role == 'DOCTOR'
         doctor = getattr(user, 'doctor_profile', None) if is_doctor else None
         
-        if not is_doctor and not patient.allow_public_qr_access:
-            return Response({"error": "Public emergency access is disabled by the patient."}, status=403)
-            
         contact = None
         if verifier_type == 'EMERGENCY_CONTACT':
             if not contact_id:
