@@ -630,7 +630,7 @@ const PatientDashboard = () => {
         {activeTab === 'history' && (
           <div className="pd-card">
             <div className="pd-section-heading"><Icon d={ICONS.History} /> Full Medical Timeline</div>
-            <MedicalRecordList records={recentRecords} />
+            <MedicalRecordList records={allMedicalRecords} />
           </div>
         )}
 

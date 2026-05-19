@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../utils/api';
 
 const Icon = ({ d, size = 20, className = '' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -14,6 +15,13 @@ const ATTACH  = 'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.
 
 const MedicalRecordList = ({ records }) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
+
+  const getFileUrl = (url) => {
+      if (!url) return null;
+      if (url.startsWith('http')) return url;
+      const baseUrl = api.defaults.baseURL ? api.defaults.baseURL.replace(/\/api\/?$/, '') : '';
+      return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   return (
     <div>
@@ -126,7 +134,7 @@ const MedicalRecordList = ({ records }) => {
                 )}
               </div>
               {selectedRecord.file && (
-                <a href={selectedRecord.file} target="_blank" rel="noopener noreferrer"
+                <a href={getFileUrl(selectedRecord.file)} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#EFF6FF', color: '#3B9EE2', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 16px', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
                   <Icon d={ATTACH} size={16} /> View Attached File
                 </a>
