@@ -18,6 +18,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'hospital', 'created_at', 'updated_at']
 
     def get_doctor_count(self, obj):
+        if not obj: return 0
         return obj.doctors.count()
 
 
@@ -35,6 +36,7 @@ class HospitalSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'is_verified', 'created_at', 'updated_at']
     
     def get_doctor_count(self, obj):
+        if not obj: return 0
         return obj.doctors.filter(is_verified=True).count()
 
 
@@ -124,12 +126,15 @@ class DoctorSerializer(serializers.ModelSerializer):
         return None
 
     def get_license_document_url(self, obj):
+        if not obj: return None
         return self._build_url(obj.license_document)
 
     def get_degree_certificate_url(self, obj):
+        if not obj: return None
         return self._build_url(obj.degree_certificate)
 
     def get_identity_proof_url(self, obj):
+        if not obj: return None
         return self._build_url(obj.identity_proof)
 
     class Meta:
