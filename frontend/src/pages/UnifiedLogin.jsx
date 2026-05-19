@@ -376,9 +376,14 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
         } catch (err) {
             setLoading(false);
             console.error(err);
-            const message = err.response?.data?.registration_number?.[0] || err.response?.data?.email?.[0] || 'Registration failed. Please try again.';
-            setError(message);
-            toast.error(message);
+            if (err.response && err.response.data) {
+                const errorMsg = Object.values(err.response.data).flat().join(' ');
+                setError(errorMsg || "Registration failed. Please try again.");
+                toast.error(errorMsg || "Registration failed. Please try again.");
+            } else {
+                setError("Registration failed. Please try again.");
+                toast.error("Registration failed. Please try again.");
+            }
         }
     };
 
