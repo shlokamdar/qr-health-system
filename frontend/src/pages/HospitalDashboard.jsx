@@ -206,14 +206,6 @@ const HospitalDashboard = () => {
                             <span>{hospitalInfo?.address}</span>
                         </div>
                     </div>
-
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl font-bold hover:bg-white/20 transition-all transition-duration-300"
-                    >
-                        <LogOut size={20} />
-                        <span>Sign Out</span>
-                    </button>
                 </div>
 
                 {/* Quick Stats */}
