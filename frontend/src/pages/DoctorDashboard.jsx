@@ -125,7 +125,7 @@ const DoctorDashboard = () => {
     const handleCreateTicket = async (e) => {
         e.preventDefault();
         try {
-            await api.post('support/tickets/create/', ticketForm);
+            await api.post('support/tickets/', ticketForm);
             toast.success('Ticket submitted successfully!');
             setTicketForm({ subject: '', description: '', priority: 'MEDIUM' });
             setShowTicketModal(false);
