@@ -107,7 +107,11 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
             'blood_group': request.data.get('blood_group', ''),
         }
         
-        patient = Patient.objects.create(user=user, **patient_data)
+        # The Patient profile is already created by the post_save signal on User creation
+        patient = Patient.objects.get(user=user)
+        for attr, value in patient_data.items():
+            setattr(patient, attr, value)
+        patient.save()
         
         AccessLog.objects.create(
             actor=request.user,

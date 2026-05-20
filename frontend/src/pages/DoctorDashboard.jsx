@@ -389,7 +389,12 @@ const DoctorDashboard = () => {
             });
         } catch (err) {
             console.error(err);
-            toast.error('Failed to register patient');
+            if (err.response && err.response.data) {
+                const errorMsg = Object.values(err.response.data).flat().join(' ');
+                toast.error(errorMsg || 'Failed to register patient');
+            } else {
+                toast.error('Failed to register patient');
+            }
         }
     };
 

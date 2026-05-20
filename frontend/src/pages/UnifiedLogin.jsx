@@ -184,17 +184,50 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
     }, [registerRole]);
 
 
-    // Check Username Availability
+    // Get values based on active registration role
+    const getCurrentUsername = () => {
+        if (registerRole === 'PATIENT') return patientData.username;
+        if (registerRole === 'DOCTOR') return doctorData.username;
+        if (registerRole === 'LAB_TECH') return labTechData.username;
+        if (registerRole === 'HOSPITAL_ADMIN') return hospitalData.admin_username;
+        return '';
+    };
+
+    const getCurrentEmail = () => {
+        if (registerRole === 'PATIENT') return patientData.email;
+        if (registerRole === 'DOCTOR') return doctorData.email;
+        if (registerRole === 'LAB_TECH') return labTechData.email;
+        if (registerRole === 'HOSPITAL_ADMIN') return hospitalData.email;
+        return '';
+    };
+
+    const getCurrentPhone = () => {
+        if (registerRole === 'PATIENT') return patientData.phone;
+        if (registerRole === 'DOCTOR') return doctorData.phone;
+        if (registerRole === 'HOSPITAL_ADMIN') return hospitalData.phone;
+        return '';
+    };
+
+    // Reset availability checking states when role or active tab changes
     useEffect(() => {
+        setUsernameAvailable(null);
+        setEmailAvailable(null);
+        setPhoneAvailable(null);
+        setError('');
+    }, [registerRole, activeTab]);
+
+    // Check Username Availability (generalized)
+    useEffect(() => {
+        const username = getCurrentUsername();
         const checkAvailability = async () => {
-            if (!patientData.username || patientData.username.length < 3) {
+            if (!username || username.length < 3) {
                 setUsernameAvailable(null);
                 return;
             }
 
             setIsCheckingUsername(true);
             try {
-                const response = await api.get(`auth/check-username/?username=${patientData.username}`);
+                const response = await api.get(`auth/check-username/?username=${username}`);
                 setUsernameAvailable(response.data.available);
             } catch (err) {
                 console.error("Failed to check username", err);
@@ -206,19 +239,20 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
         const timeoutId = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timeoutId);
-    }, [patientData.username]);
+    }, [patientData.username, doctorData.username, labTechData.username, hospitalData.admin_username, registerRole]);
 
-    // Check Email Availability
+    // Check Email Availability (generalized)
     useEffect(() => {
+        const email = getCurrentEmail();
         const checkAvailability = async () => {
-            if (registerRole !== 'PATIENT' || !patientData.email || !isEmailValid(patientData.email)) {
+            if (!email || !isEmailValid(email)) {
                 setEmailAvailable(null);
                 return;
             }
 
             setIsCheckingEmail(true);
             try {
-                const response = await api.get(`auth/check-email/?email=${patientData.email}`);
+                const response = await api.get(`auth/check-email/?email=${email}`);
                 setEmailAvailable(response.data.available);
             } catch (err) {
                 console.error("Failed to check email", err);
@@ -230,19 +264,20 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
         const timeoutId = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timeoutId);
-    }, [patientData.email, registerRole]);
+    }, [patientData.email, doctorData.email, labTechData.email, hospitalData.email, registerRole]);
 
-    // Check Phone Availability
+    // Check Phone Availability (generalized)
     useEffect(() => {
+        const phone = getCurrentPhone();
         const checkAvailability = async () => {
-            if (registerRole !== 'PATIENT' || !patientData.phone || patientData.phone.length < 10) {
+            if (!phone || phone.length < 10) {
                 setPhoneAvailable(null);
                 return;
             }
 
             setIsCheckingPhone(true);
             try {
-                const response = await api.get(`auth/check-phone/?phone=${patientData.phone}`);
+                const response = await api.get(`auth/check-phone/?phone=${phone}`);
                 setPhoneAvailable(response.data.available);
             } catch (err) {
                 console.error("Failed to check phone", err);
@@ -254,7 +289,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
         const timeoutId = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timeoutId);
-    }, [patientData.phone, registerRole]);
+    }, [patientData.phone, doctorData.phone, hospitalData.phone, registerRole]);
 
     // Generate Suggested Usernames for Doctor
     useEffect(() => {
@@ -268,30 +303,6 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             ]);
         }
     }, [doctorData.firstName, doctorData.lastName, registerRole]);
-
-    // Check Doctor Username Availability
-    useEffect(() => {
-        const checkAvailability = async () => {
-            if (!doctorData.username || doctorData.username.length < 3) {
-                setUsernameAvailable(null);
-                return;
-            }
-
-            setIsCheckingUsername(true);
-            try {
-                const response = await api.get(`auth/check-username/?username=${doctorData.username}`);
-                setUsernameAvailable(response.data.available);
-            } catch (err) {
-                console.error("Failed to check username", err);
-                setUsernameAvailable(null);
-            } finally {
-                setIsCheckingUsername(false);
-            }
-        };
-
-        const timeoutId = setTimeout(checkAvailability, 500);
-        return () => clearTimeout(timeoutId);
-    }, [doctorData.username]);
 
     // Fetch Labs for Lab Tech Registration
     useEffect(() => {
@@ -310,41 +321,77 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
 
     const handleHospitalNext = () => {
-        if (hospitalStep === 1 && !hospitalData.admin_username) {
-            const message = "Admin Username is required.";
-            setError(message);
-            toast.error(message);
-            return;
+        if (hospitalStep === 1) {
+            const { admin_username, email, admin_password, confirmPassword } = hospitalData;
+            if (!admin_username) {
+                const message = "Admin Username is required.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(admin_username)) {
+                const message = "Username can only contain letters, numbers, and underscores.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (!email) {
+                const message = "Official Hospital Email is required.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (!isEmailValid(email)) {
+                const message = "Please enter a valid email address.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (usernameAvailable === false) {
+                const message = "Username is already taken. Please choose another.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (emailAvailable === false) {
+                const message = "Email is already registered. Please login instead.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (!admin_password) {
+                const message = "Password is required.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (getPasswordStrength(admin_password) < 2) {
+                const message = "Password is too weak. Please use mix of letters and numbers.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (admin_password !== confirmPassword) {
+                const message = "Passwords do not match";
+                setError(message);
+                toast.error(message);
+                return;
+            }
         }
-        if (hospitalStep === 1 && !hospitalData.email) {
-            const message = "Official Hospital Email is required.";
-            setError(message);
-            toast.error(message);
-            return;
-        }
-        if (hospitalStep === 1 && !isEmailValid(hospitalData.email)) {
-            const message = "Please enter a valid email address.";
-            setError(message);
-            toast.error(message);
-            return;
-        }
-        if (hospitalStep === 1 && !hospitalData.admin_password) {
-            const message = "Password is required.";
-            setError(message);
-            toast.error(message);
-            return;
-        }
-        if (hospitalStep === 1 && hospitalData.admin_password !== hospitalData.confirmPassword) {
-            const message = "Passwords do not match";
-            setError(message);
-            toast.error(message);
-            return;
-        }
-        if (hospitalStep === 2 && (!hospitalData.name || !hospitalData.registration_number || !hospitalData.phone)) {
-            const message = 'Please fill all identity fields';
-            setError(message);
-            toast.error(message);
-            return;
+        if (hospitalStep === 2) {
+            const { name, registration_number, phone } = hospitalData;
+            if (!name || !registration_number || !phone) {
+                const message = 'Please fill all identity fields';
+                setError(message);
+                toast.error(message);
+                return;
+            }
+            if (phoneAvailable === false) {
+                const message = "Phone number is already associated with another account.";
+                setError(message);
+                toast.error(message);
+                return;
+            }
         }
         if (hospitalStep === 3 && !hospitalData.address) {
             const message = 'Please enter the hospital address';
@@ -683,19 +730,46 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
     const handleDoctorNext = () => {
         if (doctorStep === 1) {
-            const { firstName, lastName, email, password, confirmPassword } = doctorData;
+            const { firstName, lastName, email, password, confirmPassword, username } = doctorData;
             if (!firstName) { setError("First Name is required."); toast.error("First Name is required."); return; }
             if (!lastName) { setError("Last Name is required."); toast.error("Last Name is required."); return; }
+            if (!username) { setError("Username is required."); toast.error("Username is required."); return; }
             if (!email) { setError("Email address is required."); toast.error("Email address is required."); return; }
             if (!password) { setError("Password is required."); toast.error("Password is required."); return; }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                setError("Username can only contain letters, numbers, and underscores.");
+                toast.error("Username invalid format.");
+                return;
+            }
             if (!isEmailValid(email)) {
                 setError("Please enter a valid email address."); toast.error("Invalid email."); return;
+            }
+            if (usernameAvailable === false) {
+                setError("Username is already taken. Please choose another.");
+                toast.error("Username unavailable.");
+                return;
+            }
+            if (emailAvailable === false) {
+                setError("Email is already registered. Please login instead.");
+                toast.error("Email already exists.");
+                return;
             }
             if (getPasswordStrength(password) < 2) {
                 setError("Password is too weak."); toast.error("Weak password."); return;
             }
             if (password !== confirmPassword) {
                 setError("Passwords do not match."); toast.error("Passwords mismatch."); return;
+            }
+        }
+        if (doctorStep === 2) {
+            const { dob, phone, address, city, pin } = doctorData;
+            if (!dob) { setError("Date of Birth is required."); toast.error("Date of Birth is required."); return; }
+            if (!phone) { setError("Phone number is required."); toast.error("Phone number is required."); return; }
+            if (!address || !city || !pin) { setError("Address details are required."); toast.error("Address details are required."); return; }
+            if (phoneAvailable === false) {
+                setError("Phone number is already associated with another account.");
+                toast.error("Phone number already exists.");
+                return;
             }
         }
         setError("");
@@ -794,10 +868,30 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
             const { firstName, lastName, email, password, confirmPassword, username } = labTechData;
             if (!firstName) { setError("First Name is required."); toast.error("First Name is required."); return; }
             if (!lastName) { setError("Last Name is required."); toast.error("Last Name is required."); return; }
-            if (!email) { setError("Email address is required."); toast.error("Email address is required."); return; }
-            if (!isEmailValid(email)) { setError("Please enter a valid email address."); toast.error("Invalid email."); return; }
             if (!username) { setError("Username is required."); toast.error("Username is required."); return; }
+            if (!email) { setError("Email address is required."); toast.error("Email address is required."); return; }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                setError("Username can only contain letters, numbers, and underscores.");
+                toast.error("Username invalid format.");
+                return;
+            }
+            if (!isEmailValid(email)) { setError("Please enter a valid email address."); toast.error("Invalid email."); return; }
+            if (usernameAvailable === false) {
+                setError("Username is already taken. Please choose another.");
+                toast.error("Username unavailable.");
+                return;
+            }
+            if (emailAvailable === false) {
+                setError("Email is already registered. Please login instead.");
+                toast.error("Email already exists.");
+                return;
+            }
             if (!password) { setError("Password is required."); toast.error("Password is required."); return; }
+            if (getPasswordStrength(password) < 2) {
+                setError("Password is too weak. Please use mix of letters and numbers.");
+                toast.error("Weak password.");
+                return;
+            }
             if (password !== confirmPassword) {
                 setError("Passwords do not match."); toast.error("Passwords mismatch."); return;
             }
@@ -1506,7 +1600,29 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
 
                                             <div>
                                                 <label className={labelStyle}>Email Address</label>
-                                                <input type="email" className={inputStyle} value={doctorData.email} onChange={e => setDoctorData({ ...doctorData, email: e.target.value })} placeholder="doctor@hospital.com" />
+                                                <div className="relative">
+                                                    <input
+                                                        type="email"
+                                                        className={`${inputStyle} pr-10 ${emailAvailable === true && isEmailValid(doctorData.email) ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                            (emailAvailable === false || (doctorData.email && doctorData.email.length > 5 && !isEmailValid(doctorData.email))) ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                        }`}
+                                                        value={doctorData.email}
+                                                        onChange={e => setDoctorData({ ...doctorData, email: e.target.value })}
+                                                        placeholder="doctor@hospital.com"
+                                                    />
+                                                    <div className="absolute right-3 top-3.5">
+                                                        {isCheckingEmail ? (
+                                                            <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                        ) : (doctorData.email && doctorData.email.length > 5) ? (
+                                                            (emailAvailable === true && isEmailValid(doctorData.email)) ? (
+                                                                <Check className="w-5 h-5 text-green-500" />
+                                                            ) : (emailAvailable === false || !isEmailValid(doctorData.email)) ? (
+                                                                <X className="w-5 h-5 text-red-500" />
+                                                            ) : null
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                                {emailAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Email is already registered.</p>}
                                             </div>
 
                                             <div>
@@ -1553,7 +1669,29 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                 </div>
                                                 <div className="flex-1">
                                                     <label className={labelStyle}>Phone Number</label>
-                                                    <input type="tel" className={inputStyle} value={doctorData.phone || ''} onChange={e => setDoctorData({ ...doctorData, phone: e.target.value })} placeholder="+91 98765 43210" />
+                                                    <div className="relative">
+                                                        <input
+                                                            type="tel"
+                                                            className={`${inputStyle} pr-10 ${phoneAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                                phoneAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                            }`}
+                                                            value={doctorData.phone || ''}
+                                                            onChange={e => setDoctorData({ ...doctorData, phone: e.target.value })}
+                                                            placeholder="+91 98765 43210"
+                                                        />
+                                                        <div className="absolute right-3 top-3.5">
+                                                            {isCheckingPhone ? (
+                                                                <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                            ) : (doctorData.phone && doctorData.phone.length >= 10) ? (
+                                                                phoneAvailable === true ? (
+                                                                    <Check className="w-5 h-5 text-green-500" />
+                                                                ) : phoneAvailable === false ? (
+                                                                    <X className="w-5 h-5 text-red-500" />
+                                                                ) : null
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                    {phoneAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Phone number is already associated with another account.</p>}
                                                 </div>
                                             </div>
 
@@ -1743,11 +1881,55 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                         <div className="space-y-5">
                                             <div>
                                                 <label className={labelStyle}>Admin Username</label>
-                                                <input type="text" className={inputStyle} value={hospitalData.admin_username} onChange={e => setHospitalData({ ...hospitalData, admin_username: e.target.value })} placeholder="hospital_admin" />
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        className={`${inputStyle} pr-10 ${usernameAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                            usernameAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                            }`}
+                                                        value={hospitalData.admin_username || ''}
+                                                        onChange={e => setHospitalData({ ...hospitalData, admin_username: e.target.value })}
+                                                        placeholder="hospital_admin"
+                                                    />
+                                                    <div className="absolute right-3 top-3.5">
+                                                        {isCheckingUsername ? (
+                                                            <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                        ) : (hospitalData.admin_username && hospitalData.admin_username.length >= 3) ? (
+                                                            usernameAvailable === true ? (
+                                                                <Check className="w-5 h-5 text-green-500" />
+                                                            ) : usernameAvailable === false ? (
+                                                                <X className="w-5 h-5 text-red-500" />
+                                                            ) : null
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                                {usernameAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Username is already taken.</p>}
                                             </div>
                                             <div>
                                                 <label className={labelStyle}>Official Hospital Email</label>
-                                                <input type="email" className={inputStyle} value={hospitalData.email} onChange={e => setHospitalData({ ...hospitalData, email: e.target.value })} placeholder="admin@hospital.com" />
+                                                <div className="relative">
+                                                    <input
+                                                        type="email"
+                                                        className={`${inputStyle} pr-10 ${emailAvailable === true && isEmailValid(hospitalData.email) ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                            (emailAvailable === false || (hospitalData.email && hospitalData.email.length > 5 && !isEmailValid(hospitalData.email))) ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                        }`}
+                                                        value={hospitalData.email}
+                                                        onChange={e => setHospitalData({ ...hospitalData, email: e.target.value })}
+                                                        placeholder="admin@hospital.com"
+                                                    />
+                                                    <div className="absolute right-3 top-3.5">
+                                                        {isCheckingEmail ? (
+                                                            <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                        ) : (hospitalData.email && hospitalData.email.length > 5) ? (
+                                                            (emailAvailable === true && isEmailValid(hospitalData.email)) ? (
+                                                                <Check className="w-5 h-5 text-green-500" />
+                                                            ) : (emailAvailable === false || !isEmailValid(hospitalData.email)) ? (
+                                                                <X className="w-5 h-5 text-red-500" />
+                                                            ) : null
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                                {emailAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Email is already registered.</p>}
                                             </div>
                                             <div className="flex gap-4">
                                                 <div className="flex-1">
@@ -1776,7 +1958,29 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                 </div>
                                                 <div className="flex-1">
                                                     <label className={labelStyle}>Contact</label>
-                                                    <input type="text" className={inputStyle} value={hospitalData.phone} onChange={e => setHospitalData({ ...hospitalData, phone: e.target.value })} placeholder="+1 234 567 890" />
+                                                    <div className="relative">
+                                                        <input
+                                                            type="text"
+                                                            className={`${inputStyle} pr-10 ${phoneAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                                phoneAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                            }`}
+                                                            value={hospitalData.phone}
+                                                            onChange={e => setHospitalData({ ...hospitalData, phone: e.target.value })}
+                                                            placeholder="+1 234 567 890"
+                                                        />
+                                                        <div className="absolute right-3 top-3.5">
+                                                            {isCheckingPhone ? (
+                                                                <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                            ) : (hospitalData.phone && hospitalData.phone.length >= 10) ? (
+                                                                phoneAvailable === true ? (
+                                                                    <Check className="w-5 h-5 text-green-500" />
+                                                                ) : phoneAvailable === false ? (
+                                                                    <X className="w-5 h-5 text-red-500" />
+                                                                ) : null
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                    {phoneAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Phone number is already associated with another account.</p>}
                                                 </div>
                                             </div>
                                             <div className="flex gap-4 pt-4">
@@ -1866,24 +2070,61 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                 <div className="flex-1">
                                                     <label className={labelStyle}>Last Name</label>
                                                     <input type="text" className={inputStyle} value={labTechData.lastName} onChange={e => setLabTechData({ ...labTechData, lastName: e.target.value })} placeholder="Smith" />
-                                                </div>
                                             </div>
 
-                                            <div>
-                                                <label className={labelStyle}>Choose a Username</label>
-                                                <input
-                                                    type="text"
-                                                    className={inputStyle}
-                                                    value={labTechData.username}
-                                                    onChange={e => setLabTechData({ ...labTechData, username: e.target.value.toLowerCase() })}
-                                                    placeholder="labtech_jane"
-                                                />
-                                            </div>
+                                             <div>
+                                                 <label className={labelStyle}>Choose a Username</label>
+                                                 <div className="relative">
+                                                     <input
+                                                         type="text"
+                                                         className={`${inputStyle} pr-10 ${usernameAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                             usernameAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                             }`}
+                                                         value={labTechData.username}
+                                                         onChange={e => setLabTechData({ ...labTechData, username: e.target.value.toLowerCase() })}
+                                                         placeholder="labtech_jane"
+                                                     />
+                                                     <div className="absolute right-3 top-3.5">
+                                                         {isCheckingUsername ? (
+                                                             <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                         ) : (labTechData.username && labTechData.username.length >= 3) ? (
+                                                             usernameAvailable === true ? (
+                                                                 <Check className="w-5 h-5 text-green-500" />
+                                                             ) : usernameAvailable === false ? (
+                                                                 <X className="w-5 h-5 text-red-500" />
+                                                             ) : null
+                                                         ) : null}
+                                                     </div>
+                                                 </div>
+                                                 {usernameAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Username is already taken.</p>}
+                                             </div>
 
-                                            <div>
-                                                <label className={labelStyle}>Email Address</label>
-                                                <input type="email" className={inputStyle} value={labTechData.email} onChange={e => setLabTechData({ ...labTechData, email: e.target.value })} placeholder="jane@lab.com" />
-                                            </div>
+                                             <div>
+                                                 <label className={labelStyle}>Email Address</label>
+                                                 <div className="relative">
+                                                     <input
+                                                         type="email"
+                                                         className={`${inputStyle} pr-10 ${emailAvailable === true && isEmailValid(labTechData.email) ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
+                                                             (emailAvailable === false || (labTechData.email && labTechData.email.length > 5 && !isEmailValid(labTechData.email))) ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''
+                                                         }`}
+                                                         value={labTechData.email}
+                                                         onChange={e => setLabTechData({ ...labTechData, email: e.target.value })}
+                                                         placeholder="jane@lab.com"
+                                                     />
+                                                     <div className="absolute right-3 top-3.5">
+                                                         {isCheckingEmail ? (
+                                                             <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                                                         ) : (labTechData.email && labTechData.email.length > 5) ? (
+                                                             (emailAvailable === true && isEmailValid(labTechData.email)) ? (
+                                                                 <Check className="w-5 h-5 text-green-500" />
+                                                             ) : (emailAvailable === false || !isEmailValid(labTechData.email)) ? (
+                                                                 <X className="w-5 h-5 text-red-500" />
+                                                             ) : null
+                                                         ) : null}
+                                                     </div>
+                                                 </div>
+                                                 {emailAvailable === false && <p className="text-xs text-red-500 mt-1 font-medium">Email is already registered.</p>}
+                                             </div>
 
                                             <div className="flex gap-4">
                                                 <div className="flex-1">

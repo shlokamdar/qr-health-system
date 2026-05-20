@@ -34,12 +34,12 @@ FRONTEND_URL = config('FRONTEND_URL', default='https://pulseid.online')
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,https://pulseid.pythonanywhere.com', cast=Csv())
 # Add FRONTEND_URL to CORS origins if it's not already there
 if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+    if isinstance(CORS_ALLOWED_ORIGINS, list): CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,https://pulseid.pythonanywhere.com', cast=Csv())
 # Add FRONTEND_URL to CSRF trusted origins if it's not already there
 if FRONTEND_URL and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
+    if isinstance(CSRF_TRUSTED_ORIGINS, list): CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 
 # Application definition
