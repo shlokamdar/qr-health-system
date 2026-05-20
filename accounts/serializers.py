@@ -50,6 +50,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         degree_certificate = validated_data.get('degree_certificate')
         identity_proof = validated_data.get('identity_proof')
         
+        is_staff = False
+        is_superuser = False
+        if role == User.Role.ADMIN:
+            is_staff = True
+            is_superuser = True
+
         user = User.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password'],
@@ -57,6 +63,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             role=role,
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
+            is_staff=is_staff,
+            is_superuser=is_superuser,
         )
 
         # Create specific profile based on role

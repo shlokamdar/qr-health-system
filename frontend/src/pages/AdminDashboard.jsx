@@ -521,6 +521,7 @@ const CreateUserModal = ({ isOpen, onClose, hospitals, labs, onSuccess }) => {
         { value: 'DOCTOR', label: 'Doctor', icon: Stethoscope },
         { value: 'LAB_TECH', label: 'Lab Technician', icon: FlaskConical },
         { value: 'HOSPITAL_ADMIN', label: 'Hospital Admin', icon: ShieldCheck },
+        { value: 'ADMIN', label: 'System Admin', icon: Shield },
     ];
 
     return (
@@ -540,7 +541,7 @@ const CreateUserModal = ({ isOpen, onClose, hospitals, labs, onSuccess }) => {
                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto leading-relaxed">
                         <div className="md:col-span-2">
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">User Role</label>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                                 {roles.map(r => (
                                     <button
                                         key={r.value}
