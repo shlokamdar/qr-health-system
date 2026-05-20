@@ -515,7 +515,6 @@ const PatientDashboard = () => {
             { id: 'prescriptions', label: 'Prescriptions', icon: 'Pill' },
             { id: 'lab_reports', label: 'Lab Reports', icon: 'FlaskConical' },
             { id: 'sharing', label: 'Sharing & Access', icon: 'Shield', dot: stats.pendingRequests > 0 ? '#F97316' : null },
-            { id: 'history', label: 'Full History', icon: 'History' },
             { id: 'emergency_contacts', label: 'Emergency Contacts', icon: 'Users', dot: emergencyContacts.length === 0 ? '#3B9EE2' : null },
             { id: 'support', label: 'Support & Help', icon: 'LifeBuoy' },
           ].map(item => (

@@ -50,7 +50,6 @@ const MobileNav = ({ activeTab, setActiveTab, unreadCount, logout }) => {
     { id: 'appointments', label: 'Appointments', icon: 'Calendar' },
     { id: 'prescriptions', label: 'Prescriptions', icon: 'Pill' },
     { id: 'lab_reports', label: 'Lab Reports', icon: 'FlaskConical' },
-    { id: 'history', label: 'History', icon: 'History' },
     { id: 'emergency_contacts', label: 'Emergency Contacts', icon: 'Users' },
   ];
 
