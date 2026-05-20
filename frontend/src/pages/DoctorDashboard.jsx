@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import DoctorService from '../services/doctor.service';
 import PatientService from '../services/patient.service';
+import labService from '../services/lab.service';
 import Header from '../components/Header';
 import DashboardStats from '../components/doctor/DashboardStats';
 import PatientSearch from '../components/doctor/PatientSearch';
@@ -55,6 +56,7 @@ const DoctorDashboard = () => {
     const [searchId, setSearchId] = useState('');
     const [patientResult, setPatientResult] = useState(null);
     const [records, setRecords] = useState([]);
+    const [labReports, setLabReports] = useState([]);
     const [consultations, setConsultations] = useState([]);
     const [myConsultations, setMyConsultations] = useState([]);
     const [tickets, setTickets] = useState([]);
@@ -269,9 +271,13 @@ const DoctorDashboard = () => {
                             DoctorService.getPatientHistory(healthId)
                                 .then(consData => setConsultations(consData))
                                 .catch(err => { console.warn('Could not load history:', err); setConsultations([]); });
+                            labService.getPatientReports(healthId)
+                                .then(repData => setLabReports(Array.isArray(repData) ? repData : repData.results || []))
+                                .catch(err => { console.warn('Could not load lab reports:', err); setLabReports([]); });
                         } else {
                             setRecords([]);
                             setConsultations([]);
+                            setLabReports([]);
                         }
                     })
                     .catch(() => {
@@ -329,7 +335,7 @@ const DoctorDashboard = () => {
 
         setPatientResult(data);
 
-        // Step 2: Secondary data (records + history) — non-fatal, fail silently
+        // Step 2: Secondary data (records + history + lab reports) — non-fatal, fail silently
         if (data.has_full_access) {
             try {
                 const recData = await PatientService.getRecords(idToSearch);
@@ -346,9 +352,18 @@ const DoctorDashboard = () => {
                 console.warn('Could not load consultation history:', err);
                 setConsultations([]);
             }
+
+            try {
+                const repData = await labService.getPatientReports(idToSearch);
+                setLabReports(Array.isArray(repData) ? repData : repData.results || []);
+            } catch (err) {
+                console.warn('Could not load lab reports:', err);
+                setLabReports([]);
+            }
         } else {
             setRecords([]);
             setConsultations([]);
+            setLabReports([]);
         }
 
         // Default to consultation tab when patient is loaded
@@ -825,14 +840,15 @@ const DoctorDashboard = () => {
                                                                         <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Medical Ledger</h3>
                                                                     </div>
                                                                     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-                                                                        <span>{records?.length || 0} Documents Encrypted</span>
+                                                                        <span>{(records?.length || 0) + (labReports?.length || 0)} Documents Encrypted</span>
                                                                     </div>
                                                                 </div>
                                                                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-4">
-                                                                    <MedicalRecordList records={records || []} />
+                                                                    <MedicalRecordList records={records || []} labReports={labReports || []} />
                                                                 </div>
                                                             </div>
                                                         )}
+
 
                                                         {/* New Consultation */}
                                                         {patientSubTab === 'consultation' && (

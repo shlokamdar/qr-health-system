@@ -1,33 +1,46 @@
 from django.core.management.base import BaseCommand
 from labs.models import LabTest
 
+LAB_TESTS = [
+    {"name": "Complete Blood Count (CBC)", "code": "CBC"},
+    {"name": "Lipid Profile", "code": "LIPID"},
+    {"name": "Thyroid Function Test (TFT)", "code": "TFT"},
+    {"name": "Urinalysis", "code": "URINE"},
+    {"name": "COVID-19 RT-PCR", "code": "COVID_PCR"},
+    {"name": "Liver Function Test (LFT)", "code": "LFT"},
+    {"name": "Kidney Function Test (KFT)", "code": "KFT"},
+    {"name": "HbA1c", "code": "HBA1C"},
+    {"name": "Blood Glucose Test", "code": "GLUCOSE"},
+    {"name": "ECG", "code": "ECG"},
+    {"name": "Vitamin D", "code": "VIT_D"},
+    {"name": "Vitamin B12", "code": "VIT_B12"},
+    {"name": "Chest X-Ray", "code": "XRAY_CHEST"},
+    {"name": "Ultrasound", "code": "ULTRASOUND"},
+]
+
+
 class Command(BaseCommand):
-    help = 'Seed initial lab tests'
+    help = "Seed the LabTest catalog with all 14 standard diagnostic test types."
 
-    def handle(self, *args, **kwargs):
-        tests = [
-            {'id': 1, 'name': 'Complete Blood Count (CBC)', 'code': 'CBC', 'description': 'Measures different parts of the blood.'},
-            {'id': 2, 'name': 'Lipid Profile', 'code': 'LIPID', 'description': 'Measures cholesterol and triglycerides.'},
-            {'id': 3, 'name': 'Thyroid Function Test (TFT)', 'code': 'TFT', 'description': 'Checks how well your thyroid is working.'},
-            {'id': 4, 'name': 'Urinalysis', 'code': 'URINE', 'description': 'Examines the appearance, concentration and content of urine.'},
-            {'id': 5, 'name': 'COVID-19 RT-PCR', 'code': 'RTPCR', 'description': 'Detects SARS-CoV-2 viral RNA.'},
-            {'id': 6, 'name': 'Liver Function Test (LFT)', 'code': 'LFT', 'description': 'Measures levels of proteins, liver enzymes, and bilirubin.'},
-            {'id': 7, 'name': 'Kidney Function Test (KFT)', 'code': 'KFT', 'description': 'Evaluates how well kidneys are working.'},
-            {'id': 8, 'name': 'HbA1c', 'code': 'HBA1C', 'description': 'Average blood sugar levels over the past 3 months.'},
-            {'id': 9, 'name': 'Blood Glucose Test', 'code': 'GLUCOSE', 'description': 'Measures sugar levels in the blood.'},
-            {'id': 10, 'name': 'ECG', 'code': 'ECG', 'description': 'Records the electrical signal from the heart.'},
-            {'id': 11, 'name': 'Vitamin D', 'code': 'VITD', 'description': 'Measures vitamin D levels.'},
-            {'id': 12, 'name': 'Vitamin B12', 'code': 'VITB12', 'description': 'Measures vitamin B12 levels.'},
-            {'id': 13, 'name': 'Chest X-Ray', 'code': 'CXRAY', 'description': 'Produces images of the heart, lungs, and blood vessels.'},
-            {'id': 14, 'name': 'Ultrasound', 'code': 'ULTRASOUND', 'description': 'Uses sound waves to produce pictures of the inside of the body.'},
-        ]
+    def handle(self, *args, **options):
+        created_count = 0
+        updated_count = 0
 
-        for test_data in tests:
-            test, created = LabTest.objects.update_or_create(
-                id=test_data['id'],
-                defaults={'name': test_data['name'], 'code': test_data['code'], 'description': test_data['description']}
+        for test in LAB_TESTS:
+            obj, created = LabTest.objects.update_or_create(
+                code=test["code"],
+                defaults={"name": test["name"]},
             )
             if created:
-                self.stdout.write(self.style.SUCCESS(f'Created test: {test.name}'))
+                created_count += 1
+                self.stdout.write(self.style.SUCCESS(f"  [CREATED] {obj}"))
             else:
-                self.stdout.write(self.style.SUCCESS(f'Updated test: {test.name}'))
+                updated_count += 1
+                self.stdout.write(f"  [EXISTS]  {obj}")
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\nDone! {created_count} created, {updated_count} already existed. "
+                f"Total: {LabTest.objects.count()} lab tests in DB."
+            )
+        )
