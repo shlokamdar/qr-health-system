@@ -37,6 +37,13 @@ const HospitalDashboard = () => {
         name: '',
         description: ''
     });
+    const [profileForm, setProfileForm] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        address: ''
+    });
+    const [updatingProfile, setUpdatingProfile] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -52,6 +59,14 @@ const HospitalDashboard = () => {
                 ]);
                 setStats(s);
                 setHospitalInfo(h);
+                if (h) {
+                    setProfileForm({
+                        name: h.name || '',
+                        phone: h.phone || '',
+                        email: h.email || '',
+                        address: h.address || ''
+                    });
+                }
                 setDoctors(d);
                 setLabs(l);
                 setTechnicians(t);
@@ -66,6 +81,26 @@ const HospitalDashboard = () => {
         };
         fetchData();
     }, []);
+
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        setUpdatingProfile(true);
+        try {
+            const updated = await HospitalService.updateHospitalProfile(profileForm);
+            setHospitalInfo(updated);
+            setProfileForm({
+                name: updated.name || '',
+                phone: updated.phone || '',
+                email: updated.email || '',
+                address: updated.address || ''
+            });
+            toast.success("Facility profile updated successfully!");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update profile");
+        } finally {
+            setUpdatingProfile(false);
+        }
+    };
 
     const handleCreateDept = async (e) => {
         e.preventDefault();
@@ -671,13 +706,15 @@ const HospitalDashboard = () => {
                         {activeTab === 'profile' && (
                             <div className="max-w-3xl animate-in fade-in slide-in-from-left-4 duration-500">
                                 <h3 className="text-2xl font-black text-slate-800 mb-8 border-b border-slate-100 pb-4">Facility Configuration</h3>
-                                <form className="space-y-8">
+                                <form onSubmit={handleUpdateProfile} className="space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hospital Name</label>
                                             <input
                                                 type="text"
-                                                defaultValue={hospitalInfo?.name}
+                                                value={profileForm.name}
+                                                onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
+                                                required
                                                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all font-bold"
                                             />
                                         </div>
@@ -694,7 +731,9 @@ const HospitalDashboard = () => {
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Line</label>
                                             <input
                                                 type="tel"
-                                                defaultValue={hospitalInfo?.phone}
+                                                value={profileForm.phone}
+                                                onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                                required
                                                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all font-bold"
                                             />
                                         </div>
@@ -702,7 +741,9 @@ const HospitalDashboard = () => {
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Official Email</label>
                                             <input
                                                 type="email"
-                                                defaultValue={hospitalInfo?.email}
+                                                value={profileForm.email}
+                                                onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
+                                                required
                                                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all font-bold"
                                             />
                                         </div>
@@ -711,13 +752,19 @@ const HospitalDashboard = () => {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Physical Address</label>
                                         <textarea
                                             rows={3}
-                                            defaultValue={hospitalInfo?.address}
+                                            value={profileForm.address}
+                                            onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                                            required
                                             className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all font-bold resize-none"
                                         />
                                     </div>
                                     <div className="pt-4 flex justify-end">
-                                        <button className="px-10 py-4 bg-[#3B9EE2] text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-[#2E8BCC] transition-all transform active:scale-95">
-                                            Update Profile
+                                        <button
+                                            type="submit"
+                                            disabled={updatingProfile}
+                                            className="px-10 py-4 bg-[#3B9EE2] text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-[#2E8BCC] transition-all transform active:scale-95 disabled:opacity-50"
+                                        >
+                                            {updatingProfile ? "Updating..." : "Update Profile"}
                                         </button>
                                     </div>
                                 </form>
