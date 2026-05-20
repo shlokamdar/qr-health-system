@@ -9,7 +9,7 @@ from .serializers import (
     LabTechnicianSerializer, LabTechnicianRegisterSerializer,
     LabTestSerializer, LabReportSerializer
 )
-from role_permissions.roles import IsLabTech
+from role_permissions.roles import IsLabTech, IsDoctor
 from audit.models import AccessLog
 
 class DiagnosticLabViewSet(viewsets.ModelViewSet):
@@ -113,8 +113,8 @@ class LabRecentUploadsView(generics.ListAPIView):
 
 
 class PatientLabReportsView(generics.ListAPIView):
-    """Allows a verified lab tech to view all lab reports for a patient by health_id."""
-    permission_classes = [IsLabTech]
+    """Allows a verified lab tech or doctor to view all lab reports for a patient by health_id."""
+    permission_classes = [(IsLabTech | IsDoctor)]
     serializer_class = LabReportSerializer
 
     def get_queryset(self):

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import DoctorService from '../services/doctor.service';
 import PatientService from '../services/patient.service';
+import labService from '../services/lab.service';
 import Header from '../components/Header';
 import DashboardStats from '../components/doctor/DashboardStats';
 import PatientSearch from '../components/doctor/PatientSearch';
@@ -55,6 +56,7 @@ const DoctorDashboard = () => {
     const [searchId, setSearchId] = useState('');
     const [patientResult, setPatientResult] = useState(null);
     const [records, setRecords] = useState([]);
+    const [labReports, setLabReports] = useState([]);
     const [consultations, setConsultations] = useState([]);
     const [myConsultations, setMyConsultations] = useState([]);
     const [tickets, setTickets] = useState([]);
@@ -77,7 +79,12 @@ const DoctorDashboard = () => {
         diagnosis: '',
         prescription: '',
         notes: '',
-        follow_up_date: ''
+        follow_up_date: '',
+        temperature: '',
+        blood_pressure: '',
+        pulse: '',
+        spo2: '',
+        weight: ''
     });
 
     // Sub-navigation for Patient View
@@ -118,7 +125,7 @@ const DoctorDashboard = () => {
     const handleCreateTicket = async (e) => {
         e.preventDefault();
         try {
-            await api.post('support/tickets/create/', ticketForm);
+            await api.post('support/tickets/', ticketForm);
             toast.success('Ticket submitted successfully!');
             setTicketForm({ subject: '', description: '', priority: 'MEDIUM' });
             setShowTicketModal(false);
@@ -252,23 +259,29 @@ const DoctorDashboard = () => {
                 setIsScannerOpen(false);
                 setIsCameraLoading(false);
 
+                // Step 1: Patient lookup — fatal if this fails
                 PatientService.getByHealthId(healthId)
                     .then(data => {
                         setPatientResult(data);
                         if (data.has_full_access) {
-                            return Promise.all([
-                                PatientService.getRecords(healthId),
-                                DoctorService.getPatientHistory(healthId)
-                            ]);
+                            // Step 2: Secondary data — non-fatal
+                            PatientService.getRecords(healthId)
+                                .then(recData => setRecords(recData))
+                                .catch(err => { console.warn('Could not load records:', err); setRecords([]); });
+                            DoctorService.getPatientHistory(healthId)
+                                .then(consData => setConsultations(consData))
+                                .catch(err => { console.warn('Could not load history:', err); setConsultations([]); });
+                            labService.getPatientReports(healthId)
+                                .then(repData => setLabReports(Array.isArray(repData) ? repData : repData.results || []))
+                                .catch(err => { console.warn('Could not load lab reports:', err); setLabReports([]); });
+                        } else {
+                            setRecords([]);
+                            setConsultations([]);
+                            setLabReports([]);
                         }
-                        return Promise.resolve([[], []]);
-                    })
-                    .then(([recData, consData]) => {
-                        setRecords(recData);
-                        setConsultations(consData);
                     })
                     .catch(() => {
-                        toast.error('Patient not found or Access Denied');
+                        toast.error('Patient not found. Please check the Health ID.');
                         setPatientResult(null);
                     });
             }
@@ -310,31 +323,55 @@ const DoctorDashboard = () => {
         const idToSearch = overrideId || searchId;
         if (!idToSearch) return;
 
+        // Step 1: Patient lookup — fatal if this fails
+        let data;
         try {
-            const data = await PatientService.getByHealthId(idToSearch);
-            setPatientResult(data);
+            data = await PatientService.getByHealthId(idToSearch);
+        } catch (err) {
+            toast.error('Patient not found. Please check the Health ID.');
+            setPatientResult(null);
+            return;
+        }
 
-            if (data.has_full_access) {
+        setPatientResult(data);
+
+        // Step 2: Secondary data (records + history + lab reports) — non-fatal, fail silently
+        if (data.has_full_access) {
+            try {
                 const recData = await PatientService.getRecords(idToSearch);
                 setRecords(recData);
+            } catch (err) {
+                console.warn('Could not load medical records:', err);
+                setRecords([]);
+            }
 
+            try {
                 const consData = await DoctorService.getPatientHistory(idToSearch);
                 setConsultations(consData);
-            } else {
-                setRecords([]);
+            } catch (err) {
+                console.warn('Could not load consultation history:', err);
                 setConsultations([]);
             }
 
-            // Default to consultation tab when patient is loaded
-            setPatientSubTab('consultation');
-
-            if (activeTab !== 'search') {
-                setActiveTab('search');
-                setSearchId(idToSearch);
+            try {
+                const repData = await labService.getPatientReports(idToSearch);
+                setLabReports(Array.isArray(repData) ? repData : repData.results || []);
+            } catch (err) {
+                console.warn('Could not load lab reports:', err);
+                setLabReports([]);
             }
-        } catch (err) {
-            toast.error('Patient not found or Access Denied');
-            setPatientResult(null);
+        } else {
+            setRecords([]);
+            setConsultations([]);
+            setLabReports([]);
+        }
+
+        // Default to consultation tab when patient is loaded
+        setPatientSubTab('consultation');
+
+        if (activeTab !== 'search') {
+            setActiveTab('search');
+            setSearchId(idToSearch);
         }
     };
 
@@ -364,7 +401,12 @@ const DoctorDashboard = () => {
                 diagnosis: '',
                 prescription: '',
                 notes: '',
-                follow_up_date: ''
+                follow_up_date: '',
+                temperature: '',
+                blood_pressure: '',
+                pulse: '',
+                spo2: '',
+                weight: ''
             });
         } catch (err) {
             console.error(err);
@@ -803,14 +845,15 @@ const DoctorDashboard = () => {
                                                                         <h3 className="text-2xl font-black text-[#0D1B2A] tracking-tight">Medical Ledger</h3>
                                                                     </div>
                                                                     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-                                                                        <span>{records?.length || 0} Documents Encrypted</span>
+                                                                        <span>{(records?.length || 0) + (labReports?.length || 0)} Documents Encrypted</span>
                                                                     </div>
                                                                 </div>
                                                                 <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-4">
-                                                                    <MedicalRecordList records={records || []} />
+                                                                    <MedicalRecordList records={records || []} labReports={labReports || []} />
                                                                 </div>
                                                             </div>
                                                         )}
+
 
                                                         {/* New Consultation */}
                                                         {patientSubTab === 'consultation' && (

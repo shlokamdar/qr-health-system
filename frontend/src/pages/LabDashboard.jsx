@@ -34,9 +34,18 @@ const LabDashboard = () => {
     const [labTests, setLabTests] = useState([
         { id: 1, name: 'Complete Blood Count (CBC)' },
         { id: 2, name: 'Lipid Profile' },
-        { id: 3, name: 'Thyroid Function Test' },
+        { id: 3, name: 'Thyroid Function Test (TFT)' },
         { id: 4, name: 'Urinalysis' },
         { id: 5, name: 'COVID-19 RT-PCR' },
+        { id: 6, name: 'Liver Function Test (LFT)' },
+        { id: 7, name: 'Kidney Function Test (KFT)' },
+        { id: 8, name: 'HbA1c' },
+        { id: 9, name: 'Blood Glucose Test' },
+        { id: 10, name: 'ECG' },
+        { id: 11, name: 'Vitamin D' },
+        { id: 12, name: 'Vitamin B12' },
+        { id: 13, name: 'Chest X-Ray' },
+        { id: 14, name: 'Ultrasound' }
     ]);
     const [recentUploads, setRecentUploads] = useState([]);
     const [loadingProfile, setLoadingProfile] = useState(true);
@@ -89,9 +98,18 @@ const LabDashboard = () => {
             setLabTests([
                 { id: 1, name: 'Complete Blood Count (CBC)' },
                 { id: 2, name: 'Lipid Profile' },
-                { id: 3, name: 'Thyroid Function Test' },
+                { id: 3, name: 'Thyroid Function Test (TFT)' },
                 { id: 4, name: 'Urinalysis' },
                 { id: 5, name: 'COVID-19 RT-PCR' },
+                { id: 6, name: 'Liver Function Test (LFT)' },
+                { id: 7, name: 'Kidney Function Test (KFT)' },
+                { id: 8, name: 'HbA1c' },
+                { id: 9, name: 'Blood Glucose Test' },
+                { id: 10, name: 'ECG' },
+                { id: 11, name: 'Vitamin D' },
+                { id: 12, name: 'Vitamin B12' },
+                { id: 13, name: 'Chest X-Ray' },
+                { id: 14, name: 'Ultrasound' }
             ]);
         }
     };

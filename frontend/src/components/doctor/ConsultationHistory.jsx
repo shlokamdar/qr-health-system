@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { Calendar, User, ClipboardList, Stethoscope, ChevronRight, X, Clock, Pill, FileText, AlertCircle, FileX } from 'lucide-react';
+import { Calendar, User, ClipboardList, Stethoscope, ChevronRight, X, Clock, Pill, FileText, AlertCircle, FileX, Activity } from 'lucide-react';
 
 const ConsultationHistory = ({ consultations }) => {
     const [selectedConsultation, setSelectedConsultation] = useState(null);
+
+    const hasVitals = selectedConsultation && (
+        selectedConsultation.temperature ||
+        selectedConsultation.blood_pressure ||
+        selectedConsultation.pulse ||
+        selectedConsultation.spo2 ||
+        selectedConsultation.weight
+    );
 
     return (
         <div className="bg-white rounded-[10px] border border-[#E2E8F0] p-6 shadow-sm">
@@ -127,6 +135,47 @@ const ConsultationHistory = ({ consultations }) => {
                             </div>
 
                             <div className="space-y-8">
+                                {hasVitals && (
+                                    <div className="bg-slate-50/80 p-6 rounded-3xl border border-slate-100">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-1.5">
+                                            <Activity className="w-3 h-3 text-[#3B9EE2]" />
+                                            Patient Vitals
+                                        </label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                            {selectedConsultation.temperature && (
+                                                <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm text-center">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Temp</p>
+                                                    <p className="font-bold text-md text-[#0D1B2A] mt-1">{selectedConsultation.temperature} °F</p>
+                                                </div>
+                                            )}
+                                            {selectedConsultation.blood_pressure && (
+                                                <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm text-center">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">B.P.</p>
+                                                    <p className="font-bold text-md text-[#0D1B2A] mt-1">{selectedConsultation.blood_pressure} mmHg</p>
+                                                </div>
+                                            )}
+                                            {selectedConsultation.pulse && (
+                                                <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm text-center">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Pulse</p>
+                                                    <p className="font-bold text-md text-[#0D1B2A] mt-1">{selectedConsultation.pulse} bpm</p>
+                                                </div>
+                                            )}
+                                            {selectedConsultation.spo2 && (
+                                                <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm text-center">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">SpO₂</p>
+                                                    <p className="font-bold text-md text-[#0D1B2A] mt-1">{selectedConsultation.spo2} %</p>
+                                                </div>
+                                            )}
+                                            {selectedConsultation.weight && (
+                                                <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm text-center">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Weight</p>
+                                                    <p className="font-bold text-md text-[#0D1B2A] mt-1">{selectedConsultation.weight} kg</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="bg-slate-50/80 p-6 rounded-3xl border border-slate-100">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-1.5">
                                         <Pill className="w-3 h-3 text-[#3B9EE2]" />

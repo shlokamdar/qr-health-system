@@ -8,9 +8,18 @@ def populate_lab_tests(apps, schema_editor):
     tests_data = [
         (1, 'Complete Blood Count (CBC)', 'CBC'),
         (2, 'Lipid Profile', 'LIPID'),
-        (3, 'Thyroid Function Test', 'TFT'),
+        (3, 'Thyroid Function Test (TFT)', 'TFT'),
         (4, 'Urinalysis', 'URINE'),
         (5, 'COVID-19 RT-PCR', 'RTPCR'),
+        (6, 'Liver Function Test (LFT)', 'LFT'),
+        (7, 'Kidney Function Test (KFT)', 'KFT'),
+        (8, 'HbA1c', 'HBA1C'),
+        (9, 'Blood Glucose Test', 'GLUCOSE'),
+        (10, 'ECG', 'ECG'),
+        (11, 'Vitamin D', 'VITD'),
+        (12, 'Vitamin B12', 'VITB12'),
+        (13, 'Chest X-Ray', 'CXRAY'),
+        (14, 'Ultrasound', 'ULTRASOUND'),
     ]
     for tid, name, code in tests_data:
         LabTest.objects.get_or_create(id=tid, defaults={'name': name, 'code': code})

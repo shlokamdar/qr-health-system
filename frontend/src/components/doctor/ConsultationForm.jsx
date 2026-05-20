@@ -1,5 +1,4 @@
-import React from 'react';
-import { PlusCircle, Save, Calendar, FileText, ClipboardList, PenTool, FilePlus } from 'lucide-react';
+import { PlusCircle, Save, Calendar, FileText, ClipboardList, PenTool, FilePlus, Activity } from 'lucide-react';
 
 const ConsultationForm = ({ newConsultation, setNewConsultation, handleSubmit }) => {
     const inputStyle = "w-full border border-[#E2E8F0] bg-white p-3 rounded-[6px] text-[14px] focus:border-[#3B9EE2] focus:ring-4 focus:ring-[#3B9EE2]/10 focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-[#9CA3AF]";
@@ -30,6 +29,68 @@ const ConsultationForm = ({ newConsultation, setNewConsultation, handleSubmit })
                             value={newConsultation.follow_up_date}
                             onChange={e => setNewConsultation({ ...newConsultation, follow_up_date: e.target.value })}
                         />
+                    </div>
+                </div>
+
+                {/* Dedicated Vitals Section */}
+                <div className="bg-slate-50 p-5 rounded-[10px] border border-[#E2E8F0] space-y-4">
+                    <h4 className="text-[14px] font-bold text-[#0D1B2A] flex items-center gap-1.5 border-b border-[#E2E8F0] pb-2">
+                        <Activity className="w-4 h-4 text-[#3B9EE2]" />
+                        <span>Vitals (Optional)</span>
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div>
+                            <label className="text-[12px] font-bold text-[#4A5568] mb-1 block">Temp (°F)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                placeholder="98.6"
+                                className="w-full border border-[#E2E8F0] bg-white p-2.5 rounded-[6px] text-[13px] focus:border-[#3B9EE2] focus:ring-2 focus:ring-[#3B9EE2]/10 focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-[#9CA3AF]"
+                                value={newConsultation.temperature || ''}
+                                onChange={e => setNewConsultation({ ...newConsultation, temperature: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[12px] font-bold text-[#4A5568] mb-1 block">BP (mmHg)</label>
+                            <input
+                                type="text"
+                                placeholder="120/80"
+                                className="w-full border border-[#E2E8F0] bg-white p-2.5 rounded-[6px] text-[13px] focus:border-[#3B9EE2] focus:ring-2 focus:ring-[#3B9EE2]/10 focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-[#9CA3AF]"
+                                value={newConsultation.blood_pressure || ''}
+                                onChange={e => setNewConsultation({ ...newConsultation, blood_pressure: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[12px] font-bold text-[#4A5568] mb-1 block">Pulse (bpm)</label>
+                            <input
+                                type="number"
+                                placeholder="72"
+                                className="w-full border border-[#E2E8F0] bg-white p-2.5 rounded-[6px] text-[13px] focus:border-[#3B9EE2] focus:ring-2 focus:ring-[#3B9EE2]/10 focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-[#9CA3AF]"
+                                value={newConsultation.pulse || ''}
+                                onChange={e => setNewConsultation({ ...newConsultation, pulse: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[12px] font-bold text-[#4A5568] mb-1 block">SpO₂ (%)</label>
+                            <input
+                                type="number"
+                                placeholder="98"
+                                className="w-full border border-[#E2E8F0] bg-white p-2.5 rounded-[6px] text-[13px] focus:border-[#3B9EE2] focus:ring-2 focus:ring-[#3B9EE2]/10 focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-[#9CA3AF]"
+                                value={newConsultation.spo2 || ''}
+                                onChange={e => setNewConsultation({ ...newConsultation, spo2: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[12px] font-bold text-[#4A5568] mb-1 block">Weight (kg)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                placeholder="70"
+                                className="w-full border border-[#E2E8F0] bg-white p-2.5 rounded-[6px] text-[13px] focus:border-[#3B9EE2] focus:ring-2 focus:ring-[#3B9EE2]/10 focus:outline-none transition-all font-medium text-[#0D1B2A] placeholder:text-[#9CA3AF]"
+                                value={newConsultation.weight || ''}
+                                onChange={e => setNewConsultation({ ...newConsultation, weight: e.target.value })}
+                            />
+                        </div>
                     </div>
                 </div>
 
