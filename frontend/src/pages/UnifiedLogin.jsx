@@ -2070,6 +2070,7 @@ const UnifiedLogin = ({ initialTab, initialRole }) => {
                                                 <div className="flex-1">
                                                     <label className={labelStyle}>Last Name</label>
                                                     <input type="text" className={inputStyle} value={labTechData.lastName} onChange={e => setLabTechData({ ...labTechData, lastName: e.target.value })} placeholder="Smith" />
+                                                </div>
                                             </div>
 
                                              <div>
