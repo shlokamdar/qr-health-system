@@ -250,11 +250,13 @@ const OverviewTab = ({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {recentRecords.slice(0, 3).map((rec, i) => (
-                <div key={rec.id} className="pd-compact-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
-                  <div className={rec.record_type === 'PRESCRIPTION' ? 'pd-dot-orange' : rec.record_type === 'LAB_REPORT' ? 'pd-dot-blue' : 'pd-dot-mint'} />
-                  <div style={{ width: 60, fontSize: 11, color: '#9CA3AF' }}>{new Date(rec.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+                <div key={rec.id || i} className="pd-compact-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
+                  <div className={rec.type === 'PERSONAL_PRE' || rec.record_type === 'PRESCRIPTION' ? 'pd-dot-orange' : rec.type === 'LAB_REPORT' || rec.record_type === 'LAB_REPORT' ? 'pd-dot-blue' : 'pd-dot-mint'} />
+                  <div style={{ width: 60, fontSize: 11, color: '#9CA3AF' }}>{new Date(rec.date || rec.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A' }}>Dr. {rec.doctor_name || 'System'}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A' }}>
+                      {rec.type === 'LAB_REPORT' ? rec.doctor_name : (rec.doctor_name ? (rec.doctor_name.startsWith('Dr.') ? rec.doctor_name : `Dr. ${rec.doctor_name}`) : 'System')}
+                    </div>
                     <div style={{ fontSize: 12, color: '#64748B' }}>{rec.title}</div>
                   </div>
                 </div>

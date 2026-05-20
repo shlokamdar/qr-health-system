@@ -548,7 +548,7 @@ const PatientDashboard = () => {
         {activeTab === 'overview' && (
           <OverviewTab
             patient={patient} stats={stats}
-            recentRecords={recentRecords} accessHistory={accessHistory}
+            recentRecords={allMedicalRecords} accessHistory={accessHistory}
             sharingPermissions={sharingPermissions}
             handleRevokeAccess={handleRevokeAccess}
             handleDownloadQR={handleDownloadQR}
