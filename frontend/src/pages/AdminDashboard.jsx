@@ -667,6 +667,141 @@ const CreateUserModal = ({ isOpen, onClose, hospitals, labs, onSuccess }) => {
     );
 };
 
+const CreateHospitalModal = ({ isOpen, onClose, onSuccess }) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        address: '',
+        registration_number: '',
+        phone: '',
+        email: '',
+        admin_username: '',
+        admin_password: ''
+    });
+    const [loading, setLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.post('hospitals/', formData);
+            onSuccess();
+            onClose();
+            toast.success('Hospital registered successfully!');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to register hospital');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto animate-in zoom-in-95 duration-200">
+                <form onSubmit={handleSubmit} className="flex flex-col">
+                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">Register New Hospital</h3>
+                            <p className="text-sm text-gray-500">Add a new hospital organization to the system manually.</p>
+                        </div>
+                        <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+                            <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                    </div>
+
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto leading-relaxed text-left">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Hospital Info</label>
+                                <input
+                                    required
+                                    placeholder="Hospital Name"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                                <input
+                                    required
+                                    placeholder="Registration Number"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm mt-3 focus:ring-2 focus:ring-blue-500/20"
+                                    value={formData.registration_number}
+                                    onChange={e => setFormData({ ...formData, registration_number: e.target.value })}
+                                />
+                                <input
+                                    required
+                                    placeholder="Phone Number"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm mt-3 focus:ring-2 focus:ring-blue-500/20"
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                                <input
+                                    required
+                                    type="email"
+                                    placeholder="Contact/Official Email"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm mt-3 focus:ring-2 focus:ring-blue-500/20"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Hospital Admin Account</label>
+                                <input
+                                    required
+                                    placeholder="Admin Username"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20"
+                                    value={formData.admin_username}
+                                    onChange={e => setFormData({ ...formData, admin_username: e.target.value })}
+                                />
+                                <input
+                                    required
+                                    type="password"
+                                    placeholder="Admin Password"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm mt-3 focus:ring-2 focus:ring-blue-500/20"
+                                    value={formData.admin_password}
+                                    onChange={e => setFormData({ ...formData, admin_password: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Hospital Address</label>
+                            <textarea
+                                required
+                                rows={3}
+                                placeholder="Physical Address"
+                                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 resize-none"
+                                value={formData.address}
+                                onChange={e => setFormData({ ...formData, address: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="p-6 bg-gray-50 flex gap-3 rounded-b-2xl">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:bg-white hover:border-gray-300 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 py-3 bg-[#0D1B2A] text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                        >
+                            {loading ? 'Registering Hospital...' : 'Register Hospital'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 // ─── Credential Modal ────────────────────────────────────────────────────────
 const CredentialModal = ({ isOpen, onClose, credentials }) => {
     if (!isOpen || !credentials) return null;
@@ -878,6 +1013,7 @@ const AdminDashboard = () => {
     const [assignTarget, setAssignTarget] = useState(null); // { type: 'doctor'|'tech', data: object }
     const [ticketTarget, setTicketTarget] = useState(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showHospitalModal, setShowHospitalModal] = useState(false);
     const [showCredentialModal, setShowCredentialModal] = useState(false);
     const [approvalCredentials, setApprovalCredentials] = useState(null);
     const { logout } = useContext(AuthContext);
@@ -1024,6 +1160,24 @@ const AdminDashboard = () => {
 
     const handleLogout = () => { logout(); navigate('/system/login'); };
 
+    const handleBackup = async () => {
+        const toastId = toast.loading("Generating system backup...");
+        try {
+            const response = await api.get('admin/backup/', { responseType: 'blob' });
+            const blob = new Blob([response.data], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `pulseid_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            toast.success("Backup downloaded successfully!", { id: toastId });
+        } catch (err) {
+            toast.error("Failed to generate backup.", { id: toastId });
+        }
+    };
+
     const tabs = [
         { id: 'overview', label: 'Overview', icon: BarChart3 },
         { id: 'doctors', label: 'Doctors', icon: Users, badge: stats?.pending_doctors },
@@ -1100,6 +1254,14 @@ const AdminDashboard = () => {
                     hospitals={hospitals}
                     labs={labs}
                     onSuccess={() => { fetchStats(); fetchDoctors(); fetchTechs(); }}
+                />
+            )}
+
+            {showHospitalModal && (
+                <CreateHospitalModal
+                    isOpen={showHospitalModal}
+                    onClose={() => setShowHospitalModal(false)}
+                    onSuccess={() => { fetchStats(); fetchHospitals(); }}
                 />
             )}
 
@@ -1378,11 +1540,15 @@ const AdminDashboard = () => {
                                         <h3 className="font-bold text-gray-800">Quick Actions</h3>
                                         <div className="grid grid-cols-1 gap-3">
                                             {[
-                                                { label: 'Register Hospital', icon: Building2, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                                                { label: 'Add Admin User', icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                                { label: 'System Backup', icon: ShieldCheck, color: 'text-amber-600', bg: 'bg-amber-50' }
+                                                { label: 'Register Hospital', icon: Building2, color: 'text-indigo-600', bg: 'bg-indigo-50', onClick: () => setShowHospitalModal(true) },
+                                                { label: 'Add Admin User', icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50', onClick: () => setShowCreateModal(true) },
+                                                { label: 'System Backup', icon: ShieldCheck, color: 'text-amber-600', bg: 'bg-amber-50', onClick: handleBackup }
                                             ].map((action, i) => (
-                                                <button key={i} className="w-full flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-2xl hover:border-gray-200 hover:shadow-sm transition-all text-left">
+                                                <button 
+                                                    key={i} 
+                                                    onClick={action.onClick}
+                                                    className="w-full flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-2xl hover:border-gray-200 hover:shadow-sm transition-all text-left"
+                                                >
                                                     <div className={`w-10 h-10 ${action.bg} ${action.color} rounded-xl flex items-center justify-center shrink-0`}>
                                                         <action.icon className="w-5 h-5" />
                                                     </div>

@@ -71,3 +71,28 @@ class AdminDashboardStatsView(APIView):
             'registration_trends': trends
         }
         return Response(stats)
+
+
+from django.core import serializers
+from django.http import HttpResponse
+from itertools import chain
+
+class SystemBackupView(APIView):
+    """
+    Triggers a database backup for system administrators.
+    """
+    permission_classes = [IsSuperUser]
+
+    def get(self, request):
+        users = User.objects.all()
+        patients = Patient.objects.all()
+        doctors = Doctor.objects.all()
+        hospitals = Hospital.objects.all()
+        labs = DiagnosticLab.objects.all()
+        
+        # Serialize database records to JSON
+        data = serializers.serialize('json', chain(users, patients, doctors, hospitals, labs))
+        
+        response = HttpResponse(data, content_type='application/json')
+        response['Content-Disposition'] = 'attachment; filename="pulseid_backup.json"'
+        return response
