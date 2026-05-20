@@ -51,7 +51,12 @@ import {
 } from 'lucide-react';
 
 const DoctorDashboard = () => {
-    const [activeTab, setActiveTab] = useState('search');
+    const [activeTab, setActiveTab] = useState(localStorage.getItem('doctorActiveTab') || 'search');
+
+    useEffect(() => {
+        localStorage.setItem('doctorActiveTab', activeTab);
+    }, [activeTab]);
+
     const [doctorProfile, setDoctorProfile] = useState(null);
     const [searchId, setSearchId] = useState('');
     const [patientResult, setPatientResult] = useState(null);

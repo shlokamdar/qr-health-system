@@ -9,7 +9,12 @@ import HospitalService from '../services/hospital.service';
 import Header from '../components/Header';
 
 const HospitalDashboard = () => {
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(localStorage.getItem('hospitalActiveTab') || 'overview');
+
+    useEffect(() => {
+        localStorage.setItem('hospitalActiveTab', activeTab);
+    }, [activeTab]);
+
     const [stats, setStats] = useState(null);
     const [hospitalInfo, setHospitalInfo] = useState(null);
     const [doctors, setDoctors] = useState([]);

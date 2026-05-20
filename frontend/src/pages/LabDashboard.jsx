@@ -29,7 +29,12 @@ const LabDashboard = () => {
     const { logout } = useContext(AuthContext);
 
     // Core state
-    const [activeTab, setActiveTab] = useState('upload');
+    const [activeTab, setActiveTab] = useState(localStorage.getItem('labActiveTab') || 'upload');
+
+    useEffect(() => {
+        localStorage.setItem('labActiveTab', activeTab);
+    }, [activeTab]);
+
     const [profile, setProfile] = useState(null);
     const [labTests, setLabTests] = useState([
         { id: 1, name: 'Complete Blood Count (CBC)' },

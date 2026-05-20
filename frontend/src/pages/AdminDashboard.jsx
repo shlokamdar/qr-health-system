@@ -998,7 +998,7 @@ const AdminDashboard = () => {
     const [logs, setLogs] = useState([]);
     const [tickets, setTickets] = useState([]);
     const [users, setUsers] = useState([]);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(localStorage.getItem('adminActiveTab') || 'overview');
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -1019,6 +1019,10 @@ const AdminDashboard = () => {
     const [approvalCredentials, setApprovalCredentials] = useState(null);
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        localStorage.setItem('adminActiveTab', activeTab);
+    }, [activeTab]);
 
     useEffect(() => {
         Promise.all([
