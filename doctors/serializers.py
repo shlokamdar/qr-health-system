@@ -213,17 +213,24 @@ class ConsultationSerializer(serializers.ModelSerializer):
     """Serializer for Consultation model."""
     doctor_details = DoctorSerializer(source='doctor', read_only=True)
     patient_health_id = serializers.CharField(source='patient.health_id', read_only=True)
+    patient_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Consultation
         fields = [
-            'id', 'doctor', 'doctor_details', 'patient', 'patient_health_id',
+            'id', 'doctor', 'doctor_details', 'patient', 'patient_health_id', 'patient_name',
             'consultation_date', 'temperature', 'blood_pressure', 'pulse', 'spo2', 'weight',
             'chief_complaint', 'diagnosis', 
             'prescription', 'medicines', 'notes', 'follow_up_date',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'doctor', 'created_at', 'updated_at']
+
+    def get_patient_name(self, obj):
+        if obj.patient and obj.patient.user:
+            full_name = obj.patient.user.get_full_name().strip()
+            return full_name if full_name else obj.patient.user.username
+        return None
 
 
 class ConsultationCreateSerializer(serializers.ModelSerializer):

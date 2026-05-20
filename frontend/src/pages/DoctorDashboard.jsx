@@ -1225,7 +1225,7 @@ const DoctorDashboard = () => {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center justify-between gap-4">
                                                                 <p className="font-black text-[#0D1B2A] text-sm truncate">
-                                                                    {c.patient_name || c.patient?.health_id || `Patient ${idx + 1}`}
+                                                                    {c.patient_name || c.patient_health_id || `Patient ${idx + 1}`}
                                                                 </p>
                                                                 <span className="text-[10px] font-black text-slate-400 whitespace-nowrap">
                                                                     {new Date(c.consultation_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
