@@ -107,7 +107,10 @@ class DoctorRegisterPatientView(generics.CreateAPIView):
             'blood_group': request.data.get('blood_group', ''),
         }
         
-        patient = Patient.objects.create(user=user, **patient_data)
+        patient, created = Patient.objects.update_or_create(
+            user=user,
+            defaults=patient_data
+        )
         
         AccessLog.objects.create(
             actor=request.user,

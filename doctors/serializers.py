@@ -218,7 +218,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
         model = Consultation
         fields = [
             'id', 'doctor', 'doctor_details', 'patient', 'patient_health_id',
-            'consultation_date', 'chief_complaint', 'diagnosis', 
+            'consultation_date', 'temperature', 'blood_pressure', 'pulse', 'spo2', 'weight',
+            'chief_complaint', 'diagnosis', 
             'prescription', 'medicines', 'notes', 'follow_up_date',
             'created_at', 'updated_at'
         ]
@@ -232,7 +233,8 @@ class ConsultationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Consultation
         fields = [
-            'id', 'patient_health_id', 'consultation_date', 'chief_complaint',
+            'id', 'patient_health_id', 'consultation_date', 'temperature', 'blood_pressure',
+            'pulse', 'spo2', 'weight', 'chief_complaint',
             'diagnosis', 'prescription', 'medicines', 'notes', 'follow_up_date'
         ]
     

@@ -77,7 +77,12 @@ const DoctorDashboard = () => {
         diagnosis: '',
         prescription: '',
         notes: '',
-        follow_up_date: ''
+        follow_up_date: '',
+        temperature: '',
+        blood_pressure: '',
+        pulse: '',
+        spo2: '',
+        weight: ''
     });
 
     // Sub-navigation for Patient View
@@ -364,7 +369,12 @@ const DoctorDashboard = () => {
                 diagnosis: '',
                 prescription: '',
                 notes: '',
-                follow_up_date: ''
+                follow_up_date: '',
+                temperature: '',
+                blood_pressure: '',
+                pulse: '',
+                spo2: '',
+                weight: ''
             });
         } catch (err) {
             console.error(err);

@@ -154,6 +154,11 @@ class Consultation(models.Model):
         related_name='consultations'
     )
     consultation_date = models.DateTimeField()
+    temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text=_("Temperature in °F"))
+    blood_pressure = models.CharField(max_length=20, null=True, blank=True, help_text=_("Blood Pressure in mmHg"))
+    pulse = models.PositiveIntegerField(null=True, blank=True, help_text=_("Pulse in bpm"))
+    spo2 = models.PositiveIntegerField(null=True, blank=True, help_text=_("SpO2 in %"))
+    weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text=_("Weight in kg"))
     chief_complaint = models.TextField(help_text=_("Primary reason for visit"))
     diagnosis = models.TextField(blank=True)
     prescription = models.TextField(blank=True, help_text=_("Legacy text prescription or general notes"))
