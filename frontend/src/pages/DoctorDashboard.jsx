@@ -257,23 +257,25 @@ const DoctorDashboard = () => {
                 setIsScannerOpen(false);
                 setIsCameraLoading(false);
 
+                // Step 1: Patient lookup — fatal if this fails
                 PatientService.getByHealthId(healthId)
                     .then(data => {
                         setPatientResult(data);
                         if (data.has_full_access) {
-                            return Promise.all([
-                                PatientService.getRecords(healthId),
-                                DoctorService.getPatientHistory(healthId)
-                            ]);
+                            // Step 2: Secondary data — non-fatal
+                            PatientService.getRecords(healthId)
+                                .then(recData => setRecords(recData))
+                                .catch(err => { console.warn('Could not load records:', err); setRecords([]); });
+                            DoctorService.getPatientHistory(healthId)
+                                .then(consData => setConsultations(consData))
+                                .catch(err => { console.warn('Could not load history:', err); setConsultations([]); });
+                        } else {
+                            setRecords([]);
+                            setConsultations([]);
                         }
-                        return Promise.resolve([[], []]);
-                    })
-                    .then(([recData, consData]) => {
-                        setRecords(recData);
-                        setConsultations(consData);
                     })
                     .catch(() => {
-                        toast.error('Patient not found or Access Denied');
+                        toast.error('Patient not found. Please check the Health ID.');
                         setPatientResult(null);
                     });
             }
@@ -315,31 +317,46 @@ const DoctorDashboard = () => {
         const idToSearch = overrideId || searchId;
         if (!idToSearch) return;
 
+        // Step 1: Patient lookup — fatal if this fails
+        let data;
         try {
-            const data = await PatientService.getByHealthId(idToSearch);
-            setPatientResult(data);
+            data = await PatientService.getByHealthId(idToSearch);
+        } catch (err) {
+            toast.error('Patient not found. Please check the Health ID.');
+            setPatientResult(null);
+            return;
+        }
 
-            if (data.has_full_access) {
+        setPatientResult(data);
+
+        // Step 2: Secondary data (records + history) — non-fatal, fail silently
+        if (data.has_full_access) {
+            try {
                 const recData = await PatientService.getRecords(idToSearch);
                 setRecords(recData);
+            } catch (err) {
+                console.warn('Could not load medical records:', err);
+                setRecords([]);
+            }
 
+            try {
                 const consData = await DoctorService.getPatientHistory(idToSearch);
                 setConsultations(consData);
-            } else {
-                setRecords([]);
+            } catch (err) {
+                console.warn('Could not load consultation history:', err);
                 setConsultations([]);
             }
+        } else {
+            setRecords([]);
+            setConsultations([]);
+        }
 
-            // Default to consultation tab when patient is loaded
-            setPatientSubTab('consultation');
+        // Default to consultation tab when patient is loaded
+        setPatientSubTab('consultation');
 
-            if (activeTab !== 'search') {
-                setActiveTab('search');
-                setSearchId(idToSearch);
-            }
-        } catch (err) {
-            toast.error('Patient not found or Access Denied');
-            setPatientResult(null);
+        if (activeTab !== 'search') {
+            setActiveTab('search');
+            setSearchId(idToSearch);
         }
     };
 
