@@ -91,7 +91,7 @@ const OTPEntryModal = ({ patient, isPublic, requestId, deliveryMethod, onClose, 
                     otp: code
                 });
                 toast.success("Identity Verified. Temporary access granted.");
-                onSuccess(res.data.emergency_access_token);
+                onSuccess(res.data.emergency_access_token, res.data.expires_in);
             } else {
                 await api.post('patients/otp/verify/', {
                     health_id: patient.health_id,

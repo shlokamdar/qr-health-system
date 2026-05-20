@@ -43,6 +43,41 @@ class PatientViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         user = request.user
         
+        # Check for emergency token in headers
+        emerg_token = request.META.get('HTTP_X_EMERGENCY_TOKEN')
+        if emerg_token:
+            from django.core.cache import cache
+            patient_id = cache.get(f"emerg_token_{emerg_token}")
+            if patient_id and patient_id == instance.id:
+                from records.models import MedicalRecord
+                from records.serializers import MedicalRecordSerializer
+                from doctors.models import Consultation
+                from doctors.serializers import ConsultationSerializer
+                from labs.models import LabReport
+                from labs.serializers import LabReportSerializer
+                
+                records = MedicalRecord.objects.filter(patient=instance).order_by('-created_at')
+                prescriptions = OldPrescription.objects.filter(patient=instance).order_by('-prescription_date')
+                consultations = Consultation.objects.filter(patient=instance).order_by('-consultation_date')
+                lab_reports = LabReport.objects.filter(patient=instance).order_by('-created_at')
+                
+                patient_data = PatientSerializer(instance).data
+                patient_data['has_full_access'] = True
+                patient_data['is_emergency_access'] = True
+                patient_data['records'] = MedicalRecordSerializer(records, many=True).data
+                patient_data['prescriptions'] = OldPrescriptionSerializer(prescriptions, many=True).data
+                patient_data['consultations'] = ConsultationSerializer(consultations, many=True, context={'request': request}).data
+                patient_data['lab_reports'] = LabReportSerializer(lab_reports, many=True, context={'request': request}).data
+                
+                # Log Access
+                AccessLog.objects.create(
+                    actor=user if user.is_authenticated else None,
+                    patient=instance,
+                    action=AccessLog.Action.VIEW_PROFILE,
+                    details="Emergency access: Viewed full medical history via emergency token."
+                )
+                return Response(patient_data)
+
         # Public Access (No Login)
         if not user.is_authenticated:
             serializer = PatientPublicSerializer(instance)

@@ -20,6 +20,10 @@ api.interceptors.request.use(
             }
             config.headers['Authorization'] = `Bearer ${token}`;
         }
+        const emergencyToken = localStorage.getItem('emergency_token');
+        if (emergencyToken) {
+            config.headers['X-Emergency-Token'] = emergencyToken;
+        }
         return config;
     },
     (error) => Promise.reject(error)

@@ -9,6 +9,7 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import OTPRequestModal from '../components/patient/OTPRequestModal';
 import OTPEntryModal from '../components/patient/OTPEntryModal';
+import MedicalRecordList from '../components/patient/MedicalRecordList';
 
 const PublicPatientView = () => {
     const { healthId } = useParams();
@@ -22,6 +23,76 @@ const PublicPatientView = () => {
     const [showEntryModal, setShowEntryModal] = useState(false);
     const [activeRequestId, setActiveRequestId] = useState(null);
     const [deliveryMethod, setDeliveryMethod] = useState('');
+    const [timeLeft, setTimeLeft] = useState(0);
+
+    useEffect(() => {
+        const expiresAtStr = localStorage.getItem('emergency_token_expires_at');
+        const token = localStorage.getItem('emergency_token');
+        
+        if (!token || !expiresAtStr) return;
+        
+        const expiresAt = parseInt(expiresAtStr, 10);
+        const updateTimer = () => {
+            const now = Date.now();
+            const diff = Math.max(0, Math.floor((expiresAt - now) / 1000));
+            setTimeLeft(diff);
+            
+            if (diff <= 0) {
+                localStorage.removeItem('emergency_token');
+                localStorage.removeItem('emergency_token_expires_at');
+                toast.error("Emergency session has expired.");
+                window.location.reload();
+            }
+        };
+        
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [patient]);
+
+    const handleCloseSession = () => {
+        localStorage.removeItem('emergency_token');
+        localStorage.removeItem('emergency_token_expires_at');
+        toast.success("Emergency session closed.");
+        window.location.reload();
+    };
+
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Construction of unified records list
+    const allMedicalRecords = patient && patient.is_emergency_access ? [
+        ...(patient.records || []).map(r => ({
+            ...r,
+            type: 'OFFICIAL',
+            date: r.created_at,
+            doctor_name: r.doctor_details?.first_name ? `Dr. ${r.doctor_details.first_name} ${r.doctor_details.last_name || ''}` : r.doctor_name
+        })),
+        ...(patient.prescriptions || []).map(p => ({
+            ...p,
+            type: 'PERSONAL_PRE',
+            date: p.prescription_date || p.uploaded_at,
+            title: `Prescription: ${p.hospital_name || 'Personal Archive'}`,
+            doctor_name: p.doctor_name
+        })),
+        ...(patient.consultations || []).map(c => ({
+            ...c,
+            type: 'CONSULTATION',
+            date: c.consultation_date || c.created_at,
+            title: `Consultation: ${c.chief_complaint || 'General Checkup'}`,
+            doctor_name: c.doctor_details?.user?.first_name ? `Dr. ${c.doctor_details.user.first_name} ${c.doctor_details.user.last_name || ''}` : 'Doctor'
+        })),
+        ...(patient.lab_reports || []).map(l => ({
+            ...l,
+            type: 'LAB_REPORT',
+            date: l.created_at,
+            title: `Lab Report: ${l.test_type?.name || l.test_type_name || 'Diagnostic Report'}`,
+            doctor_name: l.technician?.lab?.name || l.lab_name || 'Diagnostic Lab'
+        }))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
 
     useEffect(() => {
         const fetchPublicData = async () => {
@@ -170,20 +241,60 @@ const PublicPatientView = () => {
                         </div>
                     </div>
 
-                    {/* Full Access CTA */}
-                    <div className="pt-4">
-                        <button 
-                            onClick={() => setShowRequestModal(true)}
-                            className="w-full bg-[#0D1B2A] hover:bg-[#1A365D] text-white p-5 rounded-[20px] font-extrabold flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20"
-                        >
-                            <Lock size={18} className="text-[#3B9EE2]" />
-                            <span>Request Full Medical Access</span>
-                            <ChevronRight size={20} className="ml-auto opacity-50" />
-                        </button>
-                        <p className="text-center text-[10px] text-[#94A3B8] mt-4 font-medium px-6">
-                            Full access requires patient OTP verification and will notify emergency contacts.
-                        </p>
-                    </div>
+                    {/* Medical Records Ledger */}
+                    {patient?.is_emergency_access && (
+                        <>
+                            <div className="h-px bg-[#F1F5F9]"></div>
+                            <div>
+                                <h3 className="text-[11px] font-black text-[#0D1B2A] uppercase tracking-[0.15em] mb-5 flex items-center gap-2">
+                                    <Activity size={14} className="text-[#3B9EE2]" /> Clinical Medical Ledger
+                                </h3>
+                                <MedicalRecordList records={allMedicalRecords} />
+                            </div>
+                        </>
+                    )}
+
+                    <div className="h-px bg-[#F1F5F9]"></div>
+
+                    {/* Full Access CTA or Countdown / Revoke */}
+                    {patient?.is_emergency_access ? (
+                        <div className="space-y-6 pt-4">
+                            <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-100 rounded-2xl">
+                                <div className="flex items-center gap-2.5">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-bold text-amber-800">Temporary Access Active</p>
+                                        <p className="text-[10px] text-amber-600 font-medium">Session expires automatically</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="font-mono text-sm font-black text-amber-800">{formatTime(timeLeft)}</span>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                onClick={handleCloseSession}
+                                className="w-full bg-red-600 hover:bg-red-700 text-white p-5 rounded-[20px] font-extrabold flex items-center justify-center gap-3 transition-all shadow-xl shadow-red-900/10"
+                            >
+                                <Lock size={18} />
+                                <span>Close Session & Revoke Access</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="pt-4">
+                            <button 
+                                onClick={() => setShowRequestModal(true)}
+                                className="w-full bg-[#0D1B2A] hover:bg-[#1A365D] text-white p-5 rounded-[20px] font-extrabold flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20"
+                            >
+                                <Lock size={18} className="text-[#3B9EE2]" />
+                                <span>Request Full Medical Access</span>
+                                <ChevronRight size={20} className="ml-auto opacity-50" />
+                            </button>
+                            <p className="text-center text-[10px] text-[#94A3B8] mt-4 font-medium px-6">
+                                Full access requires patient OTP verification and will notify emergency contacts.
+                            </p>
+                        </div>
+                    )}
 
                 </div>
             </div>
@@ -219,10 +330,12 @@ const PublicPatientView = () => {
                     requestId={activeRequestId}
                     deliveryMethod={deliveryMethod}
                     onClose={() => setShowEntryModal(false)}
-                    onSuccess={(token) => {
+                    onSuccess={(token, expiresIn) => {
                         setShowEntryModal(false);
                         if (token) {
                             localStorage.setItem('emergency_token', token);
+                            const expiresAt = Date.now() + (expiresIn || 900) * 1000;
+                            localStorage.setItem('emergency_token_expires_at', expiresAt);
                         }
                         window.location.reload();
                     }}
