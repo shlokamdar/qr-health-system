@@ -64,3 +64,32 @@ class RecordAPITest(TestCase):
         record = Record.objects.first()
         self.assertEqual(record.doctor, self.pat_user)
         self.assertEqual(record.patient, self.patient)
+
+    def test_my_consultations(self):
+        from doctors.models import Consultation
+        # Create a consultation for this patient
+        con = Consultation.objects.create(
+            patient=self.patient,
+            doctor=self.doctor,
+            consultation_date=timezone.now(),
+            chief_complaint='Fever and headache',
+            diagnosis='Viral fever',
+            prescription='Paracetamol 500mg',
+            temperature='101',
+            blood_pressure='120/80',
+            pulse='80',
+            spo2='98',
+            weight='70',
+            notes='Rest for 3 days'
+        )
+        
+        # Authenticate patient
+        self.client.force_authenticate(user=self.pat_user)
+        response = self.client.get('/api/patients/me/consultations/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['chief_complaint'], 'Fever and headache')
+        self.assertEqual(response.data[0]['diagnosis'], 'Viral fever')
+        self.assertEqual(response.data[0]['temperature'], '101.00')
+

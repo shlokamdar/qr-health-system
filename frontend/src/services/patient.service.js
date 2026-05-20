@@ -41,6 +41,11 @@ const PatientService = {
         return res.data;
     },
 
+    getConsultations: async () => {
+        const res = await api.get('patients/me/consultations/');
+        return res.data;
+    },
+
     uploadPrescription: async (formData) => {
         const res = await api.post('patients/prescriptions/', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }

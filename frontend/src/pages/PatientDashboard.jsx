@@ -78,6 +78,7 @@ const PatientDashboard = () => {
   const [recentRecords, setRecentRecords] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
+  const [consultations, setConsultations] = useState([]);
   const [labReports, setLabReports] = useState([]);
   const [accessHistory, setAccessHistory] = useState([]);
   const [sharingPermissions, setSharingPermissions] = useState([]);
@@ -126,7 +127,7 @@ const PatientDashboard = () => {
         console.error(`API call failed [${label}]:`, e); 
         return []; 
       });
-      const [pData, rData, aData, lData, hData, sData, eData, odData, docData, tData, notificationsData] = await Promise.all([
+      const [pData, rData, aData, lData, hData, sData, eData, odData, docData, tData, notificationsData, cData] = await Promise.all([
         PatientService.getProfile().catch(e => { console.error('Profile failed:', e); return null; }),
         safe(PatientService.getRecords(), 'records'),
         safe(PatientService.getMyAppointments(), 'appointments'),
@@ -137,7 +138,8 @@ const PatientDashboard = () => {
         safe(PatientService.getPrescriptions(), 'prescriptions'),
         safe(DoctorService.getVerifiedDoctors(), 'doctors'),
         safe(api.get('support/tickets/').then(res => res.data.results || res.data), 'tickets'),
-        safe(api.get('auth/notifications/').then(res => res.data.results || res.data), 'notifications')
+        safe(api.get('auth/notifications/').then(res => res.data.results || res.data), 'notifications'),
+        safe(PatientService.getConsultations(), 'consultations')
       ]);
 
       if (pData) setPatient(pData);
@@ -151,6 +153,7 @@ const PatientDashboard = () => {
       setDoctorsList(Array.isArray(docData) ? docData : []);
       setTickets(Array.isArray(tData) ? tData : []);
       setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
+      setConsultations(Array.isArray(cData) ? cData : []);
       if (pData) setEditForm(pData);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -383,6 +386,20 @@ const PatientDashboard = () => {
       date: p.prescription_date || p.uploaded_at,
       title: `Prescription: ${p.hospital_name || 'Personal Archive'}`,
       doctor_name: p.doctor_name
+    })),
+    ...consultations.map(c => ({
+      ...c,
+      type: 'CONSULTATION',
+      date: c.consultation_date || c.created_at,
+      title: `Consultation: ${c.chief_complaint || 'General Checkup'}`,
+      doctor_name: c.doctor_details?.user?.first_name ? `Dr. ${c.doctor_details.user.first_name} ${c.doctor_details.user.last_name || ''}` : 'Doctor'
+    })),
+    ...labReports.map(l => ({
+      ...l,
+      type: 'LAB_REPORT',
+      date: l.created_at,
+      title: `Lab Report: ${l.test_type?.name || l.test_type_name || 'Diagnostic Report'}`,
+      doctor_name: l.technician?.lab?.name || l.lab_name || 'Diagnostic Lab'
     }))
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 

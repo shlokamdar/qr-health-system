@@ -89,6 +89,17 @@ class PatientViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(patient)
         return Response(serializer.data)
 
+    @decorators.action(detail=False, methods=['get'], url_path='me/consultations')
+    def my_consultations(self, request):
+        """Retrieve the logged-in patient's consultations."""
+        patient = get_object_or_404(Patient, user=request.user)
+        from doctors.models import Consultation
+        from doctors.serializers import ConsultationSerializer
+        consultations = Consultation.objects.filter(patient=patient).order_by('-consultation_date')
+        serializer = ConsultationSerializer(consultations, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
     @decorators.action(detail=False, methods=['get'], url_path='me/download-pdf')
     def download_pdf(self, request):
         """Generate and return a PDF of the patient's medical history."""

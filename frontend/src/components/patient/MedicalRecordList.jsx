@@ -13,8 +13,30 @@ const FILE_X  = ['M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z', 'M14 2
 const X_ICON  = 'M18 6L6 18M6 6l12 12';
 const ATTACH  = 'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48';
 
+const getTypeDetails = (type) => {
+  switch (type) {
+    case 'CONSULTATION':
+      return { label: 'Consultation', color: '#10B981', bg: '#ECFDF5' };
+    case 'LAB_REPORT':
+      return { label: 'Lab Report', color: '#8B5CF6', bg: '#F5F3FF' };
+    case 'OFFICIAL':
+      return { label: 'Official Record', color: '#3B9EE2', bg: '#EFF6FF' };
+    case 'PERSONAL_PRE':
+    default:
+      return { label: 'Personal Upload', color: '#F59E0B', bg: '#FEF3C7' };
+  }
+};
+
 const MedicalRecordList = ({ records }) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
+
+  const hasVitals = selectedRecord && (
+    selectedRecord.temperature ||
+    selectedRecord.blood_pressure ||
+    selectedRecord.pulse ||
+    selectedRecord.spo2 ||
+    selectedRecord.weight
+  );
 
   return (
     <div>
@@ -28,111 +50,261 @@ const MedicalRecordList = ({ records }) => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {records.map((rec, idx) => (
-            <div key={rec.id} style={{ display: 'flex', gap: 14 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: rec.doctor_name ? '#2EC4A9' : '#3B9EE2', flexShrink: 0, marginTop: 20 }} />
-                {idx < records.length - 1 && <div style={{ width: 2, background: rec.doctor_name ? '#2EC4A9' : '#3B9EE2', flex: 1, opacity: 0.25, minHeight: 20 }} />}
+          {records.map((rec, idx) => {
+            const { label, color, bg } = getTypeDetails(rec.type);
+            return (
+              <div key={rec.id || idx} style={{ display: 'flex', gap: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0, marginTop: 20 }} />
+                  {idx < records.length - 1 && <div style={{ width: 2, background: color, flex: 1, opacity: 0.25, minHeight: 20 }} />}
+                </div>
+                <div
+                  onClick={() => setSelectedRecord(rec)}
+                  style={{ 
+                      background: '#fff', 
+                      border: '1px solid #E2E8F0', 
+                      borderRadius: 10, 
+                      padding: '12px 16px', 
+                      flex: 1, 
+                      marginBottom: 10, 
+                      cursor: 'pointer', 
+                      transition: 'all 0.2s',
+                      position: 'relative',
+                      overflow: 'hidden'
+                  }}
+                  onMouseEnter={e => {
+                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
+                      e.currentTarget.style.borderColor = color;
+                  }}
+                  onMouseLeave={e => {
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.borderColor = '#E2E8F0';
+                  }}>
+                  <div style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      right: 0, 
+                      background: bg, 
+                      color: color, 
+                      fontSize: '9px', 
+                      fontWeight: 800, 
+                      padding: '4px 8px', 
+                      borderRadius: '0 0 0 8px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.4px'
+                  }}>{label}</div>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 3 }}>{new Date(rec.date || rec.created_at).toLocaleDateString()}</div>
+                  
+                  {rec.type === 'CONSULTATION' ? (
+                      <div style={{ fontWeight: 700, color: '#0D1B2A', fontSize: 14 }}>{rec.doctor_name}</div>
+                  ) : rec.type === 'LAB_REPORT' ? (
+                      <div style={{ fontWeight: 700, color: '#0D1B2A', fontSize: 14 }}>{rec.title}</div>
+                  ) : rec.doctor_name ? (
+                      <div style={{ fontWeight: 700, color: '#0D1B2A', fontSize: 14 }}>{rec.doctor_name}</div>
+                  ) : (
+                      <div style={{ fontWeight: 700, color: '#3B9EE2', fontSize: 14 }}>{rec.title}</div>
+                  )}
+                  
+                  {rec.type === 'CONSULTATION' ? (
+                      <div style={{ fontSize: 13, color: '#4A5568', marginTop: 2 }}>{rec.title}</div>
+                  ) : rec.type === 'LAB_REPORT' ? (
+                      <div style={{ fontSize: 13, color: '#4A5568', marginTop: 2 }}>Performed by {rec.doctor_name}</div>
+                  ) : rec.doctor_name ? (
+                      <div style={{ fontSize: 13, color: '#4A5568', marginTop: 2 }}>{rec.title}</div>
+                  ) : null}
+                  <span style={{ color: color, fontSize: 12, fontWeight: 600, marginTop: 6, display: 'inline-block' }}>View Full Record →</span>
+                </div>
               </div>
-              <div
-                onClick={() => setSelectedRecord(rec)}
-                style={{ 
-                    background: '#fff', 
-                    border: '1px solid #E2E8F0', 
-                    borderRadius: 10, 
-                    padding: '12px 16px', 
-                    flex: 1, 
-                    marginBottom: 10, 
-                    cursor: 'pointer', 
-                    transition: 'all 0.2s',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}
-                onMouseEnter={e => {
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                    e.currentTarget.style.borderColor = rec.doctor_name ? 'rgba(46,196,169,0.3)' : 'rgba(59,158,226,0.3)';
-                }}
-                onMouseLeave={e => {
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.borderColor = '#E2E8F0';
-                }}>
-                {!rec.doctor_name && (
-                    <div style={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        right: 0, 
-                        background: '#EFF6FF', 
-                        color: '#3B9EE2', 
-                        fontSize: '9px', 
-                        fontWeight: 800, 
-                        padding: '4px 8px', 
-                        borderRadius: '0 0 0 8px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.4px'
-                    }}>Personal</div>
-                )}
-                <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 3 }}>{new Date(rec.date || rec.created_at).toLocaleDateString()}</div>
-                {rec.doctor_name ? (
-                    <div style={{ fontWeight: 700, color: '#0D1B2A', fontSize: 14 }}>{rec.doctor_name}</div>
-                ) : (
-                    <div style={{ fontWeight: 700, color: '#3B9EE2', fontSize: 14 }}>{rec.title}</div>
-                )}
-                {rec.doctor_name && <div style={{ fontSize: 13, color: '#4A5568', marginTop: 2 }}>{rec.title}</div>}
-                <span style={{ color: '#3B9EE2', fontSize: 12, fontWeight: 600, marginTop: 6, display: 'inline-block' }}>View Full Record →</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {/* Record Detail Modal */}
       {selectedRecord && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 12, maxWidth: 500, width: '100%', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+          <div style={{ background: '#fff', borderRadius: 12, maxWidth: 600, width: '100%', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
             {/* Modal Header */}
-            <div style={{ background: '#0D1B2A', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>{selectedRecord.record_type || selectedRecord.document_type || 'Medical Record'}</span>
+            <div style={{ background: selectedRecord.type === 'CONSULTATION' ? '#10B981' : selectedRecord.type === 'LAB_REPORT' ? '#8B5CF6' : '#0D1B2A', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>
+                {selectedRecord.type === 'CONSULTATION' ? 'Clinical Consultation' : selectedRecord.type === 'LAB_REPORT' ? 'Lab Report' : (selectedRecord.record_type || selectedRecord.document_type || 'Medical Record')}
+              </span>
               <button onClick={() => setSelectedRecord(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: 4, display: 'flex' }}>
                 <Icon d={X_ICON} size={18} />
               </button>
             </div>
+            
             {/* Modal Body */}
-            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Title</div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#0D1B2A' }}>{selectedRecord.title}</div>
-              </div>
-              {selectedRecord.description && (
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Description</div>
-                  <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px', color: '#4A5568', fontSize: 14 }}>{selectedRecord.description}</div>
-                </div>
-              )}
-              <div className="pd-grid-2" style={{ gap: 16 }}>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Date</div>
-                  <div style={{ color: '#4A5568', fontSize: 14 }}>{new Date(selectedRecord.date || selectedRecord.created_at).toLocaleDateString()}</div>
-                </div>
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '70vh', overflowY: 'auto' }}>
+              {selectedRecord.type === 'CONSULTATION' ? (
+                <>
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 200px' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Physician</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: '#0D1B2A' }}>{selectedRecord.doctor_name}</div>
+                    </div>
+                    <div style={{ flex: '1 1 200px' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Date & Time</div>
+                      <div style={{ fontSize: 14, color: '#4A5568' }}>{new Date(selectedRecord.date).toLocaleString()}</div>
+                    </div>
+                  </div>
 
-                {selectedRecord.doctor_name ? (
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Uploaded By</div>
-                    <div style={{ color: '#4A5568', fontSize: 14 }}>Dr. {selectedRecord.doctor_name}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Chief Complaint</div>
+                    <div style={{ fontSize: 15, fontStyle: 'italic', color: '#4A5568', borderLeft: '3px solid #10B981', paddingLeft: 10 }}>
+                      "{selectedRecord.chief_complaint}"
+                    </div>
                   </div>
-                ) : (
+
+                  {selectedRecord.diagnosis && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Diagnosis</div>
+                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 8, padding: '10px 14px', color: '#065F46', fontWeight: 600, fontSize: 14 }}>
+                        {selectedRecord.diagnosis}
+                      </div>
+                    </div>
+                  )}
+
+                  {hasVitals && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>Vitals</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 10 }}>
+                        {selectedRecord.temperature && (
+                          <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase' }}>Temp</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A', marginTop: 2 }}>{selectedRecord.temperature} °F</div>
+                          </div>
+                        )}
+                        {selectedRecord.blood_pressure && (
+                          <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase' }}>B.P.</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A', marginTop: 2 }}>{selectedRecord.blood_pressure}</div>
+                          </div>
+                        )}
+                        {selectedRecord.pulse && (
+                          <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase' }}>Pulse</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A', marginTop: 2 }}>{selectedRecord.pulse} bpm</div>
+                          </div>
+                        )}
+                        {selectedRecord.spo2 && (
+                          <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase' }}>SpO₂</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A', marginTop: 2 }}>{selectedRecord.spo2} %</div>
+                          </div>
+                        )}
+                        {selectedRecord.weight && (
+                          <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                            <div style={{ fontSize: 9, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase' }}>Weight</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B2A', marginTop: 2 }}>{selectedRecord.weight} kg</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedRecord.prescription && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Prescription Notes / Instructions</div>
+                      <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px', color: '#2D3748', fontSize: 14, fontFamily: 'monospace', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                        {selectedRecord.prescription}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedRecord.notes && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Additional Observations</div>
+                      <div style={{ color: '#4A5568', fontSize: 14 }}>
+                        {selectedRecord.notes}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedRecord.follow_up_date && (
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '10px 14px', display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ fontSize: 16 }}>📅</span>
+                      <div>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: '#B45309', textTransform: 'uppercase' }}>Follow-up Scheduled</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#78350F' }}>{new Date(selectedRecord.follow_up_date).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : selectedRecord.type === 'LAB_REPORT' ? (
+                <>
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 200px' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Test Type</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: '#0D1B2A' }}>{selectedRecord.title}</div>
+                    </div>
+                    <div style={{ flex: '1 1 200px' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Date</div>
+                      <div style={{ fontSize: 14, color: '#4A5568' }}>{new Date(selectedRecord.date).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Source</div>
-                    <div style={{ color: '#3B9EE2', fontSize: 14, fontWeight: 600 }}>Personal Upload</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Diagnostic Laboratory</div>
+                    <div style={{ fontSize: 14, color: '#4A5568', fontWeight: 600 }}>{selectedRecord.doctor_name}</div>
                   </div>
-                )}
-              </div>
-              {selectedRecord.file && (
-                <a href={getFileUrl(selectedRecord.file)} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#EFF6FF', color: '#3B9EE2', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 16px', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
-                  <Icon d={ATTACH} size={16} /> View Attached File
-                </a>
+
+                  {selectedRecord.comments && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Technician Comments / Summary</div>
+                      <div style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 8, padding: '10px 14px', color: '#5B21B6', fontSize: 14 }}>
+                        {selectedRecord.comments}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedRecord.file && (
+                    <a href={getFileUrl(selectedRecord.file)} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#F5F3FF', color: '#8B5CF6', border: '1px solid #DDD6FE', borderRadius: 10, padding: '12px 16px', fontWeight: 600, fontSize: 14, textDecoration: 'none', marginTop: 8 }}>
+                      <Icon d={ATTACH} size={16} /> View Lab Report PDF
+                    </a>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Title</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: '#0D1B2A' }}>{selectedRecord.title}</div>
+                  </div>
+                  {selectedRecord.description && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Description</div>
+                      <div style={{ background: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px', color: '#4A5568', fontSize: 14 }}>{selectedRecord.description}</div>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Date</div>
+                      <div style={{ color: '#4A5568', fontSize: 14 }}>{new Date(selectedRecord.date || selectedRecord.created_at).toLocaleDateString()}</div>
+                    </div>
+
+                    {selectedRecord.doctor_name ? (
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Uploaded By</div>
+                        <div style={{ color: '#4A5568', fontSize: 14 }}>Dr. {selectedRecord.doctor_name}</div>
+                      </div>
+                    ) : (
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Source</div>
+                        <div style={{ color: '#3B9EE2', fontSize: 14, fontWeight: 600 }}>Personal Upload</div>
+                      </div>
+                    )}
+                  </div>
+                  {selectedRecord.file && (
+                    <a href={getFileUrl(selectedRecord.file)} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#EFF6FF', color: '#3B9EE2', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 16px', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                      <Icon d={ATTACH} size={16} /> View Attached File
+                    </a>
+                  )}
+                </>
               )}
             </div>
+            
             <div style={{ borderTop: '1px solid #E2E8F0', padding: '12px 20px', textAlign: 'center' }}>
               <button onClick={() => setSelectedRecord(null)} style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>Close</button>
             </div>
