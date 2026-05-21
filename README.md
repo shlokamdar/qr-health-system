@@ -1,120 +1,121 @@
-# Unified Health Record System
+# PulseID: Secure QR-Based Unified Health Record System
 
-A secure, prototype healthcare system allowing doctors to access patient medical records via QR code scanning, built with **Django REST Framework** and **React**.
+PulseID is a state-of-the-art, secure, and unified digital healthcare platform designed to provide instant access to life-saving patient records during emergencies. Built on a robust and modern architecture using **Django REST Framework** and **React**, it enables secure medical data sharing via dynamic QR codes, protected by two-factor verification workflows.
 
-## 🚀 Tech Stack
+---
 
-- **Backend**: Django, Django REST Framework (DRF), SimpleJWT, PostgreSQL (configured for SQLite in proto).
-- **Frontend**: React, Vite, TailwindCSS, Axios, React Router.
-- **Security**: Role-Based Access Control (RBAC), JWT Authentication, Audit Logging.
+## 🚀 Key Features
+
+*   **Secure Unified Health ID (HID)**: Automatically generates a unique, cryptographic Health ID and high-definition dynamic QR Code for every registered patient.
+*   **Dual-Tier Emergency Workflows**:
+    *   *Public QR Scan (Basic Tier)*: Provides immediate access to critical life-saving information (blood group, allergies, chronic conditions, and emergency contacts) without requiring login.
+    *   *Secure Verification (Full Access Tier)*: Allows authorized doctors to request comprehensive clinical records (consultations, lab test ledgers, and history) via secure One-Time PIN (OTP) verification sent to the patient or emergency contacts.
+*   **Granular Role-Based Access Control (RBAC)**: Supports customized dashboards and functionalities for **Patients**, **Doctors**, **Lab Technicians**, and **System Administrators**.
+*   **Clinical Medical Ledger**: Unified timeline containing doctor consultations, laboratory diagnostic reports, and personal uploads.
+*   **Secure Document Exports**: Direct download of password-protected PDF medical summaries for patients.
+*   **Comprehensive Audit Trails**: Automated `AccessLog` logging of every single profile access, upload, and permission modification for institutional accountability and compliance.
+
+---
 
 ## 📂 Project Structure
 
 ```text
-final-year-project/
-├── accounts/           # User Authentication & Roles (Patient, Doctor, Lab)
-├── audit/              # Access Logs & Security Tracking
-├── config/             # Main Django Configuration & URLs
-├── frontend/           # React Frontend (Vite)
-│   ├── public/
+qr-health/
+├── accounts/           # User Authentication, Profiles & Custom Roles
+├── audit/              # Access Logs & Compliance Security Tracking
+├── config/             # Central Django Configuration & Security Rules
+├── doctors/            # Doctor Profiles & Consultation Workflows
+├── labs/               # Lab Technicians & Diagnostic Seeding Commands
+├── patients/           # Patient Profiles, OTP Requests, & QR Generation
+├── records/            # Clinical Records Structure
+├── role_permissions/   # Custom Role Rules & Access Guards
+├── support/            # Help Center & In-App Support Services
+├── utils/              # PDF Generation, Emails & Shared Helpers
+├── frontend/           # React Frontend Application (Vite)
 │   ├── src/
-│   │   ├── components/
-│   │   ├── context/    # Auth Context (JWT handling)
-│   │   ├── pages/      # Dashboards (Patient/Doctor), Login
-│   │   ├── utils/      # API Interceptors
-│   │   ├── App.jsx     # Main Routing
-│   │   └── main.jsx
+│   │   ├── components/ # Reusable UI Components
+│   │   ├── pages/      # Interactive Role Dashboards & Public Views
+│   │   ├── utils/      # Axios API Interceptors with Auto-Token Headers
+│   │   └── App.jsx     # Routing & Application Flow
 │   ├── package.json
 │   └── vite.config.js
-├── media/              # Generated QR Codes & Uploaded Reports
-├── patients/           # Patient Profiles & Health ID Logic
-├── permissions/        # Custom DRF Permissions (IsDoctor, IsPatientOwner, etc.)
-├── records/            # Medical Records (Prescriptions, Lab Reports)
-├── venv/               # Python Virtual Environment
-├── db.sqlite3          # Database (Prototype)
-├── manage.py           # Django Management Script
+├── db.sqlite3          # Database Store (SQLite for Local Prototype)
+├── manage.py           # Django Management Entrypoint
 └── README.md
 ```
 
-## 🛠️ Setup & Installation
+---
 
-### Prerequisite
-- Python 3.10+
-- Node.js 16+
+## 🛠️ Quick Start & Installation
 
-### 1. Backend Setup
+### Prerequisites
+*   Python 3.10+
+*   Node.js 16+
 
-1.  **Clone & Navigate**:
-    ```bash
-    git clone <repo-url>
-    cd qr-health-system
-    ```
+---
 
-2.  **Create & Activate Virtual Environment**:
-    ```bash
-    python -m venv venv
-    # Windows
-    .\venv\Scripts\Activate.ps1
-    # Mac/Linux
-    source venv/bin/activate
-    ```
+### 1. Backend Server Setup
 
-3.  **Install Dependencies**:
-    ```bash
-    pip install django djangorestframework djangorestframework-simplejwt psycopg2-binary qrcode pillow drf-yasg python-decouple django-cors-headers
-    ```
+1. **Activate Environment**:
+   ```bash
+   # Create a virtual environment
+   python -m venv venv
 
-4.  **Run Migrations**:
-    ```bash
-    python manage.py migrate
-    ```
+   # Activate on Windows (PowerShell)
+   .\venv\Scripts\Activate.ps1
 
-5.  **Create Admin User**:
-    ```bash
-    python manage.py createsuperuser
-    ```
+   # Activate on Mac/Linux
+   source venv/bin/activate
+   ```
 
-6.  **Run Server**:
-    ```bash
-    python manage.py runserver
-    ```
-    Backend will run at http://127.0.0.1:8000.
+2. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 2. Frontend Setup
+3. **Database Setup**:
+   ```bash
+   python manage.py migrate
+   ```
 
-1.  **Navigate to Frontend**:
-    ```bash
-    cd frontend
-    ```
+4. **Initialize Standard Lookup Data**:
+   ```bash
+   # Seed standard lab tests
+   python manage.py runscript populate_lab_tests
+   ```
 
-2.  **Install Dependencies**:
-    ```bash
-    npm install
-    ```
+5. **Start Dev Server**:
+   ```bash
+   python manage.py runserver
+   ```
+   *The API server will run at: `http://127.0.0.1:8000`.*
 
-3.  **Run Dev Server**:
-    ```bash
-    npm run dev
-    ```
-    Frontend will run at http://localhost:5173.
+---
 
-## 📖 Usage Guide
+### 2. Frontend Application Setup
 
-### Roles & Features
-- **Patient**:
-    - Register/Login.
-    - View **Health ID** and **QR Code**.
-    - View own medical records.
-- **Doctor**:
-    - Register/Login.
-    - **Scan** (Simulate by entering) a Patient's Health ID.
-    - View Patient's profile and records.
-    - **Upload** new records (Prescriptions, Lab Reports).
-- **Admin**:
-    - Access `http://127.0.0.1:8000/admin`.
-    - View **Audit Logs** (AccessLog) to see who accessed what data.
+1. **Navigate and Install**:
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-### API Documentation
-Interactive API docs are available at:
-- **Swagger UI**: http://127.0.0.1:8000/swagger/
-- **ReDoc**: http://127.0.0.1:8000/redoc/
+2. **Run Dev Environment**:
+   ```bash
+   npm run dev
+   ```
+   *The React application will run at: `http://localhost:5173`.*
+
+---
+
+## 📖 Access & Usage Guide
+
+### Automated Documentation
+*   **Interactive Swagger Specification**: `http://127.0.0.1:8000/swagger/`
+*   **ReDoc Technical Overview**: `http://127.0.0.1:8000/redoc/`
+
+### System Roles
+*   **Patients**: Manage emergency settings, add emergency contacts, upload historic prescriptions, download password-secured health summaries, and grant/revoke active doctor permissions.
+*   **Doctors**: Perform health record searches, request OTP verification for full profiles, log new patient consultation summaries, and view unified patient medical ledgers.
+*   **Lab Technicians**: Manage diagnostic uploads, file official reports, and record diagnostic test results.
+*   **Administrators**: Access the administrative control panel (`/admin`) to audit database transactions, view `AccessLogs`, and manage user roles.
