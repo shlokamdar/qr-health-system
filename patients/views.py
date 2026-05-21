@@ -44,7 +44,7 @@ class PatientViewSet(viewsets.ModelViewSet):
         user = request.user
         
         # Check for emergency token in headers
-        emerg_token = request.META.get('HTTP_X_EMERGENCY_TOKEN')
+        emerg_token = request.headers.get('X-Emergency-Token') or request.META.get('HTTP_X_EMERGENCY_TOKEN')
         if emerg_token:
             from django.core.cache import cache
             patient_id = cache.get(f"emerg_token_{emerg_token}")

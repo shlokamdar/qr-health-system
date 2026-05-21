@@ -41,6 +41,11 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:
 if FRONTEND_URL and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
     if isinstance(CSRF_TRUSTED_ORIGINS, list): CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-emergency-token',
+]
+
 
 # Application definition
 
