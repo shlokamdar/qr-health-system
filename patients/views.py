@@ -46,8 +46,14 @@ class PatientViewSet(viewsets.ModelViewSet):
         # Check for emergency token in headers
         emerg_token = request.headers.get('X-Emergency-Token') or request.META.get('HTTP_X_EMERGENCY_TOKEN')
         if emerg_token:
-            from django.core.cache import cache
-            patient_id = cache.get(f"emerg_token_{emerg_token}")
+            from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
+            signer = TimestampSigner()
+            try:
+                patient_id_str = signer.unsign(emerg_token, max_age=900)  # 15 minutes validity
+                patient_id = int(patient_id_str)
+            except (SignatureExpired, BadSignature):
+                patient_id = None
+
             if patient_id and patient_id == instance.id:
                 from records.models import MedicalRecord
                 from records.serializers import MedicalRecordSerializer
@@ -661,9 +667,10 @@ class EmergencyOTPVerifyView(APIView):
         
         patient = otp_request.patient
         
-        # Issue an emergency token (JWT or simple cache token)
-        emergency_access_token = str(uuid.uuid4())
-        cache.set(f"emerg_token_{emergency_access_token}", patient.id, timeout=900) # 15 mins
+        # Issue an emergency token (cryptographically signed for process safety in multi-process production servers)
+        from django.core.signing import TimestampSigner
+        signer = TimestampSigner()
+        emergency_access_token = signer.sign(str(patient.id))
         
         AccessLog.objects.create(
             actor=request.user if request.user.is_authenticated else None,
