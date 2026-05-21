@@ -35,15 +35,15 @@ def regenerate_qr_codes():
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
-        buffer = BytesIO()
-        img.save(buffer, format='PNG')
-        
-        # Delete old QR code if it exists
-        if patient.qr_code:
-            patient.qr_code.delete(save=False)
+        with BytesIO() as buffer:
+            img.save(buffer)
             
-        file_name = f"qr_{patient.health_id}.png"
-        patient.qr_code.save(file_name, File(buffer), save=True)
+            # Delete old QR code if it exists
+            if patient.qr_code:
+                patient.qr_code.delete(save=False)
+                
+            file_name = f"qr_{patient.health_id}.png"
+            patient.qr_code.save(file_name, File(buffer), save=True)
         print("Done.")
 
 if __name__ == "__main__":
